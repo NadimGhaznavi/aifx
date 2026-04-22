@@ -8,4 +8,4 @@ layout: default
 # Table of Contents
 
 - [01 - Introduction](/tutorial/01-introduction.html)
-
+- [02 - Preview of What You Will Learn](/tutorial/02-preview.html)
