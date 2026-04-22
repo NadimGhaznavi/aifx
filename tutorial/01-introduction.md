@@ -1,0 +1,37 @@
+---
+title: FOREX Tutorial - 01 Introduction
+layout: default
+---
+
+![Candlestick Chart](/images/01-candlestick.svg)
+
+# Introduction
+
+The page covers the [introductory tutorial video](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=1).
+
+---
+
+# Notes
+
+- 70% of amateurs who trade FOREX lose their money.
+- There is a vast amount of information on the web about FOREX, but most of it is a scam designed to have you trade on a particular platform, and thus give them your money (as you lose it).
+- In order to make money:
+  - You need to have an extremely strong economics background or
+  - you need a solid system that allows you to thoroughly your ideas
+
+- Have your own ideas
+- Backtest properly
+  - Testing strategies over 5, 8, 12 years over 40, 50 pairs and seeing the results and how the trades develop
+- Fail a lot
+  - In this process, you will fail a lot
+- Learn
+  - In this process, you will learn a lot
+
+The good news is that the 70% who lose money are likely not doing this. The tutorial is aimed to teach this process.
+
+---
+
+# Pre-Requisites
+
+- Python is installed
+- VS Code is installed
