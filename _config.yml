@@ -1,0 +1,8 @@
+title: AI FX
+description: AI-driven FOREX experimentation framework
+
+remote_theme: nadimghaznavi/minimax
+
+plugins:
+  - jekyll-remote-theme
+
