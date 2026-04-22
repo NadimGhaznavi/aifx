@@ -20,6 +20,6 @@ A link to my [notes](/tutorial/index.md) on the [tutorial](https://www.youtube.c
 # Links
 
 - [AI Hydra](https://pypi.org/project/ai-hydra/) - Reinforcement Learning Sandbox
-
 - [Forex bot & backtest system with Python for beginners](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=1)
+- [OANDA Website](https://www.oanda.com/ca-en/) 
 
