@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Configured the GitHub repo to publish under the DNS name
   - Created a skeleton website
 - Watched and took notes:
-  - [Video](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=1) and [notes](https://aifx.osoyalce.com/tutorial/01-introduction.html)
+  - [01 - Introduction](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=1) and [notes](https://aifx.osoyalce.com/tutorial/01-introduction.html)
 
 ---
 
