@@ -10,7 +10,8 @@ layout: default
 - [01 - Introduction](/tutorial/01-introduction.html)
 - [02 - Preview of What You Will Learn](/tutorial/02-preview.html)
 - [03 - OANDA Account Setup](/tutorial/03-oanda-account-setup.html)
-- [04 - OANDA Rest API](/tutorial/04-rest-api.html)
+- [04 - Rest APIs](/tutorial/04-rest-api.html)
+- [05 - OANDA API](/tutorial/05-oanda-api.html)
 
 # Links
 
