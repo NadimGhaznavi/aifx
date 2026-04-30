@@ -22,6 +22,9 @@ The page covers the [05 OANDA API tutorial](https://www.youtube.com/watch?v=6Ryr
 
 ![API Query Authorization](/images/05-authorization-header.png)
 
+- Send a [https://api-fxpractice.oanda.com/v3/accounts/<ACCOUNT_ID>/instruments](https://api-fxpractice.oanda.com/v3/accounts/<ACCOUNT_ID>/instruments) using the same credentials.
+- Save the queries, figure out how to delete queries
+
 ---
 
 # Links
