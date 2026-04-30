@@ -17,3 +17,5 @@ The page covers the [06 Python and VS Code setup](https://www.youtube.com/watch?
   - `pip install requests`
   - `pip install pandas`
   - `pip install jupyter`
+
+- Create a folder for your code and create `test.ipynb`

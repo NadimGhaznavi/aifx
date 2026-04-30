@@ -14,6 +14,7 @@ layout: default
 - [03 - OANDA Account Setup](/tutorial/03-oanda-account-setup.html)
 - [04 - Rest APIs](/tutorial/04-rest-api.html)
 - [05 - OANDA API](/tutorial/05-oanda-api.html)
+- [06 - Python and VS Code](/tutorial/06-VS-Code-and-Python.html)
 
 ---
 
