@@ -16,6 +16,9 @@ The page covers the [04 Rest API video](https://www.youtube.com/watch?v=Usq9Rr6c
 # Notes
 
 - Create a [Postman](https://www.postman.com/) account.
+- Navigate to the [JSON Placeholder](https://jsonplaceholder.typicode.com) site.
+
+
 ---
 
 # Links
