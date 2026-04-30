@@ -17,6 +17,11 @@ The page covers the [04 Rest API video](https://www.youtube.com/watch?v=Usq9Rr6c
 
 - Create a [Postman](https://www.postman.com/) account.
 - Navigate to the [JSON Placeholder](https://jsonplaceholder.typicode.com) site.
+  - This site hosts a fake API to test your code against
+  - Copy the link to a faki API resource (e.g. POSTS, USERS)
+  - Paste it into *Postman*
+  - Note that if you **POST**, then you get the `id` of the new object
+  - If you **GET**, then you retrieve that object
 
 
 ---
