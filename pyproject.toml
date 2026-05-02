@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "aifx"
-version = "0.11.0"
+version = "0.14.0"
 license = "GPL-3.0-or-later"
 description = "AI-driven FOREX experimentation framework."
 authors = ["Nadim-Daniel Ghaznavi <nghaznavi@gmail.com>"]
