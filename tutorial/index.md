@@ -26,7 +26,7 @@ Num | Notes                                                                     
 11  | [Create a utils script](/tutorial/11-create-utils-script.html)                           | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=11) | [v0.11.0](https://github.com/NadimGhaznavi/aifx/releases/tag/v0.11.0)
 12  | [Python classes](/tutorial/11-classes.html)                                              | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=12) |
 13  | [Trading instrument class](/tutorial/12-trading-instrument.html)                         | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=13) |
-14  | [OANDA API class](/tutorial/13-oanda-api.html)                         | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=14) |
+14  | [OANDA API class](/tutorial/13-oanda-api.html)                                           | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=14) | [v0.14.0](https://github.com/NadimGhaznavi/aifx/releases/tag/v0.14.0)
 
 
 
