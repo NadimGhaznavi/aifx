@@ -20,3 +20,6 @@ The page covers the [06 Python and VS Code setup](https://www.youtube.com/watch?
 
 - Create a folder for your code and create `test.ipynb`, this should open a *Jupyter Notebood* in VS Code.
 
+---
+
+[Back](/tutorial/index.html)

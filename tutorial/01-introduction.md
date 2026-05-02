@@ -35,3 +35,7 @@ The good news is that the 70% who lose money are likely not doing this. The tuto
 
 - Python is installed
 - VS Code is installed
+
+---
+
+[Back](/tutorial/index.html)

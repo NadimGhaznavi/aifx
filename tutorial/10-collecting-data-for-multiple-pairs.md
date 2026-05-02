@@ -17,3 +17,7 @@ The page covers the [10th tutorial video](https://www.youtube.com/watch?v=7rmfu1
 - Create `save_file()` to save the DataFrame to disk
 - Creaee `create_data()` that calls the previous three functions
 - Create code to step though the valid pairs and then call the `create_data()` function to save 4000 candles worth of data to file for all valid currency pairs.
+
+---
+
+[Back](/tutorial/index.html)

@@ -29,3 +29,7 @@ This video provides an overview of what is covered in the tutorial.
   - Support for drilling in and displaying the candle patterns
 - Next create a Trading Bot
 - Deploy the bot to the cloud
+
+---
+
+[Back](/tutorial/index.html)

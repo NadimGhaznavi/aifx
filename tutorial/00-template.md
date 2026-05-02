@@ -1,5 +1,5 @@
 ---
-title: FOREX Tutorial - 0X Name...
+title: FOREX Tutorial - XX Name...
 layout: default
 ---
 
@@ -8,3 +8,11 @@ layout: default
 # Introduction
 
 The page covers the [XXX tutorial video](XXX).
+
+---
+
+# Notes
+
+---
+
+[Back](/tutorial/index.html)
