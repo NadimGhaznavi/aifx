@@ -21,11 +21,12 @@ Num | Notes | Video Link
 04  | [Rest APIs](/tutorial/04-rest-api.html)                            |
 [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=4)
 05  | [OANDA API](/tutorial/05-oanda-api.html)                           | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=5)
-06  | [Python and VS Code](/tutorial/06-VS-Code-and-Python.html)         | 
+06  | [Python and VS Code](/tutorial/06-vs-code-and-python.html)         | 
 [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=6)
-07  | [Getting Candle Data with Python](tutorial/07-Candle-Data-from-Python.html) | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=7)
-08  | [Tradable Instruments](/tutorial/08-Instruments.html)              | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=8)
-09  | [Historical Candle Data](/tutorial/09-Historical-Candle-Data.html)                                                                    | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=9)
+07  | [Getting Candle Data with Python](tutorial/07-candle-data-from-python.html) | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=7)
+08  | [Tradable Instruments](/tutorial/08-instruments.html)              | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=8)
+09  | [Historical Candle Data](/tutorial/09-historical-candle-data.html)                                                                    | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=9)
+10  | [Collecting Data for Multiple Pairs](/tutorial/10-collecting-data-for-multiple-pairs.md)                     | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=10)
 
 
 
