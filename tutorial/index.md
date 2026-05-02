@@ -7,6 +7,12 @@ layout: default
 
 ---
 
+# Introduction
+
+The page provides links to my short summary, a link to the YouTube tutorial video and other items such as a links section. Click the github link to download the code.
+
+---
+
 # Table of Contents
 
 The table below contains my notes on the tutorial videos.
