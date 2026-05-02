@@ -17,6 +17,10 @@ A link to my [notes](/tutorial/index.md) on the [tutorial](https://www.youtube.c
 
 ---
 
+# AI FX Project Beginnings
+
+- [AI FX Project](/aifx/index.html)
+
 # Links
 
 - [AI Hydra](https://pypi.org/project/ai-hydra/) - Reinforcement Learning Sandbox

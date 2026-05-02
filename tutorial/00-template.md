@@ -1,5 +1,5 @@
 ---
-title: FOREX Tutorial - XX Name...
+title: FOREX Tutorial XX - Name...
 layout: default
 ---
 

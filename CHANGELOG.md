@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- Added tutorials 12, 13.
+- Added an introduction to the website
+- Linked the most recent GitHub release to the TOC
+- Constants files for accounts, candles, defaults, instruments and prices
+
+---
+
 ## [0.11.0] - 2026-05-02 @ 16:11
 
 ### Added
