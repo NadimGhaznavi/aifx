@@ -9,13 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- **Website**
-  - Create a CNAME record to publish this repo as https://aifx.osoyalce.com
+### Website
+  - Created a CNAME record to publish this repo as https://aifx.osoyalce.com
   - Configured the GitHub repo to publish under the DNS name
   - Created a skeleton website
 - Watched and took notes:
   - [01 - Introduction](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=1) and [notes](https://aifx.osoyalce.com/tutorial/01-introduction.html)
+- Added `tutorial` and `tutorial-code` that tracks the per-episode update data.
+- Created a [web frontend](/tutorial/index.html) site.
+
+### Code Artifacts
+
+- images/ - Website images
+- tutorial/ - GFM docs
+- tutorial-code/
+- his_data/ - Cache of data from OANDA
+- defs.py - Project constants
+- instrument.ipynb - ETL instrument data from OANDA
+- save_candles.ipynb - ETL candle data from OANDA
+- text.ipynb - Core Jupyter run-code-book
+- utils.py - `get_his_data_filename()` and `get_instruments_data_filename()` functions
 
 ---
 
