@@ -9,12 +9,25 @@ layout: default
 
 # Table of Contents
 
-- [01 - Introduction](/tutorial/01-introduction.html)
-- [02 - Preview of What You Will Learn](/tutorial/02-preview.html)
-- [03 - OANDA Account Setup](/tutorial/03-oanda-account-setup.html)
-- [04 - Rest APIs](/tutorial/04-rest-api.html)
-- [05 - OANDA API](/tutorial/05-oanda-api.html)
-- [06 - Python and VS Code](/tutorial/06-VS-Code-and-Python.html)
+The table below contains my notes on the tutorial videos.
+
+Num | Notes | Video Link
+--- | ----- | -------------
+01  | [Introduction](/tutorial/01-introduction.html)                     | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=1)
+02  | [Preview of What You Will Learn](/tutorial/02-preview.html)        |
+[Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=2)
+03  | [OANDA Account Setup](/tutorial/03-oanda-account-setup.html)       |
+[Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=3)
+04  | [Rest APIs](/tutorial/04-rest-api.html)                            |
+[Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=4)
+05  | [OANDA API](/tutorial/05-oanda-api.html)                           | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=5)
+06  | [Python and VS Code](/tutorial/06-VS-Code-and-Python.html)         | 
+[Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=6)
+07  | [Getting Candle Data with Python](tutorial/07-Candle-Data-from-Python.html) | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=7)
+08  | [Tradable Instruments](/tutorial/08-Instruments.html)              | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=8)
+09  | [Historical Candle Data](/tutorial/09-Historical-Candle-Data.html)                                                                    | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=9)
+
+
 
 ---
 
