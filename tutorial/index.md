@@ -9,7 +9,11 @@ layout: default
 
 # Introduction
 
-The page provides links to my short summary, a link to the YouTube tutorial video and other items such as a links section. Click the github link to download the code.
+The page provides:
+
+- Summary notes
+- Link to the YouTube tutorial video and other items such as a links section
+- Link to the GitHub files associated with the tutorial
 
 ---
 
@@ -17,7 +21,7 @@ The page provides links to my short summary, a link to the YouTube tutorial vide
 
 The table below contains my notes on the tutorial videos.
 
-Num | Notes                                                                                    | Video Link
+File # | Notes                                                                                    | Video Link
 ----|------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------
 01  | [Introduction](/tutorial/01-introduction.html)                                           | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=1)
 02  | [Preview of What You Will Learn](/tutorial/02-preview.html)                              | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=2)
