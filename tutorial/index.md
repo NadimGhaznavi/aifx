@@ -11,8 +11,8 @@ layout: default
 
 The table below contains my notes on the tutorial videos.
 
-Num | Notes | Video Link
---- | ----- | -------------
+Num | Notes                                                              | Video Link
+----|--------------------------------------------------------------------|-------------------------------------------------------------
 01  | [Introduction](/tutorial/01-introduction.html)                     | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=1)
 02  | [Preview of What You Will Learn](/tutorial/02-preview.html)        |
 [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=2)
