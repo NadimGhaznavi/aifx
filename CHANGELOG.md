@@ -7,20 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [0.15.0] - 2026-05-02 @ 22:09
 
 ### Added
 
-- Added tutorials 12, 13.
+- Added tutorials 12, 13, 14, 15
 - Added an introduction to the website
 - Linked the most recent GitHub release to the TOC
 - Constants files for accounts, candles, defaults, directories, files, frequencies, pairs, instruments, and prices
+
+- **AI FX Code**
+- Added initial aifx code and module support
 
 ### Changed 
 
 - Numbering: The series author's first two videos don't count in his numbering scheme. 
 - Renumbered files and file references to match the tutorial's descriptions,
-e.g. "...in episode 12..."
+e.g. "...in episode 12..."
   - Updated the TOC
 
 ---
