@@ -28,7 +28,7 @@ class OandaMgr:
         return response.status_code, response.json()
 
     def get_instruments(self):
-        code, data = self.fetch_instruments()
+        code, data = self._fetch_instruments()
         if code == 200:
             df = pd.DataFrame.from_dict(data[INS.INSTRUMENTS])
             return df[

@@ -13,8 +13,8 @@ The table below contains my notes on the tutorial videos.
 
 Num | Notes                                                                                      | Video Link                                                                                                 | Code
 ----|--------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------
-    | [Introduction](/tutorial/00.1-introduction.html)                                           | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=1)  | 
-    | [Preview of What You Will Learn](/tutorial/00.2-preview.html)                              | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=2)  |
+00  | [Introduction](/tutorial/00.1-introduction.html)                                           | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=1)  | 
+00  | [Preview of What You Will Learn](/tutorial/00.2-preview.html)                              | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=2)  |
 01  | [OANDA Account Setup](/tutorial/01-oanda-account-setup.html)                               | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=3)  |
 02  | [Rest APIs](/tutorial/02-rest-api.html)                                                    | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=4)  |
 03  | [OANDA API](/tutorial/03-oanda-api.html)                                                   | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=5)  |
