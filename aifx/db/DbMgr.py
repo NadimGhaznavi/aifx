@@ -123,6 +123,14 @@ class DbMgr:
 
         return age > STALE_VALUE[table]
 
+    def select_all(self, table: str, order_by: str | None = None) -> list[sqlite3.Row]:
+        sql = f"SELECT * FROM {table}"
+
+        if order_by is not None:
+            sql += f" ORDER BY {order_by}"
+
+        return self._cursor.execute(sql).fetchall()
+
     def update(self, table: str, records: list[dict], key_fields: list[str]) -> int:
         if not records:
             return 0

@@ -24,16 +24,17 @@ class Ui_Widget(object):
         if not Widget.objectName():
             Widget.setObjectName(u"Widget")
         Widget.resize(800, 600)
-        self.widget = QWidget(Widget)
-        self.widget.setObjectName(u"widget")
-        self.widget.setGeometry(QRect(130, 90, 392, 134))
-        self.verticalLayout = QVBoxLayout(self.widget)
+        self.layoutWidget = QWidget(Widget)
+        self.layoutWidget.setObjectName(u"layoutWidget")
+        self.layoutWidget.setGeometry(QRect(130, 90, 392, 134))
+        self.verticalLayout = QVBoxLayout(self.layoutWidget)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.horizontalLayout_2 = QHBoxLayout()
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.lbl_aifx = QLabel(self.widget)
+        self.lbl_aifx = QLabel(self.layoutWidget)
         self.lbl_aifx.setObjectName(u"lbl_aifx")
+        self.lbl_aifx.setAlignment(Qt.AlignBottom|Qt.AlignLeading|Qt.AlignLeft)
 
         self.horizontalLayout_2.addWidget(self.lbl_aifx)
 
@@ -41,8 +42,10 @@ class Ui_Widget(object):
 
         self.horizontalLayout_2.addItem(self.horizontalSpacer)
 
-        self.lbl_version = QLabel(self.widget)
+        self.lbl_version = QLabel(self.layoutWidget)
         self.lbl_version.setObjectName(u"lbl_version")
+        self.lbl_version.setTextFormat(Qt.AutoText)
+        self.lbl_version.setAlignment(Qt.AlignBottom|Qt.AlignLeading|Qt.AlignLeft)
 
         self.horizontalLayout_2.addWidget(self.lbl_version)
 
@@ -55,12 +58,12 @@ class Ui_Widget(object):
 
         self.horizontalLayout = QHBoxLayout()
         self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.lbl_instrument = QLabel(self.widget)
+        self.lbl_instrument = QLabel(self.layoutWidget)
         self.lbl_instrument.setObjectName(u"lbl_instrument")
 
         self.horizontalLayout.addWidget(self.lbl_instrument)
 
-        self.cb_instrument = QComboBox(self.widget)
+        self.cb_instrument = QComboBox(self.layoutWidget)
         self.cb_instrument.setObjectName(u"cb_instrument")
         sizePolicy = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -74,7 +77,7 @@ class Ui_Widget(object):
 
         self.horizontalLayout.addItem(self.hspace)
 
-        self.btn_exit = QPushButton(self.widget)
+        self.btn_exit = QPushButton(self.layoutWidget)
         self.btn_exit.setObjectName(u"btn_exit")
 
         self.horizontalLayout.addWidget(self.btn_exit)
@@ -91,7 +94,7 @@ class Ui_Widget(object):
     def retranslateUi(self, Widget):
         Widget.setWindowTitle(QCoreApplication.translate("Widget", u"Widget", None))
         self.lbl_aifx.setText(QCoreApplication.translate("Widget", u"<html><head/><body><p><span style=\" font-size:24pt; font-weight:700; color:#669f1e;\">AI FX</span></p></body></html>", None))
-        self.lbl_version.setText(QCoreApplication.translate("Widget", u"<version>", None))
+        self.lbl_version.setText(QCoreApplication.translate("Widget", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700; color:#669f1e;\">&lt;version&gt;</span></p></body></html>", None))
         self.lbl_instrument.setText(QCoreApplication.translate("Widget", u"Instrument:", None))
         self.btn_exit.setText(QCoreApplication.translate("Widget", u"Exit", None))
     # retranslateUi
