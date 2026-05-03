@@ -27,6 +27,7 @@ class AiFx(QWidget):
         print("UI Loaded...", flush=True)
         self.wire_signals()
         print("Signals wired...", flush=True)
+        print("Houston, we have lift-off!!!", flush=True)
 
     def load_ui(self):
         try:
@@ -46,7 +47,7 @@ class AiFx(QWidget):
 
     def wire_signals(self):
         # Wire up an exit button
-        self.ui.btn_exit.clicked.connect(self.close)
+        self.ui.btn_exit.clicked.connect(self.ui.close)
 
 def main():
     app = QApplication(sys.argv)
