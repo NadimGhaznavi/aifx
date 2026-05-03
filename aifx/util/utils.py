@@ -1,9 +1,9 @@
 # tutorial-code/utils.py
 
-from constants.DDir import DDir
-from constants.DFile import DFile
-from constants.DPairs import DPair as PAIR
-from constants.DFrequency import DFrequency as FREQ
+from aifx.constants.DDir import DDir
+from aifx.constants.DFile import DFile
+from aifx.constants.DPairs import DPair as PAIR
+from aifx.constants.DFrequency import DFrequency as FREQ
 
 
 def get_his_data_filename(pair, granularity):
