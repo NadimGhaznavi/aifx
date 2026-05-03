@@ -1,5 +1,5 @@
 ---
-title: FOREX Tutorial - 04 Rest API
+title: FOREX Tutorial 02 - Rest API
 layout: default
 ---
 
@@ -9,7 +9,7 @@ layout: default
 
 # Introduction
 
-The page covers the [04 Rest API video](https://www.youtube.com/watch?v=Usq9Rr6c-ws&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=4).
+The page covers the [second YouTube tutorial on the Rest API](https://www.youtube.com/watch?v=Usq9Rr6c-ws&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=4).
 
 ---
 

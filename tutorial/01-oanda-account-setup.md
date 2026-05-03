@@ -1,5 +1,5 @@
 ---
-title: FOREX Tutorial - 03 OANDA Account Setup
+title: FOREX Tutorial 01 - OANDA Account Setup
 layout: default
 ---
 
@@ -7,7 +7,7 @@ layout: default
 
 # Introduction
 
-The page covers the [third tutorial video](https://www.youtube.com/watch?v=6L834DTGu-s&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=3), setting up an [OANDA](https://www.oanda.com/ca-en/) account.
+The page covers the [first tutorial video](https://www.youtube.com/watch?v=6L834DTGu-s&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=3), setting up an [OANDA](https://www.oanda.com/ca-en/) account.
 
 ---
 

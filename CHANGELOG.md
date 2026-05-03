@@ -14,7 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added tutorials 12, 13.
 - Added an introduction to the website
 - Linked the most recent GitHub release to the TOC
-- Constants files for accounts, candles, defaults, instruments and prices
+- Constants files for accounts, candles, defaults, directories, files, frequencies, pairs, instruments, and prices
+
+### Changed 
+
+- Numbering: The series author's first two videos don't count in his numbering scheme. 
+- Renumbered files and file references to match the tutorial's descriptions,
+e.g. "...in episode 12..."
+  - Updated the TOC
 
 ---
 
