@@ -11,6 +11,7 @@ class AiFx(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.load_ui()
+        self.wire_signals()
 
     def load_ui(self):
         loader = QUiLoader()
@@ -19,8 +20,12 @@ class AiFx(QWidget):
         ui_file.open(QFile.ReadOnly)
         self.ui = loader.load(ui_file, self)
         ui_file.close()
+        # Set the window's title bar
         self.setWindowTitle("AI FX")
 
+
+    def wire_signals(self):
+        # Wire up an exit button
         self.ui.exitButton.clicked.connect(self.close)
 
 if __name__ == "__main__":

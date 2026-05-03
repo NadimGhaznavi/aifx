@@ -1,3 +1,17 @@
 {
-    "files": ["aifx.py","form.ui"]
+    "files": [
+        "aifx.py",
+        "constants/DAccount.py",
+        "constants/DCandle.py",
+        "constants/DDef.py",
+        "constants/DDir.py",
+        "constants/DFile.py",
+        "constants/DFrequency.py",
+        "constants/DInstrument.py",
+        "constants/DPairs.py",
+        "constants/DPrice.py",
+        "form.ui",
+        "mgr/DbMgr.py",
+        "mgr/OandaMgr.py"
+    ]
 }
