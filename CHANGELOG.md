@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.15.11] - 2026-05-03 @ 16:32
+## [0.15.12] - 2026-05-03 @ 16:32
+
+**Working GUI that fetches OANDA instruments and builds a drop down menu**
 
 ### Fixed
 -  aifx being shadowed by aifs script.
