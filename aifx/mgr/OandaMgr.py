@@ -1,4 +1,11 @@
-# oanda_api.py
+# aifx/mgr/OandaMgr.py
+#
+#    AI FX
+#    Author: Nadim-Daniel Ghaznavi
+#    Copyright: (c) 2026 Nadim-Daniel Ghaznavi
+#    GitHub: https://github.com/NadimGhaznavi/aifx
+#    Website: https://aifx.osoyalce.com
+#    License: GPL 3.0
 
 import requests
 import pandas as pd
@@ -34,7 +41,7 @@ class OandaAPI:
     def save_instruments(self):
         df = self.get_instruments_df()
         if df is not None:
-            df.to_pickle(utils.get_instruments_data_filename())
+            pass # TODO
 
     def fetch_candles(self, pair_name, count, granularity):
         url = f"{DDEF.OANDA_URL}/{INS.INSTRUMENTS}/{pair_name}/{CANDLE.CANDLES}"

@@ -1,4 +1,12 @@
-# This Python file uses the following encoding: utf-8
+# aifx/aifx.py
+#
+#    AI FX
+#    Author: Nadim-Daniel Ghaznavi
+#    Copyright: (c) 2026 Nadim-Daniel Ghaznavi
+#    GitHub: https://github.com/NadimGhaznavi/aifx
+#    Website: https://aifx.osoyalce.com
+#    License: GPL 3.0
+
 from pathlib import Path
 import sys
 
