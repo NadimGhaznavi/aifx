@@ -12,3 +12,5 @@ from typing import Final
 class DPrice:
 
     MBA: Final[str] = "MBA"
+    PRICE: Final[str] = "PRICE"
+    PRICING: Final[str] = "Pricing"

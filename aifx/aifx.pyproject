@@ -11,8 +11,10 @@
         "constants/DInstrument.py",
         "constants/DPairs.py",
         "constants/DPrice.py",
+        "forex/Instrument.py",
         "form.ui",
         "db/DbMgr.py",
+        "mgr/CacheMgr.py",
         "mgr/OandaMgr.py"
     ]
 }

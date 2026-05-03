@@ -14,10 +14,13 @@ from PySide6.QtWidgets import QApplication, QWidget
 from PySide6.QtCore import QFile
 from PySide6.QtUiTools import QUiLoader
 
+from aifx.mgr.CacheMgr import CacheMgr
+
 
 class AiFx(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.cache_mgr = CacheMgr()
         self.load_ui()
         self.wire_signals()
 
@@ -28,16 +31,17 @@ class AiFx(QWidget):
         ui_file.open(QFile.ReadOnly)
         self.ui = loader.load(ui_file, self)
         ui_file.close()
+
         # Set the window's title bar
         self.setWindowTitle("AI FX")
 
 
     def wire_signals(self):
         # Wire up an exit button
-        self.ui.exitButton.clicked.connect(self.close)
+        self.ui.btn_exit.clicked.connect(self.close)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     widget = AiFx()
-    widget.show()
+    widget.ui.show()
     sys.exit(app.exec())

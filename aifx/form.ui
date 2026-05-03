@@ -16,20 +16,17 @@
   <widget class="QWidget" name="">
    <property name="geometry">
     <rect>
-     <x>290</x>
-     <y>40</y>
-     <width>227</width>
+     <x>220</x>
+     <y>130</y>
+     <width>461</width>
      <height>132</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="QLabel" name="label">
+     <widget class="QLabel" name="lbl_title">
       <property name="text">
        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:24pt; font-weight:700; color:#669f1e;&quot;&gt;AI FX&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-      </property>
-      <property name="textFormat">
-       <enum>Qt::RichText</enum>
       </property>
      </widget>
     </item>
@@ -47,16 +44,35 @@
      </spacer>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout">
+     <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="0,1,0,0">
+      <property name="leftMargin">
+       <number>10</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>10</number>
+      </property>
       <item>
-       <widget class="QPushButton" name="refreshButton">
+       <widget class="QLabel" name="lbl_instrument">
         <property name="text">
-         <string>Refresh</string>
+         <string>Instrument:</string>
         </property>
        </widget>
       </item>
       <item>
-       <spacer name="horizontalSpacer">
+       <widget class="QComboBox" name="cb_instrument">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="hspace">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
@@ -69,7 +85,7 @@
        </spacer>
       </item>
       <item>
-       <widget class="QPushButton" name="exitButton">
+       <widget class="QPushButton" name="btn_exit">
         <property name="text">
          <string>Exit</string>
         </property>

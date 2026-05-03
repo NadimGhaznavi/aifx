@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.15.9] - 2026-04-03 @ 12:16
+## [0.15.10] - 2026-05-03 @ 16:15
+
+- Package updates
+
+---
+
+## [0.15.9] - 2026-05-03 @ 12:16
 
 ### Fixed
 - Tutorial page table syntax

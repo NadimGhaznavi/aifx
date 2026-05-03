@@ -16,6 +16,9 @@ class DDef:
     API_KEY: Final[str] = (
         "ed99def09cb58baca2b74884defa6f0a-d0ac2b598bb7a28fb4358a1b77686bc9"
     )
+    MAX_INSTRUMENT_AGE: Final[int] = 3600 # 1 hour
+    OANDA_RETRY: Final[int] = 2 # seconds
+    OANDA_TIMEOUT: Final[int] = 5 # seconds
     OANDA_URL: Final[str] = "https://api-fxpractice.oanda.com/v3"
     SECURE_HEADER: Final[dict] = {"Authorization": f"Bearer {API_KEY}"}
     VERSION: Final[str] = "0.15.9"

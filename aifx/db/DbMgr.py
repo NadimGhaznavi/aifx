@@ -8,8 +8,14 @@
 #    License: GPL 3.0
 
 import sqlite3
+from datetime import datetime, timezone
 
+from aifx.constants.DDef import DDef as DDEF
 from aifx.constants.DDb import DDb, DTable
+
+STALE_VALUE = {
+    DTable.INSTRUMENTS: DDEF.MAX_INSTRUMENT_AGE
+    }
 
 class DbMgr:
 
@@ -23,8 +29,8 @@ class DbMgr:
 
         try:
             self._conn = sqlite3.connect(self._db_path)
-        except:
-            raise sqlite3.OperationalError(f"Unable to open DB file {self._db_path}")
+        except sqlite3.Error as exc:
+            raise sqlite3.OperationalError(f"Unable to open DB file {self._db_path}") from exc
 
         self._conn.row_factory = sqlite3.Row
         self._conn.execute("PRAGMA foreign_keys = ON;")
@@ -84,7 +90,6 @@ class DbMgr:
                 type TEXT NOT NULL,
                 display_name TEXT NOT NULL,
                 pip_location INTEGER NOT NULL,
-                pip_value REAL NOT NULL,
                 margin_rate REAL NOT NULL,
                 updated_y INTEGER NOT NULL,
                 updated_mo INTEGER NOT NULL,
@@ -95,15 +100,92 @@ class DbMgr:
             );
             """
         )
-
         self._add_updated_ts_column(DTable.INSTRUMENTS)
-
         self._conn.commit()
 
     def _init_db(self):
         if self._db_type == DDb.CACHE:
             self._init_cache()
 
+    def is_stale(self, table: str) -> bool:
+        if table not in STALE_VALUE:
+            raise ValueError(f"No stale value configured for table: {table}")
+
+        row = self._cursor.execute(
+            f"SELECT MAX(updated_ts) FROM {table}"
+        ).fetchone()
+
+        if row is None or row[0] is None:
+            return True
+
+        now_ts = int(datetime.now(timezone.utc).timestamp())
+        age = now_ts - int(row[0])
+
+        return age > STALE_VALUE[table]
+
+    def update(self, table: str, records: list[dict], key_fields: list[str]) -> int:
+        if not records:
+            return 0
+
+        now = datetime.now(timezone.utc)
+
+        stamped_records = []
+        for record in records:
+            stamped = dict(record)
+            stamped["updated_y"] = now.year
+            stamped["updated_mo"] = now.month
+            stamped["updated_d"] = now.day
+            stamped["updated_h"] = now.hour
+            stamped["updated_mi"] = now.minute
+            stamped["updated_s"] = now.second
+            stamped_records.append(stamped)
+
+        self._upsert_many(
+            table=table,
+            records=stamped_records,
+            key_fields=key_fields,
+        )
+
+        return len(stamped_records)
 
 
+    def _upsert_many(self, table: str, records: list[dict], key_fields: list[str]) -> None:
+        fields = sorted(records[0].keys())
+        field_set = set(fields)
 
+        for record in records:
+            if set(record.keys()) != field_set:
+                raise ValueError("Inconsistent record fields")
+
+        columns = ", ".join(fields)
+        placeholders = ", ".join(["?"] * len(fields))
+        conflict_fields = ", ".join(key_fields)
+
+        update_fields = [
+            field for field in fields
+            if field not in key_fields
+        ]
+
+        if update_fields:
+            update_clause = ", ".join(
+                f"{field}=excluded.{field}"
+                for field in update_fields
+            )
+            conflict_action = f"DO UPDATE SET {update_clause}"
+        else:
+            conflict_action = "DO NOTHING"
+
+        sql = f"""
+            INSERT INTO {table} ({columns})
+            VALUES ({placeholders})
+            ON CONFLICT({conflict_fields})
+            {conflict_action}
+        """
+
+        values = [
+            tuple(record[field] for field in fields)
+            for record in records
+        ]
+
+        with self._conn:
+            self._cursor.executemany(sql, values)

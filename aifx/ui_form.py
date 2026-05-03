@@ -15,8 +15,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QHBoxLayout, QLabel, QPushButton,
-    QSizePolicy, QSpacerItem, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QComboBox, QHBoxLayout, QLabel,
+    QPushButton, QSizePolicy, QSpacerItem, QVBoxLayout,
+    QWidget)
 
 class Ui_Widget(object):
     def setupUi(self, Widget):
@@ -25,38 +26,49 @@ class Ui_Widget(object):
         Widget.resize(800, 600)
         self.widget = QWidget(Widget)
         self.widget.setObjectName(u"widget")
-        self.widget.setGeometry(QRect(290, 40, 227, 132))
+        self.widget.setGeometry(QRect(220, 130, 461, 132))
         self.verticalLayout = QVBoxLayout(self.widget)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
-        self.label = QLabel(self.widget)
-        self.label.setObjectName(u"label")
-        self.label.setTextFormat(Qt.RichText)
+        self.lbl_title = QLabel(self.widget)
+        self.lbl_title.setObjectName(u"lbl_title")
 
-        self.verticalLayout.addWidget(self.label)
+        self.verticalLayout.addWidget(self.lbl_title)
 
         self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         self.verticalLayout.addItem(self.verticalSpacer)
 
-        self.horizontalLayout = QHBoxLayout()
-        self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.refreshButton = QPushButton(self.widget)
-        self.refreshButton.setObjectName(u"refreshButton")
+        self.horizontalLayout_3 = QHBoxLayout()
+        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+        self.horizontalLayout_3.setContentsMargins(10, 0, 10, -1)
+        self.lbl_instrument = QLabel(self.widget)
+        self.lbl_instrument.setObjectName(u"lbl_instrument")
 
-        self.horizontalLayout.addWidget(self.refreshButton)
+        self.horizontalLayout_3.addWidget(self.lbl_instrument)
 
-        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.cb_instrument = QComboBox(self.widget)
+        self.cb_instrument.setObjectName(u"cb_instrument")
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.cb_instrument.sizePolicy().hasHeightForWidth())
+        self.cb_instrument.setSizePolicy(sizePolicy)
 
-        self.horizontalLayout.addItem(self.horizontalSpacer)
+        self.horizontalLayout_3.addWidget(self.cb_instrument)
 
-        self.exitButton = QPushButton(self.widget)
-        self.exitButton.setObjectName(u"exitButton")
+        self.hspace = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
-        self.horizontalLayout.addWidget(self.exitButton)
+        self.horizontalLayout_3.addItem(self.hspace)
 
+        self.btn_exit = QPushButton(self.widget)
+        self.btn_exit.setObjectName(u"btn_exit")
 
-        self.verticalLayout.addLayout(self.horizontalLayout)
+        self.horizontalLayout_3.addWidget(self.btn_exit)
+
+        self.horizontalLayout_3.setStretch(1, 1)
+
+        self.verticalLayout.addLayout(self.horizontalLayout_3)
 
 
         self.retranslateUi(Widget)
@@ -66,8 +78,8 @@ class Ui_Widget(object):
 
     def retranslateUi(self, Widget):
         Widget.setWindowTitle(QCoreApplication.translate("Widget", u"Widget", None))
-        self.label.setText(QCoreApplication.translate("Widget", u"<html><head/><body><p align=\"center\"><span style=\" font-size:24pt; font-weight:700; color:#669f1e;\">AI FX</span></p></body></html>", None))
-        self.refreshButton.setText(QCoreApplication.translate("Widget", u"Refresh", None))
-        self.exitButton.setText(QCoreApplication.translate("Widget", u"Exit", None))
+        self.lbl_title.setText(QCoreApplication.translate("Widget", u"<html><head/><body><p align=\"center\"><span style=\" font-size:24pt; font-weight:700; color:#669f1e;\">AI FX</span></p></body></html>", None))
+        self.lbl_instrument.setText(QCoreApplication.translate("Widget", u"Instrument:", None))
+        self.btn_exit.setText(QCoreApplication.translate("Widget", u"Exit", None))
     # retranslateUi
 

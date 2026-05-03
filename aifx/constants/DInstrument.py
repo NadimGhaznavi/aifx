@@ -13,6 +13,7 @@ class DInstrument:
 
     DISPLAY_NAME: Final[str] = "displayName"
     NAME: Final[str] = "name"
+    INSTRUMENT: Final[str] = "Instrument"
     INSTRUMENTS: Final[str] = "instruments"
     MARGIN_RATE: Final[str] = "marginRate"
     TYPE: Final[str] = "type"
