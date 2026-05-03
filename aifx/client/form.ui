@@ -16,19 +16,43 @@
   <widget class="QWidget" name="">
    <property name="geometry">
     <rect>
-     <x>220</x>
-     <y>130</y>
-     <width>461</width>
-     <height>132</height>
+     <x>130</x>
+     <y>90</y>
+     <width>392</width>
+     <height>134</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="QLabel" name="lbl_title">
-      <property name="text">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:24pt; font-weight:700; color:#669f1e;&quot;&gt;AI FX&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-      </property>
-     </widget>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <widget class="QLabel" name="lbl_aifx">
+        <property name="text">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:24pt; font-weight:700; color:#669f1e;&quot;&gt;AI FX&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QLabel" name="lbl_version">
+        <property name="text">
+         <string>&lt;version&gt;</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
     <item>
      <spacer name="verticalSpacer">
@@ -44,16 +68,7 @@
      </spacer>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="0,1,0,0">
-      <property name="leftMargin">
-       <number>10</number>
-      </property>
-      <property name="topMargin">
-       <number>0</number>
-      </property>
-      <property name="rightMargin">
-       <number>10</number>
-      </property>
+     <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
        <widget class="QLabel" name="lbl_instrument">
         <property name="text">
@@ -78,8 +93,8 @@
         </property>
         <property name="sizeHint" stdset="0">
          <size>
-          <width>40</width>
-          <height>20</height>
+          <width>58</width>
+          <height>34</height>
          </size>
         </property>
        </spacer>

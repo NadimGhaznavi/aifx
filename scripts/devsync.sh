@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 set -euo pipefail
 
 SRC="/opt/dev/aifx/aifx/"

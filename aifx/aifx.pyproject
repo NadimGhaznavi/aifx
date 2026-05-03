@@ -1,6 +1,7 @@
 {
     "files": [
         "client/aifx_qt.py",
+        "client/form.ui",
         "constants/DAccount.py",
         "constants/DCandle.py",
         "constants/DDb.py",
@@ -12,7 +13,6 @@
         "constants/DPairs.py",
         "constants/DPrice.py",
         "forex/Instrument.py",
-        "form.ui",
         "db/DbMgr.py",
         "mgr/CacheMgr.py",
         "mgr/OandaMgr.py"

@@ -20,20 +20,28 @@ from aifx.mgr.CacheMgr import CacheMgr
 class AiFx(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+        print("AiFx starting up...", flush=True)
         self.cache_mgr = CacheMgr()
+        print("CacheMgr created...", flush=True)
         self.load_ui()
+        print("UI Loaded...", flush=True)
         self.wire_signals()
+        print("Signals wired...", flush=True)
 
     def load_ui(self):
-        loader = QUiLoader()
-        path = Path(__file__).resolve().parent / "form.ui"
-        ui_file = QFile(path)
-        ui_file.open(QFile.ReadOnly)
-        self.ui = loader.load(ui_file, self)
-        ui_file.close()
+        try:
+            loader = QUiLoader()
+            path = Path(__file__).resolve().parent / "form.ui"
+            ui_file = QFile(path)
+            ui_file.open(QFile.ReadOnly)
+            # self.ui = loader.load(ui_file, self)
+            self.ui = loader.load(ui_file)
+            ui_file.close()
 
-        # Set the window's title bar
-        self.setWindowTitle("AI FX")
+            # Set the window's title bar
+            self.setWindowTitle("AI FX")
+        except Exception as e:
+            print(f"UI Load failed: {e}", flush=True)
 
 
     def wire_signals(self):
