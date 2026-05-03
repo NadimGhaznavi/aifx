@@ -36,11 +36,14 @@ class aifx(QtWidgets.QWidget):
         self.view.setHtml(html)
 
 
-if __name__ == "__main__":
+def main():
     app = QtWidgets.QApplication([])
-
     widget = aifx()
     widget.resize(1400, 600)
     widget.show()
+    return app
 
+
+if __name__ == "__main__":
+    app = main()
     sys.exit(app.exec())
