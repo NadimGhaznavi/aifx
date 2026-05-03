@@ -41,9 +41,8 @@ def main():
     widget = aifx()
     widget.resize(1400, 600)
     widget.show()
-    return app
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":
-    app = main()
-    sys.exit(app.exec())
+    main()
