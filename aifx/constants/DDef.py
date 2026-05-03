@@ -18,3 +18,4 @@ class DDef:
     )
     OANDA_URL: Final[str] = "https://api-fxpractice.oanda.com/v3"
     SECURE_HEADER: Final[dict] = {"Authorization": f"Bearer {API_KEY}"}
+    VERSION: Final[str] = "0.15.9"
