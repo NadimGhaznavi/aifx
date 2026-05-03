@@ -9,26 +9,25 @@
 
 import requests
 import pandas as pd
-import utils
 
-from constants.DAccount import DAccount as ACCT
-from constants.DDef import DDef as DDEF
-from constants.DInstrument import DInstrument as INS
-from constants.DCandle import DCandle as CANDLE
-from constants.DPrice import DPrice as PRICE
+from aifx.constants.DAccount import DAccount as ACCT
+from aifx.constants.DDef import DDef as DDEF
+from aifx.constants.DInstrument import DInstrument as INS
+from aifx.constants.DCandle import DCandle as CANDLE
+from aifx.constants.DPrice import DPrice as PRICE
 
 
-class OandaAPI:
+class OandaMgr:
 
     def __init__(self):
         self.session = requests.Session()
 
-    def fetch_instruments(self):
+    def _fetch_instruments(self):
         url = f"{DDEF.OANDA_URL}/{ACCT.ACCOUNTS}/{DDEF.ACCOUNT_ID}/{INS.INSTRUMENTS}"
         response = self.session.get(url, params=None, headers=DDEF.SECURE_HEADER)
         return response.status_code, response.json()
 
-    def get_instruments_df(self):
+    def get_instruments(self):
         code, data = self.fetch_instruments()
         if code == 200:
             df = pd.DataFrame.from_dict(data[INS.INSTRUMENTS])
@@ -37,11 +36,6 @@ class OandaAPI:
             ]
         else:
             return None
-
-    def save_instruments(self):
-        df = self.get_instruments_df()
-        if df is not None:
-            pass # TODO
 
     def fetch_candles(self, pair_name, count, granularity):
         url = f"{DDEF.OANDA_URL}/{INS.INSTRUMENTS}/{pair_name}/{CANDLE.CANDLES}"
@@ -52,9 +46,9 @@ class OandaAPI:
 
 
 if __name__ == "__main__":
-    api = OandaAPI()
+    mgr = OandaMgr()
     # 4 hour intervalus: H4
     # print(api.fetch_candles("EUR_NOK", 50, "H4"))
     # Print the first 5 rows
-    df = api.get_instruments_df()
-    api.save_instruments()
+    df = mgr.get_instruments()
+    print(df)
