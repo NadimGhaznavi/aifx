@@ -27,4 +27,5 @@ A link to my [notes](/tutorial/index.md) on the [tutorial](https://www.youtube.c
 - [Forex bot & backtest system with Python for beginners](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=1)
 - [OANDA Website](https://www.oanda.com/ca-en/) 
 - [Postman](https://www.postman.com/)
+- [Plotly](https://plotly.com/python/)
 

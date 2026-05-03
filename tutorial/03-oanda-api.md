@@ -1,5 +1,5 @@
 ---
-title: FOREX Tutorial - 05 OANDA API
+title: FOREX Tutorial 03 - OANDA API
 layout: default
 ---
 
@@ -9,7 +9,7 @@ layout: default
 
 # Introduction
 
-The page covers the [05 OANDA API tutorial](https://www.youtube.com/watch?v=6RyrpdZDSt0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=5).
+The page covers the [third OANDA API tutorial](https://www.youtube.com/watch?v=6RyrpdZDSt0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=5).
 
 ---
 

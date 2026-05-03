@@ -1,11 +1,11 @@
 ---
-title: FOREX Tutorial - 09 Historical Candle Data
+title: FOREX Tutorial 07 - Historical Candle Data
 layout: default
 ---
 
 # Introduction
 
-The page covers the [09 tutorial video](https://www.youtube.com/watch?v=351X3vHZX6Q&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=9).
+The page covers the [7th tutorial video](https://www.youtube.com/watch?v=351X3vHZX6Q&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=9).
 
 ---
 

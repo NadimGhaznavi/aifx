@@ -1,13 +1,15 @@
 ---
-title: FOREX Tutorial XX - Name...
+title: FOREX Tutorial YY - Name...
 layout: default
 ---
 
-![XXX](/images/XXX.png)
+![A Foo image](/images/foo.png)
+
+---
 
 # Introduction
 
-The page covers the [XXX tutorial video](XXX).
+The page covers the [YYth tutorial video](YY).
 
 ---
 

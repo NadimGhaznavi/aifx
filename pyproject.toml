@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "aifx"
-version = "0.14.0"
+version = "0.15.1"
 license = "GPL-3.0-or-later"
 description = "AI-driven FOREX experimentation framework."
 authors = ["Nadim-Daniel Ghaznavi <nghaznavi@gmail.com>"]
@@ -21,7 +21,12 @@ classifiers = [
 [tool.poetry.dependencies]
 python = ">=3.11,<3.14"
 requests = ">=2.33.1"
-pandas = ">3.0.2"
+pandas = ">=3.0.2"
+plotly = ">=6.7.0"
+PySide6 = ">=6.11.0"
+poetry = ">=2.3.4"
+poetry-core = ">=2.3.2"
+
 
 # Core runtime dependencies
 rich = "^14.0.0"

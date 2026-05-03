@@ -1,11 +1,11 @@
 ---
-title: FOREX Tutorial 13 - Trading Instrument Class
+title: FOREX Tutorial 11 - Trading Instrument Class
 layout: default
 ---
 
 # Introduction
 
-The page covers the [13th tutorial video](https://www.youtube.com/watch?v=MkiQmuruSjA&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=13).
+The page covers the [11th tutorial video](https://www.youtube.com/watch?v=MkiQmuruSjA&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=13).
 
 ---
 
