@@ -40,8 +40,12 @@ class AiFx(QWidget):
         # Wire up an exit button
         self.ui.btn_exit.clicked.connect(self.close)
 
-if __name__ == "__main__":
+def main():
     app = QApplication(sys.argv)
     widget = AiFx()
     widget.ui.show()
     sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    main()

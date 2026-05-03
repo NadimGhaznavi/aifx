@@ -1,6 +1,6 @@
 {
     "files": [
-        "aifx_cli.py",
+        "client/aifx_qt.py",
         "constants/DAccount.py",
         "constants/DCandle.py",
         "constants/DDb.py",
