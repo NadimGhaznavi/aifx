@@ -4,6 +4,7 @@ import sys
 import random
 
 from PySide6 import QtCore, QtWidgets, QtGui
+from PySide6.QtWidgets import QToolButton
 from PySide6.QtWebEngineWidgets import QWebEngineView
 import plotly.graph_objects as go
 
@@ -18,22 +19,15 @@ class aifx(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
 
-        self.hello = ["Hallo Welt", "Hei maailma", "Hola Mundo", "Привет мир"]
-
-        self.button = QtWidgets.QPushButton("Click me!")
-        self.text = QtWidgets.QLabel("Hello World", alignment=QtCore.Qt.AlignCenter)
-
-        self.layout = QtWidgets.QVBoxLayout(self)
-        self.view = QWebEngineView()
-        self.layout.addWidget(self.view)
-
-        self.button.clicked.connect(self.magic)
+        button = QToolButton
 
     @QtCore.Slot()
     def magic(self):
-        fig = go.Figure(data=[go.Scatter(y=[random.randint(0, 10) for _ in range(20)])])
-        html = fig.to_html(include_plotlyjs="cdn")
-        self.view.setHtml(html)
+        self.text.setText(random.choice(self.hello))
+
+    @QtCore.Slot()
+    def quit(self):
+        sys.exit(self.  ())
 
 
 def main():
