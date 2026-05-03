@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "aifx"
-version = "0.15.10"
+version = "0.15.11"
 license = "GPL-3.0-or-later"
 description = "AI-driven FOREX experimentation framework."
 authors = ["Nadim-Daniel Ghaznavi <nghaznavi@gmail.com>"]
@@ -45,7 +45,7 @@ pytest = "^8.4.1"
 pytest-mock = "^3.14.1"
 
 [tool.poetry.scripts]
-aifx = "aifx.client.aifx:main"
+aifx = "aifx.client.aifx_qt:main"
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

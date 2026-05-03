@@ -7,8 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.15.11] - 2026-05-03 @ 16:32
+
+### Fixed
+-  aifx being shadowed by aifs script.
+
+---
+
 ## [0.15.10] - 2026-05-03 @ 16:15
 
+### Added
 - Package updates
 
 ---
