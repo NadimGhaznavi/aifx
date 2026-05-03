@@ -22,6 +22,7 @@ classifiers = [
 python = ">=3.11,<3.14"
 requests = ">=2.33.1"
 pandas = ">3.0.2"
+plotly = ">6.7.0"
 
 # Core runtime dependencies
 rich = "^14.0.0"

@@ -36,7 +36,7 @@ Num | Notes                                                                     
 
 - [OANDA Hub](https://hub.oanda.com/)
 - [fxTrade Practice](https://api-fxpractice.oanda.com/)
-- [fxTrade](https://api-fxtrade.oanda.com/)
+- [Plotly](https://plotly.com/python/)
 - [OANDA Website](https://www.oanda.com/ca-en/)
   - [OANDA Developer Website](https://developer.oanda.com/)
   - [OANDA Rest API](https://developer.oanda.com/rest-live-v20/introduction/)

@@ -1,5 +1,5 @@
 ---
-title: FOREX Tutorial YY - Name...
+title: FOREX Tutorial 14 - Plotting Candles with Plotly
 layout: default
 ---
 
@@ -17,4 +17,10 @@ The page covers the [XXX tutorial video](XXX).
 
 ---
 
+# Links
+
+- [Plotly](https://plotly.com/python/)
+
+
 [Back](/tutorial/index.html)
+
