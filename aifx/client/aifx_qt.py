@@ -1,4 +1,4 @@
-# aifx/aifx.py
+# aifx/client/aifx_qt.py
 #
 #    AI FX
 #    Author: Nadim-Daniel Ghaznavi
@@ -73,6 +73,7 @@ class AiFx(QWidget):
     def wire_signals(self):
         # Wire up an exit button
         self.ui.btn_exit.clicked.connect(self.ui.close)
+
 
 def main():
     app = QApplication(sys.argv)
