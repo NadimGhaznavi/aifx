@@ -20,6 +20,7 @@ class DColInstrument:
 
 class DDbF:
     CACHE: Final[str] = "cache"
+    MEMORY: Final[str] = ":memory:"
 
 
 class DTable:

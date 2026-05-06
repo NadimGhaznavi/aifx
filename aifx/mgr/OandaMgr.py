@@ -12,7 +12,7 @@ import requests
 import time
 
 from aifx.constants.DAccount import DAccountF as ACCTF
-from aifx.constants.DCandle import DCandle as CANDLE
+from aifx.constants.DCandle import DCandleF as CANDLEF
 from aifx.constants.DDef import DDef as DDEF
 from aifx.constants.DInstrument import DInstrument as INS
 from aifx.constants.DOanda import DOanda as OANDA
@@ -55,7 +55,7 @@ class OandaMgr:
         return [Instrument.from_oanda(ob) for ob in data[INS.INSTRUMENTS]]
 
     def fetch_candles(self, pair_name, count, granularity):
-        url = f"{OANDA.OANDA_URL}/{INS.INSTRUMENTS}/{pair_name}/{CANDLE.CANDLES}"
+        url = f"{OANDA.OANDA_URL}/{INS.INSTRUMENTS}/{pair_name}/{CANDLEF.CANDLES}"
         params = dict(count=count, granularity=granularity, price=PRICE.MBA)
 
         response = self.session.get(

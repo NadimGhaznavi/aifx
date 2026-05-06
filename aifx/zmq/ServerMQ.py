@@ -102,6 +102,10 @@ class ServerMQ:
 
     # ----- Static methods -----
     @staticmethod
+    def _encode_json(data: str) -> bytes:
+        return data.encode(AIFX.UTF_8)
+
+    @staticmethod
     def _ensure_bytes(data: bytes | Frame) -> bytes:
         return data.bytes if isinstance(data, Frame) else data
 
@@ -185,11 +189,27 @@ class ServerMQ:
                         # Handle the message
                         if mq_msg.method not in self._srv_methods:
                             raise ValueError(f"Unhandled method: {mq_msg.method}")
-                        await self._srv_methods[mq_msg.method](mq_msg)
 
+                        result = self._srv_methods[mq_msg.method](mq_msg)
+
+                        if inspect.isawaitable(result):
+                            result = await result
+
+                        reply = MQMsg(
+                            sender=self._identity,
+                            target=mq_msg.sender,
+                            method=f"{mq_msg.method}_reply",
+                            payload=result,
+                        )
+                        await self._socket.send_multipart(
+                            route + [self._encode_json(reply.to_json())]
+                        )
                     except asyncio.TimeoutError:
                         # No message received, continue
                         pass
+                    except Exception as e:
+                        self.log.critical(f"Critical exception: {e}")
+                        print(f"Critical exception: {e}")
 
                 else:
                     raise RuntimeError("Socket is not initialized")
@@ -273,12 +293,18 @@ class ServerMQ:
     async def send(self, msg: MQMsg) -> None:
         await self._socket.send(msg.to_json())
 
-    def start(self) -> None:
+    async def start(self) -> None:
         if self._started:
             return
 
+        self._started = True
         self._hb_task = asyncio.create_task(self.bg_hb_listen(), name=MQF.HEARTBEAT)
         self._listen_task = asyncio.create_task(self.bg_listen(), name=MQF.CONTROL)
+
+        await asyncio.gather(
+            self._hb_task,
+            self._listen_task,
+        )
 
     def topic(self, suffix: str) -> str:
         return f"{self._topic_prefix}.{suffix}"

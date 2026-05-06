@@ -10,5 +10,5 @@
 from typing import Final
 
 
-class DAccount:
+class DAccountF:
     ACCOUNTS: Final[str] = "accounts"

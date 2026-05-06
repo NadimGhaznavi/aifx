@@ -10,8 +10,7 @@
 import sqlite3
 from datetime import datetime, timezone
 
-from aifx.constants.DDef import DDef as DEF
-from aifx.constants.DDb import DDb, DTable as TABLE
+from aifx.constants.DDb import DDbF as DBF, DTable as TABLE
 from aifx.constants.DOanda import DOanda as OANDA
 
 STALE_VALUE = {TABLE.INSTRUMENTS: OANDA.MAX_INSTRUMENT_AGE}
@@ -22,8 +21,8 @@ class DbMgr:
     def __init__(self, db_type: str, logfile=None):
         self._db_type = db_type
 
-        if db_type == DDb.CACHE:
-            self._db_path = ":memory:"
+        if db_type == DBF.CACHE:
+            self._db_path = DBF.MEMORY
         else:
             raise ValueError(f"Unrecognized database type: {db_type}")
 
@@ -102,7 +101,7 @@ class DbMgr:
         self._conn.commit()
 
     def _init_db(self):
-        if self._db_type == DDb.CACHE:
+        if self._db_type == DBF.CACHE:
             self._init_cache()
 
     def is_stale(self, table: str) -> bool:

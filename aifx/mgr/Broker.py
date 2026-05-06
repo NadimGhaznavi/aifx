@@ -25,7 +25,6 @@ from aifx.db.DbMgr import DbMgr
 from aifx.db.BrokerDb import BrokerDb
 from aifx.forex.Instrument import Instrument
 from aifx.mgr.OandaMgr import OandaMgr
-from aifx.mgr.BrokerBase import BrokerBase
 from aifx.zmq.ServerMQ import ServerMQ
 from aifx.zmq.MQMsg import MQMsg
 
@@ -35,13 +34,13 @@ BROKER_LOG = FILE.BROKER_LOG
 LOG_LEVEL = DEF.DEFAULT_LOG_LEVEL
 
 
-class Broker(BrokerBase):
+class Broker:
 
     def __init__(
         self,
         log_level=DEF.DEFAULT_LOG_LEVEL,
         log_file=FILE.BROKER_LOG,
-        address=NET.BROKER_HOSTNAME,
+        hostname=NET.BROKER_HOSTNAME,
         port=NET.BROKER_PORT,
         hb_port=NET.BROKER_HB_PORT,
         identity=MODULE.BROKER,
@@ -49,14 +48,14 @@ class Broker(BrokerBase):
 
         self._log_level = log_level
         self._log_file = log_file
-        self._address = address
+        self._hostname = hostname
         self._port = port
         self._hb_port = hb_port
         self._identity = identity
 
         self.log = AiFxLog(client_id=identity, log_file=log_file, log_level=log_level)
 
-        self.db_mgr = DbMgr(DBF.CACHE, dblogfile=log_file)
+        self.db_mgr = DbMgr(DBF.CACHE, logfile=log_file)
         self.broker_db = BrokerDb(db_mgr=self.db_mgr)
         self.oanda = OandaMgr()
 
@@ -81,17 +80,17 @@ class Broker(BrokerBase):
                 )
         return instruments
 
-    def start(self) -> None:
+    async def start(self) -> None:
         self.mq = ServerMQ(
             log_level=self._log_level,
-            addr=self._address,
+            hostname=self._hostname,
             port=self._port,
             hb_port=self._hb_port,
             identity=self._identity,
             srv_methods=self._srv_methods,
             topic_prefix=MQ.TOPIC_PREFIX,
         )
-        self.mq.start()
+        await self.mq.start()
 
 
 def main():
@@ -99,7 +98,7 @@ def main():
         log_file=BROKER_LOG,
         log_level=LOG_LEVEL,
     )
-    broker.start()
+    asyncio.run(broker.start())
 
 
 if __name__ == "__main__":
