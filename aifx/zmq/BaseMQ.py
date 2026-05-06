@@ -31,21 +31,22 @@ MsgHandler = Callable[[MQMsg], Any | Awaitable[Any]]
 class BaseMQ:
     def __init__(
         self,
-        router_address: str = NET.BROKER_HOSTNAME,
-        router_port: int = NET.BROKER_PORT,
-        router_hb_port: int = NET.BROKER_HB_PORT,
+        hostname: str = NET.BROKER_HOSTNAME,
+        port: int = NET.BROKER_PORT,
+        hb_port: int = NET.BROKER_HB_PORT,
         identity: str = MODULE.BASE_MQ,
         topic_prefix: str = MQ.TOPIC_PREFIX,
     ) -> None:
 
         self.topic_prefix = topic_prefix
-        self.router = router_address
-        self.port = router_port
-        self.hb_port = router_hb_port
-        self.identity = identity
+        self._hostname = hostname
+        self._port = port
+        self._hb_port = hb_port
+        self._identity = identity
 
-        self.router_addr = f"{NETF.TCP}{self.router}:{self.port}"
-        self.router_hb_addr = f"{NETF.TCP}{self.router}:{self.hb_port}"
+        # Addresses
+        self._address = f"{NETF.TCP}{self._hostname}:{self._port}"
+        self._hb_address = f"{NETF.TCP}{self._hostname}:{self._hb_port}"
 
         self.ctx = zmq.asyncio.Context()
         self.socket = self.ctx.socket(zmq.DEALER)
@@ -60,6 +61,7 @@ class BaseMQ:
         self.hb_task: asyncio.Task[None] | None = None
         self.hb_stop_event = asyncio.Event()
         self._last_heartbeat = 0.0
+
         self._started = False
         self._stopped = False
 
@@ -128,9 +130,6 @@ class BaseMQ:
         await self.socket.send(msg.to_json())
 
     def start(self) -> None:
-        if self._stopped:
-            raise RuntimeError("HydraBaseMQ cannot be restarted after quit()")
-
         if self._started:
             return
 
@@ -141,7 +140,7 @@ class BaseMQ:
         try:
             while not self.hb_stop_event.is_set():
                 msg = MQMsg(
-                    sender=self.identity,
+                    sender=self._identity,
                     target=NET.BROKER_HOSTNAME,
                     method=METHOD.HEARTBEAT,
                 )
@@ -167,5 +166,3 @@ class BaseMQ:
         except asyncio.CancelledError:
             raise
 
-    def topic(self, suffix: str) -> str:
-        return f"{self.topic_prefix}.{suffix}"

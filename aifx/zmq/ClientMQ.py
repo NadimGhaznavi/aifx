@@ -30,25 +30,27 @@ class ClientMQ(BaseMQ):
     def __init__(
         self,
         *,
-        router_address: str = NET.BROKER_HOSTNAME,
-        router_port: int = NET.BROKER_PORT,
-        router_hb_port: int = NET.BROKER_HB_PORT,
+        broker_address: str = NET.BROKER_HOSTNAME,
+        broker_port: int = NET.BROKER_PORT,
+        broker_hb_port: int = NET.BROKER_HB_PORT,
         identity: str = MODULE.CLIENT_MQ,
         topic_prefix: str = MQ.TOPIC_PREFIX,
-        server_address: str = NET.BROKER_HOSTNAME,
-        server_pub_port: int = NET.BROKER_PUB_PORT,
         sub_methods: dict[str, SubHandler] | None = None,
     ) -> None:
 
         super().__init__(
-            router_address=router_address,
-            router_port=router_port,
-            router_hb_port=router_hb_port,
+            broker_address=broker_address,
+            router_port=broker_port,
+            broker_hb_port=broker_hb_port,
             identity=identity,
             topic_prefix=topic_prefix,
         )
-        self.srv_host = server_address
-        self.sub_port = server_pub_port
+        # server_address: str = NET.BROKER_HOSTNAME,
+        # server_pub_port: int = NET.BROKER_PUB_PORT,
+
+        # self.srv_host = server_address
+        # self.sub_port = server_pub_port
+
         self.sub_methods = sub_methods or {}
 
         self.sub_socket: zmq.asyncio.Socket | None = None

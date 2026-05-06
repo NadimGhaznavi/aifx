@@ -13,6 +13,7 @@ from typing import Final
 class DMQ:
     CANDLES_TOPIC: Final[str] = "candles_topic"
     HEARTBEAT_INTERVAL: Final[int] = 3
+    LISTEN_INTERVAL: Final[float] = 1.0
     MAX_BATCH_SIZE: Final[int] = 50
     MAX_BATCH_TIME: Final[float] = 0.25
     PROTOCOL_VERSION: Final[str] = "1.0"
@@ -20,4 +21,5 @@ class DMQ:
 
 
 class DMQF:
+    CONTROL: Final[str] = "control"
     HEARTBEAT: Final[str] = "heartbeat"

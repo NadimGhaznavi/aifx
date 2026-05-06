@@ -11,18 +11,22 @@ import sys
 import zmq
 import asyncio
 import signal
-from typing import Callable, Optional, Any
+from typing import Callable, Optional
 
-from aifx.constants.DDef import DDef as DEF
-from aifx.constants.DModule import DModule as MODULE
-from aifx.constants.DNetwork import DNetwork as NET
+from ai_hydra.constants.DHydra import (
+    DHydraLog,
+    DHydraLogDef,
+    DHydraRouterDef,
+    DHydraServerDef,
+    DMethod,
+    DModule,
+)
+from ai_hydra.utils.HydraLog import HydraLog
+from ai_hydra.zmq.HydraMsg import HydraMsg
+from ai_hydra.zmq.HydraServerMQ import HydraServerMQ
 
-from aifx.utils.AIFxLog import AiFxLog
-from aifx.zmq.ServerMQ import ServerMQ
-from aifx.zmq.MQMsg import MQMsg
 
-
-class BrokerBase:
+class HydraServer:
     """
     Abstract base class for HydraServer implementations.
 
@@ -34,11 +38,13 @@ class BrokerBase:
     def __init__(
         self,
         address: str = "*",
-        srv_methods: list = [],
-        port: int = NET.BROKER_PORT,
-        hb_port: int = NET.BROKER_HB_PORT,
-        identity: str = MODULE.BROKER_BASE,
-        log_level=DEF.DEFAULT_LOG_LEVEL,
+        port: int = DHydraServerDef.PORT,
+        pub_port: int = DHydraServerDef.PUB_PORT,
+        router_address: str = DHydraRouterDef.HOSTNAME,
+        router_port: int = DHydraRouterDef.PORT,
+        router_hb_port: int = DHydraRouterDef.HEARTBEAT_PORT,
+        identity: str = DModule.HYDRA_SERVER,
+        log_level: DHydraLog = DHydraLogDef.DEFAULT_LOG_LEVEL,
     ):
         """
         Initialize the HydraServer with binding parameters.
@@ -50,35 +56,31 @@ class BrokerBase:
             server_id (str): Identifier for logging purposes
         """
 
-        self._address = address
-        self._port = port
-        self._hb_port = hb_port
-        self._identity = identity
-        self._log_level = log_level
+        self.address = address
+        self.port = port
+        self.pub_port = pub_port
+        self.router_address = router_address
+        self.router_port = router_port
+        self.router_hb_port = router_hb_port
+        self.identity = identity
+        self.log_level = log_level
 
-        self.log = AiFxLog(
-            client_id=identity, log_level=log_level, to_console=True
-        )
-
-        self._methods: dict[str, Callable[[MQMsg], object]] = {}
+        self._methods: dict[str, Callable[[HydraMsg], object]] = {}
 
         # Messaging stub
-        self.mq: Optional[ServerMQ] = None
+        self.mq: Optional[HydraServerMQ] = None
 
         # Structured console logs
-        self.log = AiFxLog(
-            client_id=self._identity, log_level=self._log_level, to_console=True
+        self.log = HydraLog(
+            client_id=self.identity, log_level=log_level, to_console=True
         )
 
-        self.log.info(f"Binding to network interface: {self._address}")
-        self.log.info(f"Set control port: {self._port}")
-        self.log.info(f"Set heartbeat port: {self._hb_port}")
+        self.log.info(f"Binding to network interface: {self.address}")
+        self.log.info(f"Set control port: {self.port}")
+        self.log.info(f"Set ZeroMQ PUB port: {self.pub_port}")
 
         # Shutdown coordination
-        self._port_stop_event: asyncio.Event | None = None
-        self._hb_port_stop_event: asyncio.Event | None = None
-
-        # The main loop
+        self._stop_event: asyncio.Event | None = None
         self._main_task: asyncio.Task[None] | None = None
 
     def _install_signal_handlers(self, stop_event: asyncio.Event) -> None:
@@ -104,6 +106,13 @@ class BrokerBase:
                 # Not supported on some platforms/event loops
                 pass
 
+    def loglevel(self, log_level: DHydraLog) -> None:
+        """
+        Initialize console logging for the server instance.
+        """
+        self.log = HydraLog(
+            client_id=self.identity, log_level=log_level, to_console=True
+        )
 
     async def quit(self):
         if self.mq is not None:
@@ -111,9 +120,9 @@ class BrokerBase:
 
     async def _main_loop(self, stop_event: asyncio.Event) -> None:
         try:
-            self.mq = ServerMQ(
-                address=self._address,
-                port=self._port,
+            self.mq = HydraServerMQ(
+                router_address=self.router_address,
+                router_port=self.router_port,
                 router_hb_port=self.router_hb_port,
                 identity=self.identity,
                 srv_methods=self._methods,
@@ -121,7 +130,6 @@ class BrokerBase:
                 log_level=self.log_level,
             )
             self.mq.start()
-
         except Exception:
             if self.mq is not None:
                 await self.mq.quit()
@@ -156,7 +164,9 @@ class BrokerBase:
         self._main_task = asyncio.create_task(
             self._main_loop(stop_event), name="hydra-server-main"
         )
-        wait_stop_task = asyncio.create_task(stop_event.wait(), name="wait-stop")
+        wait_stop_task = asyncio.create_task(
+            stop_event.wait(), name="wait-stop"
+        )
 
         try:
             done, pending = await asyncio.wait(
@@ -193,7 +203,9 @@ class BrokerBase:
             except asyncio.CancelledError:
                 pass
             except Exception as e:
-                self.log.debug(f"Ignoring main task exception during shutdown: {e!r}")
+                self.log.debug(
+                    f"Ignoring main task exception during shutdown: {e!r}"
+                )
 
         # Close MQ if still present
         if self.mq is not None:
@@ -206,7 +218,9 @@ class BrokerBase:
 
         # Cancel any other pending tasks, excluding this one
         current = asyncio.current_task()
-        pending = [t for t in asyncio.all_tasks() if t is not current and not t.done()]
+        pending = [
+            t for t in asyncio.all_tasks() if t is not current and not t.done()
+        ]
 
         for t in pending:
             t.cancel()

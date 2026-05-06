@@ -7,8 +7,9 @@
 #    Website: https://aifx.osoyalce.com
 #    License: GPL 3.0
 
-from typing import Any, Optional
+from typing import Any
 from collections.abc import Callable, Awaitable
+import asyncio
 
 from aifx.constants.DDef import DDef as DEF
 from aifx.constants.DDb import DDbF as DBF, DTable as TABLE
@@ -59,23 +60,25 @@ class Broker(BrokerBase):
         self.broker_db = BrokerDb(db_mgr=self.db_mgr)
         self.oanda = OandaMgr()
 
-        self._srv_methods = [{METHOD.GET_INSTRUMENTS: self.get_instruments}]
-        self.mq: Optional[ServerMQ | None] = None
+        self._srv_methods = {METHOD.GET_INSTRUMENTS: self.get_instruments}
+        self.mq: ServerMQ | None = None
 
         self.log.info("Initialized")
 
-    async def get_instruments(self, msg: MQMsg) -> list[Instrument] | None:
+    async def get_instruments_oanda(self):
+        return await asyncio.to_thread(self.oanda.get_instruments)
+
+    async def get_instruments(self, _msg: MQMsg):
 
         self.log.debug("get_instruments()")
-        instruments = None
         instruments = self.broker_db.get_instruments()
         if not instruments:
-            instruments = self.oanda.get_instruments()
+            instruments = await self.get_instruments_oanda()
             if instruments:
-                ins_recs = []
-                for ins in instruments:
-                    ins_recs.append(ins.to_dict)
-                self.db_mgr.update(table=TABLE.INSTRUMENTS, records=ins_recs)
+                self.db_mgr.update(
+                    table=TABLE.INSTRUMENTS,
+                    records=[ins.to_dict() for ins in instruments],
+                )
         return instruments
 
     def start(self) -> None:
