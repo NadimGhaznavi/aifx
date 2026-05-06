@@ -21,13 +21,19 @@ class Instrument:
     margin_rate: float
 
     @classmethod
-    def from_oanda(cls, ob: dict) -> "Instrument":
+    def from_db(cls, row) -> "Instrument":
         return cls(
-            name=ob[INS.NAME],
-            type=ob[INS.TYPE],
-            display_name=ob[INS.DISPLAY_NAME],
-            pip_location=ob[INS.PIP_LOC],
-            margin_rate=float(ob[INS.MARGIN_RATE]),
+            name=row["name"],
+            type=row["type"],
+            display_name=row["display_name"],
+            pip_location=row["pip_location"],
+            margin_rate=row["margin_rate"],
+        )
+
+    @classmethod
+    def from_db(cls, ob):
+        return cls(
+            name= ob["name"]
         )
 
     def to_dict(self) -> dict[str, object]:

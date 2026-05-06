@@ -11,13 +11,15 @@ import json
 import requests
 import time
 
-from aifx.constants.DAccount import DAccount as ACCT
+from aifx.constants.DAccount import DAccountF as ACCTF
+from aifx.constants.DCandle import DCandle as CANDLE
 from aifx.constants.DDef import DDef as DDEF
 from aifx.constants.DInstrument import DInstrument as INS
-from aifx.constants.DCandle import DCandle as CANDLE
+from aifx.constants.DOanda import DOanda as OANDA
 from aifx.constants.DPrice import DPrice as PRICE
 
 from aifx.forex.Instrument import Instrument
+
 
 class OandaMgr:
 
@@ -25,14 +27,14 @@ class OandaMgr:
         self.session = requests.Session()
 
     def _fetch_instruments(self):
-        url = f"{DDEF.OANDA_URL}/{ACCT.ACCOUNTS}/{DDEF.ACCOUNT_ID}/{INS.INSTRUMENTS}"
+        url = f"{OANDA.OANDA_URL}/{ACCTF.ACCOUNTS}/{OANDA.ACCOUNT_ID}/{INS.INSTRUMENTS}"
 
         try:
             response = self.session.get(
                 url,
                 params=None,
-                headers=DDEF.SECURE_HEADER,
-                timeout=DDEF.OANDA_TIMEOUT,
+                headers=OANDA.SECURE_HEADER,
+                timeout=OANDA.TIMEOUT,
             )
 
             if response.status_code != 200:
@@ -50,20 +52,17 @@ class OandaMgr:
         if code != 200:
             return None
 
-        return [
-            Instrument.from_oanda(ob)
-            for ob in data[INS.INSTRUMENTS]
-        ]
+        return [Instrument.from_oanda(ob) for ob in data[INS.INSTRUMENTS]]
 
     def fetch_candles(self, pair_name, count, granularity):
-        url = f"{DDEF.OANDA_URL}/{INS.INSTRUMENTS}/{pair_name}/{CANDLE.CANDLES}"
+        url = f"{OANDA.OANDA_URL}/{INS.INSTRUMENTS}/{pair_name}/{CANDLE.CANDLES}"
         params = dict(count=count, granularity=granularity, price=PRICE.MBA)
 
         response = self.session.get(
             url=url,
             params=params,
-            headers=DDEF.SECURE_HEADER,
-            timeout=DDEF.OANDA_TIMEOUT,
+            headers=OANDA.SECURE_HEADER,
+            timeout=OANDA.TIMEOUT,
         )
 
         return response.status_code, response.json()
@@ -75,21 +74,21 @@ class OandaMgr:
 
             except json.JSONDecodeError as e:
                 print(f"OANDA JSON decode error: {e}")
-                time.sleep(DDEF.OANDA_RETRY)
+                time.sleep(OANDA.RETRY)
 
             except Exception as e:
                 print(f"OANDA stream error: {e}")
-                time.sleep(DDEF.OANDA_RETRY)
+                time.sleep(OANDA.RETRY)
 
     def _try_stream_prices(self, instruments: list[str]):
-        url = f"{DDEF.OANDA_STREAM_URL}/v3/{ACCT.ACCOUNTS}/{DDEF.ACCOUNT_ID}/pricing/stream"
+        url = f"{OANDA.OANDA_STREAMING_URL}/v3/{ACCTF.ACCOUNTS}/{OANDA.ACCOUNT_ID}/pricing/stream"
 
         response = self.session.get(
             url,
-            headers=DDEF.SECURE_HEADER,
+            headers=OANDA.SECURE_HEADER,
             params={INS.INSTRUMENTS: ",".join(instruments)},
             stream=True,
-            timeout=(DDEF.OANDA_TIMEOUT, None),
+            timeout=(OANDA.TIMEOUT, None),
         )
         response.raise_for_status()
 
@@ -101,6 +100,7 @@ class OandaMgr:
 
             if msg["type"] == PRICE.PRICE:
                 yield msg
+
 
 if __name__ == "__main__":
     mgr = OandaMgr()

@@ -10,12 +10,12 @@
 import sqlite3
 from datetime import datetime, timezone
 
-from aifx.constants.DDef import DDef as DDEF
-from aifx.constants.DDb import DDb, DTable
+from aifx.constants.DDef import DDef as DEF
+from aifx.constants.DDb import DDb, DTable as TABLE
+from aifx.constants.DOanda import DOanda as OANDA
 
-STALE_VALUE = {
-    DTable.INSTRUMENTS: DDEF.MAX_INSTRUMENT_AGE
-    }
+STALE_VALUE = {TABLE.INSTRUMENTS: OANDA.MAX_INSTRUMENT_AGE}
+
 
 class DbMgr:
 
@@ -30,7 +30,9 @@ class DbMgr:
         try:
             self._conn = sqlite3.connect(self._db_path)
         except sqlite3.Error as exc:
-            raise sqlite3.OperationalError(f"Unable to open DB file {self._db_path}") from exc
+            raise sqlite3.OperationalError(
+                f"Unable to open DB file {self._db_path}"
+            ) from exc
 
         self._conn.row_factory = sqlite3.Row
         self._conn.execute("PRAGMA foreign_keys = ON;")
@@ -57,8 +59,7 @@ class DbMgr:
         """
         # Avoid raising an exception because the index already exists
         try:
-            self._conn.executescript(
-                f"""
+            self._conn.executescript(f"""
                 ALTER TABLE {table_name}
                 ADD COLUMN updated_ts INTEGER
                     GENERATED ALWAYS AS (
@@ -72,8 +73,7 @@ class DbMgr:
 
                 CREATE INDEX IF NOT EXISTS idx_{table_name}_updated_ts
                     ON {table_name}(updated_ts);
-                """
-            )
+                """)
         except sqlite3.OperationalError as exc:
             if "duplicate column name" not in str(exc).lower():
                 raise
@@ -83,8 +83,7 @@ class DbMgr:
 
     def _init_cache(self):
         """Create the in memory schema"""
-        self._cursor.executescript(
-            """
+        self._cursor.executescript("""
             CREATE TABLE IF NOT EXISTS instruments (
                 name TEXT PRIMARY KEY,
                 type TEXT NOT NULL,
@@ -98,9 +97,8 @@ class DbMgr:
                 updated_mi INTEGER NOT NULL,
                 updated_s INTEGER NOT NULL
             );
-            """
-        )
-        self._add_updated_ts_column(DTable.INSTRUMENTS)
+            """)
+        self._add_updated_ts_column(TABLE.INSTRUMENTS)
         self._conn.commit()
 
     def _init_db(self):
@@ -111,9 +109,7 @@ class DbMgr:
         if table not in STALE_VALUE:
             raise ValueError(f"No stale value configured for table: {table}")
 
-        row = self._cursor.execute(
-            f"SELECT MAX(updated_ts) FROM {table}"
-        ).fetchone()
+        row = self._cursor.execute(f"SELECT MAX(updated_ts) FROM {table}").fetchone()
 
         if row is None or row[0] is None:
             return True
@@ -156,8 +152,9 @@ class DbMgr:
 
         return len(stamped_records)
 
-
-    def _upsert_many(self, table: str, records: list[dict], key_fields: list[str]) -> None:
+    def _upsert_many(
+        self, table: str, records: list[dict], key_fields: list[str]
+    ) -> None:
         fields = sorted(records[0].keys())
         field_set = set(fields)
 
@@ -169,15 +166,11 @@ class DbMgr:
         placeholders = ", ".join(["?"] * len(fields))
         conflict_fields = ", ".join(key_fields)
 
-        update_fields = [
-            field for field in fields
-            if field not in key_fields
-        ]
+        update_fields = [field for field in fields if field not in key_fields]
 
         if update_fields:
             update_clause = ", ".join(
-                f"{field}=excluded.{field}"
-                for field in update_fields
+                f"{field}=excluded.{field}" for field in update_fields
             )
             conflict_action = f"DO UPDATE SET {update_clause}"
         else:
@@ -190,10 +183,7 @@ class DbMgr:
             {conflict_action}
         """
 
-        values = [
-            tuple(record[field] for field in fields)
-            for record in records
-        ]
+        values = [tuple(record[field] for field in fields) for record in records]
 
         with self._conn:
             self._cursor.executemany(sql, values)

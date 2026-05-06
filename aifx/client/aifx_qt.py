@@ -52,24 +52,6 @@ class AiFx(QWidget):
         except Exception as e:
             print(f"UI Load failed: {e}", flush=True)
 
-    def load_instruments(self):
-        ok = self.cache_mgr.ensure_instruments()
-
-        if not ok:
-            print("Failed to load instruments", flush=True)
-            return
-
-        rows = self.cache_mgr.db_mgr.select_all(
-            table=DTable.INSTRUMENTS,
-            order_by=COL.NAME,
-        )
-
-        combo = self.ui.cb_instrument
-        combo.clear()
-
-        for row in rows:
-            combo.addItem(row[COL.NAME], row[COL.NAME])
-
     def wire_signals(self):
         # Wire up an exit button
         self.ui.btn_exit.clicked.connect(self.ui.close)

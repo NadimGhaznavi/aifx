@@ -10,6 +10,6 @@
 from typing import Final
 
 
-class DCandle:
+class DCandleF:
 
     CANDLES: Final[str] = "candles"

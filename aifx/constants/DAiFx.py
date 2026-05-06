@@ -1,4 +1,4 @@
-# aifx/constants/DFile.py
+# aifx/constants/DAiFx.py
 #
 #    AI FX
 #    Author: Nadim-Daniel Ghaznavi
@@ -10,6 +10,6 @@
 from typing import Final
 
 
-class DFile:
+class DAiFx:
 
-    BROKER_LOG: Final[str] = "aifx_broker.log"
+    UTF_8: Final[str] = "utf-8"

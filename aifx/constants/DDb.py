@@ -9,11 +9,6 @@
 
 from typing import Final
 
-class DDb:
-    CACHE: Final[str] = "cache"
-
-class DTable:
-    INSTRUMENTS: Final[str] = "instruments"
 
 class DColInstrument:
     NAME: Final[str] = "name"
@@ -21,3 +16,11 @@ class DColInstrument:
     DISPLAY_NAME: Final[str] = "display_name"
     PIP_LOCATION: Final[str] = "pip_location"
     MARGIN_RATE: Final[str] = "margin_rate"
+
+
+class DDbF:
+    CACHE: Final[str] = "cache"
+
+
+class DTable:
+    INSTRUMENTS: Final[str] = "instruments"
