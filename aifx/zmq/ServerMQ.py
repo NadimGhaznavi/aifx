@@ -15,7 +15,6 @@ import time
 import asyncio
 import zmq
 import zmq.asyncio
-from zmq.sugar.frame import Frame
 import json
 
 from aifx.constants.DAiFx import DAiFx as AIFX
@@ -28,10 +27,10 @@ from aifx.constants.DMsg import DMsg as MSG
 from aifx.constants.DNetwork import DNetwork as NET, DNetworkF as NETF
 from aifx.constants.DOanda import DOanda as OANDA
 
-from aifx.zmq.BaseMQ import BaseMQ
-from aifx.zmq.MQMsgBatch import MQMsgBatch
-from aifx.zmq.MQMsg import MQMsg
 from aifx.utils.AIFxLog import AiFxLog
+from aifx.zmq.MQMsg import MQMsg
+from aifx.zmq.MQMsgBatch import MQMsgBatch
+from aifx.zmq.UtilsMQ import UtilsMQ
 
 MsgHandler = Callable[[MQMsg], Any | Awaitable[Any]]
 
@@ -101,63 +100,36 @@ class ServerMQ:
         self._started = False
 
     # ----- Static methods -----
-    @staticmethod
-    def _encode_json(data: str) -> bytes:
-        return data.encode(AIFX.UTF_8)
-
-    @staticmethod
-    def _ensure_bytes(data: bytes | Frame) -> bytes:
-        return data.bytes if isinstance(data, Frame) else data
-
-    @staticmethod
-    def _ignore_zmq_teardown(action: Callable[[], None], what: str) -> None:
-        try:
-            action()
-        except zmq.ZMQError as e:
-            # expected during shutdown races / already-closed sockets
-            print(f"DEBUG: ignoring {what} during shutdown: {type(e).__name__}: {e}")
-
-    @staticmethod
-    def _split_router_frames(frames: list[bytes]) -> tuple[bytes, bytes, list[bytes]]:
-        """
-        Returns (sender, payload, routing_prefix)
-        routing_prefix is what you should echo back before payload.
-        """
-        if len(frames) < 2:
-            raise ValueError(f"Expected >=2 frames, got {len(frames)}")
-
-        routing_id = frames[0]
-
-        if len(frames) >= 3 and frames[1] == b"":
-            return routing_id, frames[-1], [routing_id, b""]
-        else:
-            return routing_id, frames[-1], [routing_id]
 
     # ----- End of static methods -----
 
-    # Heartbeat socket handler loop
     async def bg_hb_listen(self) -> None:
         try:
             while not self._hb_stop_event.is_set():
-                msg = MQMsg(
-                    sender=self._identity,
-                    target=NET.BROKER_HOSTNAME,
-                    method=METHOD.HEARTBEAT,
-                )
-                await self._hb_socket.send(msg.to_json())
-
                 try:
-                    message_data = await asyncio.wait_for(
-                        self._hb_socket.recv(copy=True),
+                    frames = await asyncio.wait_for(
+                        self._hb_socket.recv_multipart(),
                         timeout=OANDA.TIMEOUT,
                     )
-                    reply = MQMsg.from_json(self._ensure_bytes(message_data))
 
-                    if reply.method == METHOD.HEARTBEAT_REPLY:
+                    routing_id, message_data, route = UtilsMQ.split_router_frames(
+                        frames
+                    )
+                    mq_msg = MQMsg.from_json(message_data)
+
+                    if mq_msg.method == METHOD.HEARTBEAT:
                         self._last_heartbeat = time.time()
 
-                except asyncio.CancelledError:
-                    raise
+                        reply = MQMsg(
+                            sender=self._identity,
+                            target=mq_msg.sender,
+                            method=METHOD.HEARTBEAT_REPLY,
+                        )
+
+                        await self._hb_socket.send_multipart(
+                            route + [UtilsMQ.encode_json(reply.to_json())]
+                        )
+
                 except asyncio.TimeoutError:
                     pass
 
@@ -178,7 +150,7 @@ class ServerMQ:
                             timeout=OANDA.TIMEOUT,
                         )
 
-                        routing_id, message_data, route = self._split_router_frames(
+                        routing_id, message_data, route = UtilsMQ.split_router_frames(
                             frames
                         )
                         self._clients[routing_id] = time.time()
@@ -202,7 +174,7 @@ class ServerMQ:
                             payload=result,
                         )
                         await self._socket.send_multipart(
-                            route + [self._encode_json(reply.to_json())]
+                            route + [UtilsMQ.encode_json(reply.to_json())]
                         )
                     except asyncio.TimeoutError:
                         # No message received, continue
@@ -264,20 +236,20 @@ class ServerMQ:
             finally:
                 self._listen_task = None
 
-        self._ignore_zmq_teardown(
-            lambda: self._hb_socket.disconnect(self._hb_address),
+        UtilsMQ.ignore_zmq_teardown(
+            lambda: self._hb_socket.unbind(self._hb_address),
             f"hb_socket.disconnect({self._hb_address})",
         )
-        self._ignore_zmq_teardown(
+        UtilsMQ.ignore_zmq_teardown(
             lambda: self._hb_socket.close(linger=0),
             "hb_socket.close(linger=0)",
         )
 
-        self._ignore_zmq_teardown(
-            lambda: self._socket.disconnect(self._address),
+        UtilsMQ.ignore_zmq_teardown(
+            lambda: self._socket.unbind(self._address),
             f"socket.disconnect({self._address})",
         )
-        self._ignore_zmq_teardown(
+        UtilsMQ.ignore_zmq_teardown(
             lambda: self._socket.close(linger=0),
             "socket.close(linger=0)",
         )
@@ -288,7 +260,7 @@ class ServerMQ:
             self._socket.recv(copy=True), timeout=OANDA.TIMEOUT
         )
         if message_data is not None:
-            return MQMsg.from_json(self._ensure_bytes(message_data))
+            return MQMsg.from_json(UtilsMQ.ensure_bytes(message_data))
 
     async def send(self, msg: MQMsg) -> None:
         await self._socket.send(msg.to_json())
@@ -296,6 +268,9 @@ class ServerMQ:
     async def start(self) -> None:
         if self._started:
             return
+
+        self._socket.bind(self._address)
+        self._hb_socket.bind(self._hb_address)
 
         self._started = True
         self._hb_task = asyncio.create_task(self.bg_hb_listen(), name=MQF.HEARTBEAT)

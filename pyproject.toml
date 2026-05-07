@@ -19,6 +19,8 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
+
+# Core runtime dependencies
 asyncio = ">=4.0.0"
 python = ">=3.11,<3.14"
 requests = ">=2.33.1"
@@ -28,8 +30,7 @@ PySide6 = ">=6.11.0"
 poetry = ">=2.3.4"
 poetry-core = ">=2.3.2"
 pyzmq = ">=27.1.0"
-
-# Core runtime dependencies
+qasync = ">=0.28.0"
 rich = "^14.0.0"
 sphinxcontrib-applehelp = "^2.0.0"
 sphinxcontrib-devhelp = "^2.0.0"
@@ -46,7 +47,7 @@ pytest = "^8.4.1"
 pytest-mock = "^3.14.1"
 
 [tool.poetry.scripts]
-aifx = "aifx.client.aifx_qt:main"
+aifx = "aifx.client.ClientQt:main"
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

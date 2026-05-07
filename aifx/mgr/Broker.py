@@ -31,7 +31,6 @@ from aifx.zmq.MQMsg import MQMsg
 MsgHandler = Callable[[MQMsg], Any | Awaitable[Any]]
 
 BROKER_LOG = FILE.BROKER_LOG
-LOG_LEVEL = DEF.DEFAULT_LOG_LEVEL
 
 
 class Broker:
@@ -59,7 +58,10 @@ class Broker:
         self.broker_db = BrokerDb(db_mgr=self.db_mgr)
         self.oanda = OandaMgr()
 
-        self._srv_methods = {METHOD.GET_INSTRUMENTS: self.get_instruments}
+        self._srv_methods = {
+            METHOD.GET_INSTRUMENTS: self.get_instruments,
+            METHOD.PING: self.ping,
+        }
         self.mq: ServerMQ | None = None
 
         self.log.info("Initialized")
@@ -80,6 +82,12 @@ class Broker:
                 )
         return instruments
 
+    async def ping(self, msg: MQMsg) -> MQMsg:
+        if msg.method == METHOD.PING:
+            return MQMsg(
+                sender=self._identity, method=METHOD.PING_REPLY, target=msg.sender
+            )
+
     async def start(self) -> None:
         self.mq = ServerMQ(
             log_level=self._log_level,
@@ -96,7 +104,7 @@ class Broker:
 def main():
     broker = Broker(
         log_file=BROKER_LOG,
-        log_level=LOG_LEVEL,
+        log_level=DEF.DEFAULT_LOG_LEVEL,
     )
     asyncio.run(broker.start())
 

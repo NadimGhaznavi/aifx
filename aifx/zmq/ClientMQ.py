@@ -8,174 +8,175 @@
 #    License: GPL 3.0
 #
 
-from typing import Any
+# aifx/zmq/ClientMQ.py
+
 from collections.abc import Awaitable, Callable
+from typing import Any
 import asyncio
-import zmq, zmq.asyncio
-import json
-import traceback
+import time
+import zmq
+import zmq.asyncio
+
+from aifx.constants.DMethod import DMethod as METHOD
+from aifx.constants.DModule import DModule as MODULE
+from aifx.constants.DMQ import DMQ as MQ, DMQF as MQF
+from aifx.constants.DNetwork import DNetwork as NET, DNetworkF as NETF
+from aifx.constants.DOanda import DOanda as OANDA
+
+from aifx.zmq.MQMsg import MQMsg
+from aifx.zmq.UtilsMQ import UtilsMQ
 
 SubHandler = Callable[[str, dict], Any | Awaitable[Any]]
 
-from aifx.constants.DAiFx import DAiFx as AIFX
-from aifx.constants.DNetwork import DNetwork as NET, DNetworkF as NETF
-from aifx.constants.DModule import DModule as MODULE
-from aifx.constants.DMQ import DMQ as MQ
-from aifx.constants.DOanda import DOanda as OANDA
 
-from aifx.zmq.BaseMQ import BaseMQ
-
-
-class ClientMQ(BaseMQ):
+class ClientMQ:
     def __init__(
         self,
         *,
-        broker_address: str = NET.BROKER_HOSTNAME,
+        broker_hostname: str = NET.BROKER_HOSTNAME,
         broker_port: int = NET.BROKER_PORT,
         broker_hb_port: int = NET.BROKER_HB_PORT,
         identity: str = MODULE.CLIENT_MQ,
         topic_prefix: str = MQ.TOPIC_PREFIX,
         sub_methods: dict[str, SubHandler] | None = None,
     ) -> None:
+        self._broker_hostname = broker_hostname
+        self._broker_port = broker_port
+        self._broker_hb_port = broker_hb_port
+        self._identity = identity
+        self._topic_prefix = topic_prefix
+        self._sub_methods = sub_methods or {}
 
-        super().__init__(
-            broker_address=broker_address,
-            router_port=broker_port,
-            broker_hb_port=broker_hb_port,
-            identity=identity,
-            topic_prefix=topic_prefix,
+        self._address = f"{NETF.TCP}{self._broker_hostname}:{self._broker_port}"
+        self._hb_address = f"{NETF.TCP}{self._broker_hostname}:{self._broker_hb_port}"
+
+        self._ctx = zmq.asyncio.Context()
+
+        self._socket = self._ctx.socket(zmq.DEALER)
+        self._hb_socket = self._ctx.socket(zmq.DEALER)
+
+        self._socket.setsockopt(zmq.IDENTITY, self._identity.encode())
+        self._hb_socket.setsockopt(zmq.IDENTITY, self._identity.encode())
+
+        self._socket.connect(self._address)
+        self._hb_socket.connect(self._hb_address)
+
+        self._hb_task: asyncio.Task[None] | None = None
+        self._hb_stop_event = asyncio.Event()
+        self._last_heartbeat = 0.0
+
+        self._started = False
+        self._stopped = False
+
+    def connected(self) -> bool:
+        return (time.time() - self._last_heartbeat) < (2 * int(MQ.HEARTBEAT_INTERVAL))
+
+    async def recv(self) -> MQMsg:
+        message_data = await asyncio.wait_for(
+            self._socket.recv(copy=True),
+            timeout=OANDA.TIMEOUT,
         )
-        # server_address: str = NET.BROKER_HOSTNAME,
-        # server_pub_port: int = NET.BROKER_PUB_PORT,
+        return MQMsg.from_json(UtilsMQ.ensure_bytes(message_data))
 
-        # self.srv_host = server_address
-        # self.sub_port = server_pub_port
+    async def send(self, msg: MQMsg) -> None:
+        await self._socket.send(msg.to_json())
 
-        self.sub_methods = sub_methods or {}
+    async def request(self, msg: MQMsg) -> MQMsg:
+        await self.send(msg)
+        return await self.recv()
 
-        self.sub_socket: zmq.asyncio.Socket | None = None
-        self.sub_task: asyncio.Task[None] | None = None
-        self.sub_addr = f"{NETF.TCP}{server_address}:{server_pub_port}"
-        self.sub_socket = self.ctx.socket(zmq.SUB)
-
-        self.sub_socket.connect(self.sub_addr)
-        self.sub_stop_event = asyncio.Event()
-
-    async def bg_sub_listen(self) -> None:
-        """
-        Background subscriber loop for telemetry.
-        """
-        if self.sub_socket is None:
+    def start(self) -> None:
+        if self._started:
             return
 
+        self._started = True
+        self._hb_task = asyncio.create_task(
+            self.bg_heartbeat(),
+            name=MQF.HEARTBEAT,
+        )
+
+    async def bg_heartbeat(self) -> None:
         try:
-            while not self.sub_stop_event.is_set():
+            while not self._hb_stop_event.is_set():
+                msg = MQMsg(
+                    sender=self._identity,
+                    target=NET.BROKER_HOSTNAME,
+                    method=METHOD.HEARTBEAT,
+                )
+
+                print("Sending heartbeat...")
+                await self._hb_socket.send(msg.to_json())
+
                 try:
-                    frames = await asyncio.wait_for(
-                        self.sub_socket.recv_multipart(copy=True),
+                    message_data = await asyncio.wait_for(
+                        self._hb_socket.recv(copy=True),
                         timeout=OANDA.TIMEOUT,
                     )
+                    reply = MQMsg.from_json(UtilsMQ.ensure_bytes(message_data))
 
-                    if len(frames) != 2:
-                        print(f"ERROR: telemetry expected 2 frames, got {len(frames)}")
-                        continue
+                    if reply.method == METHOD.HEARTBEAT_REPLY:
+                        self._last_heartbeat = time.time()
+                        print("Received heartbeat reply")
 
-                    topic = self._ensure_bytes(frames[0]).decode(
-                        AIFX.UTF_8, errors="replace"
-                    )
-                    payload_bytes = self._ensure_bytes(frames[1])
-
-                    try:
-                        payload = json.loads(payload_bytes.decode(AIFX.UTF_8))
-                    except Exception as e:
-                        print(f"ERROR: SUB JSON decode error: {e}")
-                        continue
-
-                    handler = self.sub_methods.get(topic)
-
-                    if handler is not None:
-                        result = handler(topic, payload)
-                        if asyncio.iscoroutine(result):
-                            await result
-
+                except asyncio.CancelledError:
+                    raise
                 except asyncio.TimeoutError:
-                    pass
-                except Exception as e:
-                    print(f"ERROR: telemetry listen error: {e}")
-                    print(f"STACKTRACK: {traceback.format_exc()}")
+                    print("Heartbeat timed out")
+
+                await asyncio.sleep(MQ.HEARTBEAT_INTERVAL)
 
         except asyncio.CancelledError:
             raise
 
     async def quit(self) -> None:
-        await super().quit()
         if self._stopped:
             return
+
         self._stopped = True
         self._started = False
+        self._hb_stop_event.set()
 
-        # 1. stop all tasks first
-        self.hb_stop_event.set()
-        self.sub_stop_event.set()
-
-        if self.hb_task is not None:
-            self.hb_task.cancel()
+        if self._hb_task is not None:
+            self._hb_task.cancel()
             try:
-                await self.hb_task
+                await asyncio.wait_for(
+                    self._hb_task,
+                    timeout=MQ.LISTEN_INTERVAL,
+                )
+            except asyncio.TimeoutError:
+                print("DEBUG: Heartbeat task did not cancel cleanly")
             except asyncio.CancelledError:
                 pass
+            except Exception as e:
+                print(
+                    f"DEBUG: Heartbeat task exception during quit: "
+                    f"{type(e).__name__}: {e}"
+                )
             finally:
-                self.hb_task = None
+                self._hb_task = None
 
-        if self.sub_task is not None:
-            self.sub_task.cancel()
-            try:
-                await self.sub_task
-            except asyncio.CancelledError:
-                pass
-            finally:
-                self.sub_task = None
-
-        # 2. close sockets
-        self._ignore_zmq_teardown(
-            lambda: self.socket.disconnect(self.router_addr),
-            f"socket.disconnect({self.router_addr})",
+        UtilsMQ.ignore_zmq_teardown(
+            lambda: self._hb_socket.disconnect(self._hb_address),
+            f"hb_socket.disconnect({self._hb_address})",
         )
-        self._ignore_zmq_teardown(
-            lambda: self.socket.close(linger=0),
-            "socket.close(linger=0)",
-        )
-
-        self._ignore_zmq_teardown(
-            lambda: self.hb_socket.disconnect(self.router_hb_addr),
-            f"hb_socket.disconnect({self.router_hb_addr})",
-        )
-        self._ignore_zmq_teardown(
-            lambda: self.hb_socket.close(linger=0),
+        UtilsMQ.ignore_zmq_teardown(
+            lambda: self._hb_socket.close(linger=0),
             "hb_socket.close(linger=0)",
         )
 
-        if self.sub_socket is not None:
-            self._ignore_zmq_teardown(
-                lambda: self.sub_socket.close(linger=0),
-                "sub_socket.close(linger=0)",
-            )
-            self.sub_socket = None
+        UtilsMQ.ignore_zmq_teardown(
+            lambda: self._socket.disconnect(self._address),
+            f"socket.disconnect({self._address})",
+        )
+        UtilsMQ.ignore_zmq_teardown(
+            lambda: self._socket.close(linger=0),
+            "socket.close(linger=0)",
+        )
 
-        # 3. terminate context once
-        try:
-            self.ctx.term()
-        except zmq.ZMQError as e:
-            print(f"DEBUG: ignoring ctx.term() during shutdown: {e}")
+        UtilsMQ.ignore_zmq_teardown(
+            lambda: self._ctx.term(),
+            "ctx.term()",
+        )
 
-    def start(self) -> None:
-        super().start()
-
-        if self.sub_task is None:
-            self.sub_task = asyncio.create_task(self.bg_sub_listen(), name="sub_listen")
-
-    def _sub_set(self, subscribe: bool, prefix: str) -> None:
-        if self.sub_socket is None:
-            raise RuntimeError("SUB not configured")
-        opt = zmq.SUBSCRIBE if subscribe else zmq.UNSUBSCRIBE
-        self.sub_socket.setsockopt(opt, prefix.encode(AIFX.UTF_8))
+    def topic(self, suffix: str) -> str:
+        return f"{self._topic_prefix}.{suffix}"

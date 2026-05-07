@@ -17,3 +17,5 @@ class DMethod:
     GET_INSTRUMENTS: Final[str] = "get_instruments"
     HEARTBEAT: Final[str] = "heartbeat"
     HEARTBEAT_REPLY: Final[str] = "heartbeat_reply"
+    PING: Final[str] = "ping"
+    PING_REPLY: Final[str] = "pong"
