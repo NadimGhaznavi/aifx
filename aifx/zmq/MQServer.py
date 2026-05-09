@@ -23,7 +23,7 @@ from aifx.constants.DDef import DDef as DEF
 from aifx.constants.DLogging import DAiFxLog as LOG
 from aifx.constants.DMethod import DMethod as METHOD
 from aifx.constants.DModule import DModule as MODULE
-from aifx.constants.DMQ import DMQ as MQ, DMQF as MQF
+from aifx.constants.DMQ import DMQ as MQ, DMQF as MQF, DMQEvent
 from aifx.constants.DMsg import DMsg as MSG
 from aifx.constants.DNetwork import DNetwork as NET, DNetworkF as NETF
 from aifx.constants.DOanda import DOanda as OANDA
@@ -31,12 +31,13 @@ from aifx.constants.DOanda import DOanda as OANDA
 from aifx.utils.AIFxLog import AiFxLog
 from aifx.zmq.MQMsg import MQMsg
 from aifx.zmq.MQMsgBatch import MQMsgBatch
-from aifx.zmq.UtilsMQ import UtilsMQ
+from aifx.zmq.MQUtils import MQUtils
+from aifx.zmq.MQEvent import MQEvent
 
 MsgHandler = Callable[[MQMsg], Any | Awaitable[Any]]
 
 
-class ServerMQ:
+class MQServer:
     def __init__(
         self,
         log_level: LOG = DEF.DEFAULT_LOG_LEVEL,
@@ -95,6 +96,9 @@ class ServerMQ:
         # self.check_batches_task: asyncio.Task[None] | None = None
         # self.check_batches_stop_event = asyncio.Event()
 
+        # General purpose queue to the Broker app
+        self.event_queue: asyncio.Queue[MQEvent] = asyncio.Queue()
+
         # Connected clients
         self._clients: dict[bytes, float] = {}
         self._clients_lock = asyncio.Lock()
@@ -118,14 +122,14 @@ class ServerMQ:
                         timeout=OANDA.TIMEOUT,
                     )
 
-                    routing_id, message_data, route = UtilsMQ.split_router_frames(
+                    routing_id, message_data, route = MQUtils.split_router_frames(
                         frames
                     )
                     mq_msg = MQMsg.from_json(message_data)
                     await self._register_client(routing_id)
 
                     if mq_msg.method == METHOD.HEARTBEAT:
-                        self._last_heartbeat = time.time()
+                        self._last_heartbeat = time.monotonic()
 
                         reply = MQMsg(
                             sender=self._identity,
@@ -155,7 +159,7 @@ class ServerMQ:
                             timeout=OANDA.TIMEOUT,
                         )
 
-                        routing_id, message_data, route = UtilsMQ.split_router_frames(
+                        routing_id, message_data, route = MQUtils.split_router_frames(
                             frames
                         )
                         await self._register_client(routing_id)
@@ -197,22 +201,23 @@ class ServerMQ:
             print(f"Caught an exception: {e}")
             return
 
-    # Control socket handler loop
+    # Pruning loop
     async def bg_prune(self) -> None:
         try:
             while not self._prune_stop_event.is_set():
-                await asyncio.sleep(MQ.STALE_CLIENTS_TIMEOUT)
+                await asyncio.sleep(MQ.PRUNE_INTERVAL)
 
-                now = time.time()
+                now = time.monotonic()
 
                 async with self._clients_lock:
-                    stale_clients = [...]
-                    for routing_id in stale_clients:
-                        del self._clients[routing_id]
+                    stale_clients = [
+                        routing_id
+                        for routing_id, last_seen in self._clients.items()
+                        if (now - last_seen) > MQ.CLIENT_TIMEOUT
+                    ]
 
                 for routing_id in stale_clients:
-                    # Let the Broker know the client's aged out
-                    pass
+                    await self._remove_client(routing_id)
 
         except asyncio.CancelledError:
             # normal during shutdown
@@ -225,7 +230,7 @@ class ServerMQ:
     # Return a boolean representing the heartbeat status:
     # True is connected.
     def connected(self) -> bool:
-        return (time.time() - self._last_heartbeat) < int(OANDA.TIMEOUT)
+        return (time.monotonic() - self._last_heartbeat) < int(OANDA.TIMEOUT)
 
     async def quit(self) -> None:
         if not self._started:
@@ -264,20 +269,20 @@ class ServerMQ:
             finally:
                 self._listen_task = None
 
-        UtilsMQ.ignore_zmq_teardown(
+        MQUtils.ignore_zmq_teardown(
             lambda: self._hb_socket.unbind(self._hb_address),
             f"hb_socket.disconnect({self._hb_address})",
         )
-        UtilsMQ.ignore_zmq_teardown(
+        MQUtils.ignore_zmq_teardown(
             lambda: self._hb_socket.close(linger=0),
             "hb_socket.close(linger=0)",
         )
 
-        UtilsMQ.ignore_zmq_teardown(
+        MQUtils.ignore_zmq_teardown(
             lambda: self._socket.unbind(self._address),
             f"socket.disconnect({self._address})",
         )
-        UtilsMQ.ignore_zmq_teardown(
+        MQUtils.ignore_zmq_teardown(
             lambda: self._socket.close(linger=0),
             "socket.close(linger=0)",
         )
@@ -288,11 +293,27 @@ class ServerMQ:
             self._socket.recv(copy=True), timeout=OANDA.TIMEOUT
         )
         if message_data is not None:
-            return MQMsg.from_json(UtilsMQ.ensure_bytes(message_data))
+            return MQMsg.from_json(MQUtils.ensure_bytes(message_data))
 
     async def _register_client(self, routing_id: bytes):
         async with self._clients_lock:
-            self._clients[routing_id] = time.time()
+            if routing_id in self._clients:
+                self._clients[routing_id] = time.monotonic()
+                return
+
+            self._clients[routing_id] = time.monotonic()
+
+        self.event_queue.put_nowait(
+            MQEvent(event_type=DMQEvent.CLIENT_ADDED, routing_id=routing_id)
+        )
+
+    async def _remove_client(self, routing_id: bytes) -> None:
+        async with self._clients_lock:
+            self._clients.pop(routing_id, None)
+
+        self.event_queue.put_nowait(
+            MQEvent(event_type=DMQEvent.CLIENT_REMOVED, routing_id=routing_id)
+        )
 
     async def send(self, msg: MQMsg) -> None:
         await self._socket.send(msg.to_json())

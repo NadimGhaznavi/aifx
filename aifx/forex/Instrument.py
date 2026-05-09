@@ -11,6 +11,10 @@ from dataclasses import dataclass
 
 from aifx.constants.DInstrument import DInstrument as INS
 from aifx.constants.DDb import DColInstrument as COL
+from aifx.constants.DNetwork import DNetwork as NET
+
+FIRST_PUB_PORT = NET.BROKER_PUB_PORTS_START
+
 
 @dataclass(slots=True)
 class Instrument:
@@ -19,22 +23,22 @@ class Instrument:
     display_name: str
     pip_location: int
     margin_rate: float
+    pub_port: int = -1
 
     @classmethod
-    def from_db(cls, row) -> "Instrument":
+    def from_oanda(cls, ob: dict) -> "Instrument":
         return cls(
-            name=row["name"],
-            type=row["type"],
-            display_name=row["display_name"],
-            pip_location=row["pip_location"],
-            margin_rate=row["margin_rate"],
+            name=ob[INS.NAME],
+            type=ob[INS.TYPE],
+            display_name=ob[INS.DISPLAY_NAME],
+            pip_location=ob[INS.PIP_LOC],
+            margin_rate=float(ob[INS.MARGIN_RATE]),
+            pub_port=-1,
         )
 
     @classmethod
     def from_db(cls, ob):
-        return cls(
-            name= ob["name"]
-        )
+        return cls(name=ob["name"])
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -43,4 +47,5 @@ class Instrument:
             COL.DISPLAY_NAME: self.display_name,
             COL.PIP_LOCATION: self.pip_location,
             COL.MARGIN_RATE: self.margin_rate,
+            COL.PUB_PORT: self.pub_port,
         }

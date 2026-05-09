@@ -18,7 +18,7 @@ from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DNetwork import DNetwork as NET
 
 from aifx.utils.AIFxLog import AiFxLog
-from aifx.zmq.ServerMQ import ServerMQ
+from aifx.zmq.MQServer import ServerMQ
 from aifx.zmq.MQMsg import MQMsg
 
 

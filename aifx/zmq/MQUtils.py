@@ -13,7 +13,7 @@ import zmq
 from aifx.constants.DAiFx import DAiFx as AIFX
 
 
-class UtilsMQ:
+class MQUtils:
     @staticmethod
     def encode_json(data: str) -> bytes:
         return data.encode(AIFX.UTF_8)

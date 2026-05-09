@@ -15,30 +15,38 @@ from PySide6.QtCore import QFile, QTimer
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import QApplication
 
-from aifx.constants.DDef import DDef as DDEF
+from aifx.constants.DDef import DDef as DEF
 from aifx.constants.DNetwork import DNetwork as NET
 from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DMQ import DMQ as MQ
 from aifx.constants.DQt import DQtL as QTL
 
-from aifx.zmq.ClientMQ import ClientMQ
+from aifx.utils.AIFxLog import AiFxLog
+from aifx.zmq.MQClient import MQClient
 
 
 class ClientQt(QWidget):
     def __init__(
         self,
+        log_level=DEF.DEFAULT_LOG_LEVEL,
         broker_hostname: str = NET.BROKER_HOSTNAME,
         broker_port: int = NET.BROKER_PORT,
         broker_hb_port: int = NET.BROKER_HB_PORT,
         identity: str = MODULE.CLIENT_QT,
     ):
-        print(QTL.AIFX_STARTUP, flush=True)
         super().__init__()
 
-        self.load_ui()
-        print(QTL.UI_LOADED, flush=True)
+        # Console log
+        self.log = AiFxLog(client_id=identity, log_level=log_level)
+        self.log.info(QTL.AIFX_STARTUP)
 
-        self.mq = ClientMQ(
+        # Only refresh when necessary
+        self._was_connected = False
+
+        self.load_ui()
+        self.log.info(QTL.UI_LOADED)
+
+        self.mq = MQClient(
             broker_hostname=broker_hostname,
             broker_port=broker_port,
             broker_hb_port=broker_hb_port,
@@ -47,24 +55,32 @@ class ClientQt(QWidget):
             sub_methods={},
         )
         self.mq.connection_changed.connect(self.set_connection_status)
+        self.mq.instruments_received.connect(self.update_instruments)
 
         self.wire_signals()
-        print(QTL.SIGNALS_WIRED, flush=True)
+        self.log.info(QTL.SIGNALS_WIRED)
 
         # Defer this, give Qt a chance to start the event loop
         QTimer.singleShot(0, self.start_mq)
-        print(QTL.ENABLING_HEARTBEAT, flush=True)
+        self.log.info(QTL.ENABLING_HEARTBEAT)
 
-        print(QTL.STARTUP_COMPLETE, flush=True)
+        self.log.info(QTL.STARTUP_COMPLETE)
 
     def set_connection_status(self):
-        if self.mq.connected():
+        connected = self.mq.connected()
+
+        if connected:
             self.ui.lbl_connection.setStyleSheet("color: #009900; font-weight: bold;")
             self.ui.lbl_connection.setText(QTL.CONNECTED)
+
+            if not self._was_connected:
+                self.mq.get_instruments()
+
         else:
             self.ui.lbl_connection.setStyleSheet("color: #ff5500; font-weight: bold;")
             self.ui.lbl_connection.setText(QTL.DISCONNECTED)
 
+        self._was_connected = connected
 
     def load_ui(self):
         loader = QUiLoader()
@@ -81,7 +97,7 @@ class ClientQt(QWidget):
             raise RuntimeError(f"Could not load UI file: {path}")
 
         self.ui.setWindowTitle(QTL.AIFX)
-        self.ui.lbl_version.setText(f"v{DDEF.VERSION}")
+        self.ui.lbl_version.setText(f"v{DEF.VERSION}")
 
     def shutdown(self):
         if getattr(self, "_shutting_down", False):
@@ -91,15 +107,30 @@ class ClientQt(QWidget):
 
         self.mq.quit()
         self.ui.close()
-        print("Clean shutdown")
+        self.log.info("Clean shutdown")
 
     def start_mq(self):
         self.mq.start()
-        print(QTL.MQ_CLIENT_STARTED, flush=True)
+        self.log.info(QTL.MQ_CLIENT_STARTED)
 
     def wire_signals(self):
         # Wire up an exit button
         self.ui.btn_exit.clicked.connect(self.shutdown)
+
+    def update_instruments(self, instruments):
+        self.log.info("Instruments updated")
+
+        self.ui.cb_instrument.clear()
+
+        for instrument in instruments:
+            name = instrument["name"]
+            display_name = instrument.get("display_name", name)
+            pub_port = instrument.get("pub_port")
+
+            self.ui.cb_instrument.addItem(
+                f"{display_name} - {name}",
+                instrument,
+            )
 
 
 def main():

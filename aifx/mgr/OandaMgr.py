@@ -51,7 +51,6 @@ class OandaMgr:
 
         if code != 200:
             return None
-
         return [Instrument.from_oanda(ob) for ob in data[INS.INSTRUMENTS]]
 
     def fetch_candles(self, pair_name, count, granularity):

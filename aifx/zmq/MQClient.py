@@ -16,25 +16,29 @@ import time
 import zmq
 from PySide6.QtCore import QObject, QTimer, Signal
 
+from aifx.constants.DDef import DDef as DEF
+from aifx.constants.DInstrument import DInstrument as INS
 from aifx.constants.DMethod import DMethod as METHOD
 from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DMQ import DMQ as MQ
 from aifx.constants.DNetwork import DNetwork as NET, DNetworkF as NETF
 from aifx.constants.DQt import DQtL as QTL
 
+from aifx.utils.AIFxLog import AiFxLog
 from aifx.zmq.MQMsg import MQMsg
-from aifx.zmq.UtilsMQ import UtilsMQ
+from aifx.zmq.MQUtils import MQUtils
 
 SubHandler = Callable[[str, dict], Any]
 
 
-class ClientMQ(QObject):
+class MQClient(QObject):
 
     connection_changed = Signal(bool)
+    instruments_received = Signal(object)
 
     def __init__(
         self,
-        *,
+        log_level: str = DEF.DEFAULT_LOG_LEVEL,
         broker_hostname: str = NET.BROKER_HOSTNAME,
         broker_port: int = NET.BROKER_PORT,
         broker_hb_port: int = NET.BROKER_HB_PORT,
@@ -43,6 +47,10 @@ class ClientMQ(QObject):
         sub_methods: dict[str, SubHandler] | None = None,
     ) -> None:
         super().__init__()
+
+        # Console log
+        self.log = AiFxLog(client_id=MODULE.CLIENT_MQ, log_level=log_level)
+
         self._broker_hostname = broker_hostname
         self._broker_port = broker_port
         self._broker_hb_port = broker_hb_port
@@ -62,16 +70,17 @@ class ClientMQ(QObject):
         self._hb_socket.setsockopt(zmq.IDENTITY, self._identity.encode())
 
         self._socket.connect(self._address)
-        self._hb_socket.connect(self._hb_address)
+        self._timer = QTimer(self)
+        self._poll_timer = QTimer(self)
+        self._poll_timer.timeout.connect(self._poll_control_reply)
 
+        self._hb_socket.connect(self._hb_address)
         self._last_heartbeat = 0.0
         self._last_connected = None
-
         self._hb_timer = QTimer(self)
         self._hb_timer.timeout.connect(self._heartbeat_tick)
-
-        self._poll_timer = QTimer(self)
-        self._poll_timer.timeout.connect(self._poll_heartbeat_reply)
+        self._poll_hb_timer = QTimer(self)
+        self._poll_hb_timer.timeout.connect(self._poll_heartbeat_reply)
 
         self._started = False
         self._stopped = False
@@ -79,13 +88,31 @@ class ClientMQ(QObject):
     def connected(self) -> bool:
         return (time.time() - self._last_heartbeat) < (2 * int(MQ.HEARTBEAT_INTERVAL))
 
+    def get_instruments(self) -> bool:
+        msg = MQMsg(
+            sender=self._identity,
+            target=self._broker_hostname,
+            method=METHOD.GET_INSTRUMENTS,
+        )
+        try:
+            self._socket.send(msg.to_json(), flags=zmq.NOBLOCK)
+        except Exception as e:
+            self.log.critical(f"Exception: {e}")
+
+    def _handle_control_reply(self, reply: MQMsg) -> None:
+        if reply.method == METHOD.GET_INSTRUMENTS_REPLY:
+            self.instruments_received.emit(reply.payload[INS.INSTRUMENTS])
+            return
+
+        self.log.critical(f"Unhandled control reply: {reply.method}")
+
     def _heartbeat_tick(self) -> None:
         msg = MQMsg(
             sender=self._identity,
-            target=NET.BROKER_HOSTNAME,
+            target=self._broker_hostname,
             method=METHOD.HEARTBEAT,
         )
-        print(QTL.SENDING_HEARTBEAT)
+        # self.log.debug(QTL.SENDING_HEARTBEAT)
         try:
             self._hb_socket.send(msg.to_json(), flags=zmq.NOBLOCK)
         except zmq.Again:
@@ -93,57 +120,61 @@ class ClientMQ(QObject):
 
         self._update_connection_state()
 
+    def _poll_control_reply(self) -> None:
+        while True:
+            try:
+                message_data = self._socket.recv(copy=True, flags=zmq.NOBLOCK)
+            except zmq.Again:
+                break
+
+            reply = MQMsg.from_json(MQUtils.ensure_bytes(message_data))
+            self._handle_control_reply(reply)
+
     def _poll_heartbeat_reply(self) -> None:
         while True:
-            print(QTL.POLLING_HEARTBEAT_REPLY)
+            # self.log.debug(QTL.POLLING_HEARTBEAT_REPLY)
             try:
-                print(QTL.POLLING_HEARTBEAT_REPLY, flush=True)
+                # self.log.debug(QTL.POLLING_HEARTBEAT_REPLY)
                 message_data = self._hb_socket.recv(copy=True, flags=zmq.NOBLOCK)
             except zmq.Again:
                 break
 
-            reply = MQMsg.from_json(UtilsMQ.ensure_bytes(message_data))
+            reply = MQMsg.from_json(MQUtils.ensure_bytes(message_data))
 
             if reply.method == METHOD.HEARTBEAT_REPLY:
-                print(QTL.HEARTBEAT_REPLY_RECEIVED)
+                # self.log.debug(QTL.HEARTBEAT_REPLY_RECEIVED)
                 self._last_heartbeat = time.time()
 
         self._update_connection_state()
 
     def quit(self) -> None:
         if self._stopped:
-            print("ClientMQ.quit(): Already stopped", flush=True)
+            self.log.warning("ClientMQ.quit(): Already stopped")
             return
 
         self._stopped = True
         self._started = False
 
         self._hb_timer.stop()
-        print("ClientMQ.quit(): Heartbeat timer stopped", flush=True)
+        self.log.info("ClientMQ.quit(): Heartbeat timer stopped")
+
+        self._poll_hb_timer.stop()
+        self.log.info("ClientMQ.quit(): Heartbeat poll timer stopped")
 
         self._poll_timer.stop()
-        print("ClientMQ.quit(): Poll timer stopped", flush=True)
+        self.log.info("ClientMQ.quit(): Control poll timer stopped")
 
-        UtilsMQ.ignore_zmq_teardown(
-            lambda: self._hb_socket.close(linger=0),
-            "hb_socket.close(linger=0)",
-        )
-
-        UtilsMQ.ignore_zmq_teardown(
-            lambda: self._hb_socket.close(linger=0),
-            "hb_socket.close(linger=0)",
-        )
-
-        UtilsMQ.ignore_zmq_teardown(
-            lambda: self._socket.close(linger=0),
-            "socket.disconnect(linger=0)",
-        )
-        UtilsMQ.ignore_zmq_teardown(
+        MQUtils.ignore_zmq_teardown(
             lambda: self._socket.close(linger=0),
             "socket.close(linger=0)",
         )
 
-        UtilsMQ.ignore_zmq_teardown(
+        MQUtils.ignore_zmq_teardown(
+            lambda: self._hb_socket.close(linger=0),
+            "hb_socket.close(linger=0)",
+        )
+
+        MQUtils.ignore_zmq_teardown(
             lambda: self._ctx.destroy(linger=0),
             "ctx.destroy(linger=0)",
         )
@@ -161,7 +192,8 @@ class ClientMQ(QObject):
 
         self._started = True
         self._hb_timer.start(int(MQ.HEARTBEAT_INTERVAL) * 1000)
-        self._poll_timer.start(1000)
+        self._poll_hb_timer.start(1000)
+        self._poll_timer.start(100)
         self._heartbeat_tick()
 
     def topic(self, suffix: str) -> str:

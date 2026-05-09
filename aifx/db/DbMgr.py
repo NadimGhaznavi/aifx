@@ -89,6 +89,7 @@ class DbMgr:
                 display_name TEXT NOT NULL,
                 pip_location INTEGER NOT NULL,
                 margin_rate REAL NOT NULL,
+                pub_port INTEGER NOT NULL,
                 updated_y INTEGER NOT NULL,
                 updated_mo INTEGER NOT NULL,
                 updated_d INTEGER NOT NULL,
@@ -126,7 +127,7 @@ class DbMgr:
 
         return self._cursor.execute(sql).fetchall()
 
-    def update(self, table: str, records: list[dict], key_fields: list[str]) -> int:
+    def upsert(self, table: str, records: list[dict], key_fields: list[str]) -> int:
         if not records:
             return 0
 

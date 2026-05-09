@@ -12,9 +12,9 @@ from typing import Final
 
 class DNetwork:
     BROKER_HOSTNAME: Final[str] = "localhost"
-    BROKER_PORT: Final[int] = 7730
-    BROKER_HB_PORT: Final[int] = 7731
-    BROKER_PUB_PORT: Final[int] = 7732
+    BROKER_PORT: Final[int] = 20100
+    BROKER_HB_PORT: Final[int] = 20101
+    BROKER_PUB_PORTS_START: Final[int] = 20110
 
 
 class DNetworkF:

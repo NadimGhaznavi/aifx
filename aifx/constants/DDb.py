@@ -16,6 +16,7 @@ class DColInstrument:
     DISPLAY_NAME: Final[str] = "display_name"
     PIP_LOCATION: Final[str] = "pip_location"
     MARGIN_RATE: Final[str] = "margin_rate"
+    PUB_PORT: Final[str] = "pub_port"
 
 
 class DDbF:
