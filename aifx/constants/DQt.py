@@ -1,4 +1,4 @@
-# aifx/constants/DAiFx.py
+# aifx/constants/DPrice.py
 #
 #    AI FX
 #    Author: Nadim-Daniel Ghaznavi
@@ -9,15 +9,19 @@
 
 from typing import Final
 
-
-class DAiFx:
-
+class DQtF:
     UTF_8: Final[str] = "utf-8"
 
-class DAiFxL:
+class DQtL:
     AIFX: Final[str] = "AI FX"
     AIFX_STARTUP: Final[str] = "AiFx starting up..."
+    CONNECTED: Final[str] = "Connected"
+    DISCONNECTED: Final[str] = "Disonnected"
     ENABLING_HEARTBEAT: Final[str] = "Enabling heartbeat..."
+    HEARTBEAT_REPLY_RECEIVED: Final[str] = "Heartbeat reply received"
+    MQ_CLIENT_STARTED: Final[str] = "MQ Client started..."
+    POLLING_HEARTBEAT_REPLY: Final[str] = "Polling heartbeat reply..."
+    SENDING_HEARTBEAT: Final[str] = "Sending heartbeat..."
     SIGNALS_WIRED: Final[str] = "Signals wired..."
     STARTUP_COMPLETE: Final[str] = "Houston, we have lift-off!!! Startup complete."
     UI_LOADED: Final[str] = "UI Loaded..."

@@ -2362,21 +2362,6 @@ files = [
 cffi = {version = "*", markers = "implementation_name == \"pypy\""}
 
 [[package]]
-name = "qasync"
-version = "0.28.0"
-description = "Python library for using asyncio in Qt-based applications"
-optional = false
-python-versions = ">=3.8"
-groups = ["main"]
-files = [
-    {file = "qasync-0.28.0-py3-none-any.whl", hash = "sha256:21faba8d047c717008378f5ac29ea58c32a8128528629e4afd57c59b768dba0f"},
-    {file = "qasync-0.28.0.tar.gz", hash = "sha256:6f7f1f18971f59cb259b107218269ba56e3ad475ec456e54714b426a6e30b71d"},
-]
-
-[package.extras]
-typing = ["mypy (>=1.0)"]
-
-[[package]]
 name = "rapidfuzz"
 version = "3.14.5"
 description = "rapid fuzzy string matching"
@@ -3616,4 +3601,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.14"
-content-hash = "f32c32f6e2071df49c48beef24eba2f65e2a583b98c7e1c105316b015a2be026"
+content-hash = "37c1023d6c24c8f9111e1c37cbada0aa545e39868c7c667ae973196957f6882b"

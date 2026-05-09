@@ -4,7 +4,6 @@
         "client/ClientQt.py",
         "client/form.ui",
         "constants/DAccount.py",
-	"constants/DAiFx.py",
         "constants/DCandle.py",
         "constants/DDb.py",
         "constants/DDef.py",
@@ -21,10 +20,17 @@
         "constants/DOanda.py",
         "constants/DPairs.py",
         "constants/DPrice.py",
+        "constants/DQt.py",
         "forex/Instrument.py",
 	"db/BrokerDb.py",
         "db/DbMgr.py",
         "mgr/Broker.py",
-        "mgr/OandaMgr.py"
+        "mgr/OandaMgr.py",
+	"zmq/ClientMQ.py",
+	"zmq/EventMQ.py",
+	"zmq/MQMsgBatch.py",
+	"zmq/MQMsg.py",
+	"zmq/ServerMQ.py",
+	"zmq/UtilsMQ.py"
     ]
 }

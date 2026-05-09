@@ -1,4 +1,4 @@
-# aifx/client/aifx_qt.py
+# aifx/client/ClientQt.py
 #
 #    AI FX
 #    Author: Nadim-Daniel Ghaznavi
@@ -9,17 +9,17 @@
 
 from pathlib import Path
 import sys
-import asyncio
 
 from PySide6.QtWidgets import QApplication, QWidget
 from PySide6.QtCore import QFile, QTimer
 from PySide6.QtUiTools import QUiLoader
-from qasync import QEventLoop
+from PySide6.QtWidgets import QApplication
 
 from aifx.constants.DDef import DDef as DDEF
 from aifx.constants.DNetwork import DNetwork as NET
 from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DMQ import DMQ as MQ
+from aifx.constants.DQt import DQtL as QTL
 
 from aifx.zmq.ClientMQ import ClientMQ
 
@@ -28,13 +28,15 @@ class ClientQt(QWidget):
     def __init__(
         self,
         broker_hostname: str = NET.BROKER_HOSTNAME,
-        broker_port: str = NET.BROKER_PORT,
+        broker_port: int = NET.BROKER_PORT,
         broker_hb_port: int = NET.BROKER_HB_PORT,
         identity: str = MODULE.CLIENT_QT,
     ):
-        # Run Qt parent stack
-        print("AiFx starting up...", flush=True)
+        print(QTL.AIFX_STARTUP, flush=True)
         super().__init__()
+
+        self.load_ui()
+        print(QTL.UI_LOADED, flush=True)
 
         self.mq = ClientMQ(
             broker_hostname=broker_hostname,
@@ -44,50 +46,68 @@ class ClientQt(QWidget):
             topic_prefix=MQ.TOPIC_PREFIX,
             sub_methods={},
         )
-        # Defer this, give Qt a chance to start the event loop
-        QTimer.singleShot(0, self.start_mq)
-
-        self.load_ui()
-        print("UI Loaded...", flush=True)
+        self.mq.connection_changed.connect(self.set_connection_status)
 
         self.wire_signals()
-        print("Signals wired...", flush=True)
+        print(QTL.SIGNALS_WIRED, flush=True)
 
-        print("Houston, we have lift-off!!! Startup complete.", flush=True)
+        # Defer this, give Qt a chance to start the event loop
+        QTimer.singleShot(0, self.start_mq)
+        print(QTL.ENABLING_HEARTBEAT, flush=True)
+
+        print(QTL.STARTUP_COMPLETE, flush=True)
+
+    def set_connection_status(self):
+        if self.mq.connected():
+            self.ui.lbl_connection.setStyleSheet("color: #009900; font-weight: bold;")
+            self.ui.lbl_connection.setText(QTL.CONNECTED)
+        else:
+            self.ui.lbl_connection.setStyleSheet("color: #ff5500; font-weight: bold;")
+            self.ui.lbl_connection.setText(QTL.DISCONNECTED)
+
 
     def load_ui(self):
-        try:
-            loader = QUiLoader()
-            path = Path(__file__).resolve().parent / "form.ui"
+        loader = QUiLoader()
+        path = Path(__file__).resolve().parent / "form.ui"
 
-            ui_file = QFile(path)
-            ui_file.open(QFile.ReadOnly)
+        ui_file = QFile(path)
+        if not ui_file.open(QFile.ReadOnly):
+            raise RuntimeError(f"Could not open UI file: {path}")
 
-            self.ui = loader.load(ui_file)
-            ui_file.close()
+        self.ui = loader.load(ui_file)
+        ui_file.close()
 
-            # Set the window's title bar
-            self.setWindowTitle("AI FX")
-            # Set the version string
-            self.ui.lbl_version.setText(f"v{DDEF.VERSION}")
-        except Exception as e:
-            print(f"UI Load failed: {e}", flush=True)
+        if self.ui is None:
+            raise RuntimeError(f"Could not load UI file: {path}")
+
+        self.ui.setWindowTitle(QTL.AIFX)
+        self.ui.lbl_version.setText(f"v{DDEF.VERSION}")
+
+    def shutdown(self):
+        if getattr(self, "_shutting_down", False):
+            return
+
+        self._shutting_down = True
+
+        self.mq.quit()
+        self.ui.close()
 
     def start_mq(self):
         self.mq.start()
-        print("MQ Client started...", flush=True)
+        print(QTL.MQ_CLIENT_STARTED, flush=True)
 
     def wire_signals(self):
         # Wire up an exit button
-        self.ui.btn_exit.clicked.connect(self.ui.close)
+        self.ui.btn_exit.clicked.connect(self.shutdown)
 
 
 def main():
     app = QApplication(sys.argv)
-    loop = QEventLoop(app)
-    asyncio.set_event_loop(loop)
+
     widget = ClientQt()
     widget.ui.show()
+
+    app.aboutToQuit.connect(widget.shutdown)
     sys.exit(app.exec())
 
 
