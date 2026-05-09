@@ -16,6 +16,7 @@ import asyncio
 import zmq
 import zmq.asyncio
 import json
+import time
 
 from aifx.constants.DAiFx import DAiFx as AIFX
 from aifx.constants.DDef import DDef as DEF
@@ -95,7 +96,12 @@ class ServerMQ:
         # self.check_batches_stop_event = asyncio.Event()
 
         # Connected clients
-        self._clients = {}
+        self._clients: dict[bytes, float] = {}
+        self._clients_lock = asyncio.Lock()
+
+        # Periodically prune stale clients fromt the .clients dictionary
+        self._prune_task: asyncio.Task[None] | None = None
+        self._prune_stop_event = asyncio.Event()
 
         self._started = False
 
@@ -116,6 +122,7 @@ class ServerMQ:
                         frames
                     )
                     mq_msg = MQMsg.from_json(message_data)
+                    await self._register_client(routing_id)
 
                     if mq_msg.method == METHOD.HEARTBEAT:
                         self._last_heartbeat = time.time()
@@ -126,9 +133,7 @@ class ServerMQ:
                             method=METHOD.HEARTBEAT_REPLY,
                         )
 
-                        await self._hb_socket.send_multipart(
-                            route + [UtilsMQ.encode_json(reply.to_json())]
-                        )
+                        await self._hb_socket.send_multipart(route + [reply.to_json()])
 
                 except asyncio.TimeoutError:
                     pass
@@ -153,7 +158,7 @@ class ServerMQ:
                         routing_id, message_data, route = UtilsMQ.split_router_frames(
                             frames
                         )
-                        self._clients[routing_id] = time.time()
+                        await self._register_client(routing_id)
 
                         # Deserialize to HydraMsg
                         mq_msg = MQMsg.from_json(message_data)
@@ -173,9 +178,7 @@ class ServerMQ:
                             method=f"{mq_msg.method}_reply",
                             payload=result,
                         )
-                        await self._socket.send_multipart(
-                            route + [UtilsMQ.encode_json(reply.to_json())]
-                        )
+                        await self._socket.send_multipart(route + [reply.to_json()])
                     except asyncio.TimeoutError:
                         # No message received, continue
                         pass
@@ -185,6 +188,31 @@ class ServerMQ:
 
                 else:
                     raise RuntimeError("Socket is not initialized")
+
+        except asyncio.CancelledError:
+            # normal during shutdown
+            raise
+        except Exception as e:
+            self.log.critical(f"Caught an exception: {e}")
+            print(f"Caught an exception: {e}")
+            return
+
+    # Control socket handler loop
+    async def bg_prune(self) -> None:
+        try:
+            while not self._prune_stop_event.is_set():
+                await asyncio.sleep(MQ.STALE_CLIENTS_TIMEOUT)
+
+                now = time.time()
+
+                async with self._clients_lock:
+                    stale_clients = [...]
+                    for routing_id in stale_clients:
+                        del self._clients[routing_id]
+
+                for routing_id in stale_clients:
+                    # Let the Broker know the client's aged out
+                    pass
 
         except asyncio.CancelledError:
             # normal during shutdown
@@ -262,6 +290,10 @@ class ServerMQ:
         if message_data is not None:
             return MQMsg.from_json(UtilsMQ.ensure_bytes(message_data))
 
+    async def _register_client(self, routing_id: bytes):
+        async with self._clients_lock:
+            self._clients[routing_id] = time.time()
+
     async def send(self, msg: MQMsg) -> None:
         await self._socket.send(msg.to_json())
 
@@ -275,10 +307,12 @@ class ServerMQ:
         self._started = True
         self._hb_task = asyncio.create_task(self.bg_hb_listen(), name=MQF.HEARTBEAT)
         self._listen_task = asyncio.create_task(self.bg_listen(), name=MQF.CONTROL)
+        self._prune_task = asyncio.create_task(self.bg_prune(), name=MQF.PRUNING)
 
         await asyncio.gather(
             self._hb_task,
             self._listen_task,
+            self._prune_task,
         )
 
     def topic(self, suffix: str) -> str:

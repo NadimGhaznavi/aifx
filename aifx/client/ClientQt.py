@@ -91,6 +91,7 @@ class ClientQt(QWidget):
 
         self.mq.quit()
         self.ui.close()
+        print("Clean shutdown")
 
     def start_mq(self):
         self.mq.start()

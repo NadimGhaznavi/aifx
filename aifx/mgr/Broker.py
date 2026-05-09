@@ -60,7 +60,6 @@ class Broker:
 
         self._srv_methods = {
             METHOD.GET_INSTRUMENTS: self.get_instruments,
-            METHOD.PING: self.ping,
         }
         self.mq: ServerMQ | None = None
 
@@ -81,12 +80,6 @@ class Broker:
                     records=[ins.to_dict() for ins in instruments],
                 )
         return instruments
-
-    async def ping(self, msg: MQMsg) -> MQMsg:
-        if msg.method == METHOD.PING:
-            return MQMsg(
-                sender=self._identity, method=METHOD.PING_REPLY, target=msg.sender
-            )
 
     async def start(self) -> None:
         self.mq = ServerMQ(

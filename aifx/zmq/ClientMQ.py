@@ -65,7 +65,7 @@ class ClientMQ(QObject):
         self._hb_socket.connect(self._hb_address)
 
         self._last_heartbeat = 0.0
-        self._last_connected = False
+        self._last_connected = None
 
         self._hb_timer = QTimer(self)
         self._hb_timer.timeout.connect(self._heartbeat_tick)
@@ -77,9 +77,7 @@ class ClientMQ(QObject):
         self._stopped = False
 
     def connected(self) -> bool:
-        return (time.time() - self._last_heartbeat) < (
-            2 * int(MQ.HEARTBEAT_INTERVAL)
-        )
+        return (time.time() - self._last_heartbeat) < (2 * int(MQ.HEARTBEAT_INTERVAL))
 
     def _heartbeat_tick(self) -> None:
         msg = MQMsg(
