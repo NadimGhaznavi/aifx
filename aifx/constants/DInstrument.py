@@ -9,6 +9,7 @@
 
 from typing import Final
 
+
 class DInstrument:
 
     DISPLAY_NAME: Final[str] = "displayName"
@@ -18,3 +19,4 @@ class DInstrument:
     MARGIN_RATE: Final[str] = "marginRate"
     TYPE: Final[str] = "type"
     PIP_LOC: Final[str] = "pipLocation"
+    STARTED: Final[str] = "started"

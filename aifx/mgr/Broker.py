@@ -13,7 +13,7 @@ import asyncio
 
 from aifx.constants.DAiFx import DAiFx as AIFX
 from aifx.constants.DDef import DDef as DEF
-from aifx.constants.DDb import DDbF as DBF, DTable as TABLE
+from aifx.constants.DDb import DDbF as DBF, DTable as TABLE, DColInstrument as COL
 from aifx.constants.DFile import DFile as FILE
 from aifx.constants.DInstrument import DInstrument as INS
 from aifx.constants.DMethod import DMethod as METHOD
@@ -68,6 +68,7 @@ class Broker:
         # Server methods that are exposed via MQ
         self._srv_methods = {
             METHOD.GET_INSTRUMENTS: self.get_instruments,
+            METHOD.START_FEED: self.start_feed,
         }
         self.mq: MQServer | None = None
 
@@ -146,6 +147,20 @@ class Broker:
             self.mq.start(),
             self.bg_mq_events(),
         )
+
+    async def start_feed(self, msg: MQMsg):
+        instrument = msg.payload
+
+        name = instrument[COL.NAME]
+        pub_port = instrument[COL.PUB_PORT]
+
+        self.log.info(f"START_FEED received: {name}, pub_port={pub_port}")
+
+        return {
+            COL.NAME: name,
+            COL.PUB_PORT: pub_port,
+            INS.STARTED: True,
+        }
 
 
 def main():

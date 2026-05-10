@@ -38,6 +38,7 @@ class ClientQt(QWidget):
         identity: str = MODULE.CLIENT_QT,
     ):
         super().__init__()
+        self._broker_hostname = broker_hostname
 
         # Console log
         self.log = AiFxLog(client_id=identity, log_level=log_level)
@@ -63,6 +64,7 @@ class ClientQt(QWidget):
         )
         self.mq.connection_changed.connect(self.set_connection_status)
         self.mq.instruments_received.connect(self.update_instruments)
+        self.mq.feed_started.connect(self.feed_started)
 
         self.wire_signals()
         self.log.info(QTL.SIGNALS_WIRED)
@@ -70,6 +72,14 @@ class ClientQt(QWidget):
         # Defer this, give Qt a chance to start the event loop
         QTimer.singleShot(0, self.start_mq)
         self.log.info(QTL.ENABLING_HEARTBEAT)
+
+    def feed_started(self, feed_data):
+        name = feed_data[COL.NAME]
+        self.ui.lbl_current_pair.setStyleSheet("color: #bbaa66; font-weight bold;")
+        self.ui.lbl_current_pair.setText(name)
+        pub_port = feed_data[COL.PUB_PORT]
+        hostname = self._broker_hostname
+        self.log.debug(f"feed_started(): {name} - port: {pub_port}, host: {hostname}")
 
     def set_connection_status(self, connected: bool):
 

@@ -97,6 +97,7 @@ class DbMgr:
                 updated_mi INTEGER NOT NULL,
                 updated_s INTEGER NOT NULL
             );
+                                   
             """)
         self._add_updated_ts_column(TABLE.INSTRUMENTS)
         self._conn.commit()
