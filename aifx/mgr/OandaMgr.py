@@ -12,23 +12,28 @@ import requests
 import time
 
 from aifx.constants.DAccount import DAccountF as ACCTF
-from aifx.constants.DCandle import DCandleF as CANDLEF
-from aifx.constants.DDef import DDef as DDEF
+from aifx.constants.DCandle import DCandle as CANDLE
+from aifx.constants.DDef import DDef as DEF
 from aifx.constants.DInstrument import DInstrument as INS
+from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DOanda import DOanda as OANDA
 from aifx.constants.DPrice import DPrice as PRICE
 
+from aifx.utils.AiFxLog import AiFxLog
 from aifx.forex.Instrument import Instrument
 from aifx.forex.Candle import Candle
 
 
 class OandaMgr:
 
-    def __init__(self):
+    def __init__(self, log_level=DEF.DEFAULT_LOG_LEVEL, log_file=None):
+        self.log = AiFxLog(
+            client_id=MODULE.OANDA_MGR, log_file=log_file, log_level=log_level
+        )
         self.session = requests.Session()
 
     def _fetch_candles(self, pair_name, count, granularity):
-        url = f"{OANDA.OANDA_URL}/{INS.INSTRUMENTS}/{pair_name}/{CANDLEF.CANDLES}"
+        url = f"{OANDA.OANDA_URL}/{INS.INSTRUMENTS}/{pair_name}/{CANDLE.CANDLES}"
         params = dict(count=count, granularity=granularity, price=PRICE.MBA)
 
         response = self.session.get(
@@ -68,11 +73,20 @@ class OandaMgr:
         return [Instrument.from_oanda(ob) for ob in data[INS.INSTRUMENTS]]
 
     def get_candles(self, pair_name, count, granularity):
-        code, data = self._fetch_candles()
+        code, data = self._fetch_candles(
+            pair_name=pair_name, count=count, granularity=granularity
+        )
+
+        self.log.debug(f"get_candles(): {pair_name}, {count}, {granularity}, {code}")
 
         if code != 200:
             return None
-        return [Candle.from_oanda(ob) for ob in data[CANDLE.CANDLES]]
+
+        return [
+            Candle.from_oanda(pair_name, granularity, ob)
+            for ob in data[CANDLE.CANDLES]
+            if ob[CANDLE.COMPLETE]
+        ]
 
     def stream_prices(self, instruments: list[str]):
         while True:
@@ -114,5 +128,11 @@ if __name__ == "__main__":
     # 4 hour interval: H4
     # print(api.fetch_candles("EUR_NOK", 50, "H4"))
     # Print fetched instruments
-    instruments = mgr.get_instruments()
-    print(instruments)
+    # instruments = mgr.get_instruments()
+    # print(instruments)
+    mgr = OandaMgr()
+
+    candles = mgr.get_candles(pair_name="EUR_USD", count=5, granularity="S5")
+
+    for candle in candles:
+        print(candle)

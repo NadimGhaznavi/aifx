@@ -10,16 +10,24 @@
 import sqlite3
 from datetime import datetime, timezone
 
+from aifx.constants.DDef import DDef as DEF
 from aifx.constants.DDb import DDbF as DBF, DTable as TABLE
+from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DOanda import DOanda as OANDA
+
+from aifx.utils.AiFxLog import AiFxLog
 
 STALE_VALUE = {TABLE.INSTRUMENTS: OANDA.MAX_INSTRUMENT_AGE}
 
 
 class DbMgr:
 
-    def __init__(self, db_type: str, logfile=None):
+    def __init__(self, db_type: str, log_level=DEF.DEFAULT_LOG_LEVEL, log_file=None):
         self._db_type = db_type
+
+        self.log = AiFxLog(
+            client_id=MODULE.DB_MGR, log_file=log_file, log_level=log_level
+        )
 
         if db_type == DBF.CACHE:
             self._db_path = DBF.MEMORY
@@ -89,7 +97,6 @@ class DbMgr:
                 display_name TEXT NOT NULL,
                 pip_location INTEGER NOT NULL,
                 margin_rate REAL NOT NULL,
-                pub_port INTEGER NOT NULL,
                 updated_y INTEGER NOT NULL,
                 updated_mo INTEGER NOT NULL,
                 updated_d INTEGER NOT NULL,
@@ -103,32 +110,32 @@ class DbMgr:
                 granularity TEXT NOT NULL,
                                    
                 y INTEGER NOT NULL,
-                m INTEGER NOT NULL,
+                mo INTEGER NOT NULL,
                 d INTEGER NOT NULL,
                 h INTEGER NOT NULL,
                 mi INTEGER NOT NULL,
-                s INTEGER NOT NULL
+                s INTEGER NOT NULL,
 
                 volume INT NOT NULL,
                                    
-                mid_o FLOAT NOT NULL,
-                mid_h FLOAT NOT NULL,
-                mid_l FLOAT NOT NULL,
-                mid_c FLOAT NOT NULL,
-                bid_o FLOAT NOT NULL,
-                bid_h FLOAT NOT NULL,
-                bid_l FLOAT NOT NULL,
-                bid_c FLOAT NOT NULL,
-                ask_o FLOAT NOT NULL,
-                ask_h FLOAT NOT NULL,
-                ask_l FLOAT NOT NULL,
-                ask_c FLOAT NOT NULL,
+                mid_o REAL NOT NULL,
+                mid_h REAL NOT NULL,
+                mid_l REAL NOT NULL,
+                mid_c REAL NOT NULL,
+                bid_o REAL NOT NULL,
+                bid_h REAL NOT NULL,
+                bid_l REAL NOT NULL,
+                bid_c REAL NOT NULL,
+                ask_o REAL NOT NULL,
+                ask_h REAL NOT NULL,
+                ask_l REAL NOT NULL,
+                ask_c REAL NOT NULL,
                                    
                 PRIMARY KEY (instrument, granularity, y, mo, d, h, mi, s)
             );
 
-            CREATE INDEX idx_candles_instrument_time ON candles(
-                instrument, granularity, y, m, d, h, mi, s
+            CREATE INDEX IF NOT EXISTS idx_candles_instrument_time ON candles(
+                instrument, granularity, y, mo, d, h, mi, s
             );
             """)
         self._add_updated_ts_column(TABLE.INSTRUMENTS)
@@ -152,6 +159,10 @@ class DbMgr:
 
         return age > STALE_VALUE[table]
 
+    def num_rows(self, table: TABLE) -> int:
+        sql = f"SELECT * FROM {table}"
+        return len(list(self._cursor.execute(sql).fetchall()))
+
     def select_all(self, table: str, order_by: str | None = None) -> list[sqlite3.Row]:
         sql = f"SELECT * FROM {table}"
 
@@ -160,30 +171,57 @@ class DbMgr:
 
         return self._cursor.execute(sql).fetchall()
 
+    def select_one(
+        self,
+        table: str,
+        where: str | None = None,
+        params: tuple = (),
+        order_by: str | None = None,
+    ) -> sqlite3.Row | None:
+        sql = f"SELECT * FROM {table}"
+
+        if where is not None:
+            sql += f" WHERE {where}"
+
+        if order_by is not None:
+            sql += f" ORDER BY {order_by}"
+
+        sql += " LIMIT 1"
+
+        return self._cursor.execute(sql, params).fetchone()
+
     def upsert(self, table: str, records: list[dict], key_fields: list[str]) -> int:
-        if not records:
-            return 0
+        try:
+            if not records:
+                return 0
 
-        now = datetime.now(timezone.utc)
+            now = datetime.now(timezone.utc)
 
-        stamped_records = []
-        for record in records:
-            stamped = dict(record)
-            stamped["updated_y"] = now.year
-            stamped["updated_mo"] = now.month
-            stamped["updated_d"] = now.day
-            stamped["updated_h"] = now.hour
-            stamped["updated_mi"] = now.minute
-            stamped["updated_s"] = now.second
-            stamped_records.append(stamped)
+            stamped_records = []
+            if table == TABLE.INSTRUMENTS:
+                for record in records:
+                    stamped = dict(record)
+                    stamped["updated_y"] = now.year
+                    stamped["updated_mo"] = now.month
+                    stamped["updated_d"] = now.day
+                    stamped["updated_h"] = now.hour
+                    stamped["updated_mi"] = now.minute
+                    stamped["updated_s"] = now.second
+                    stamped_records.append(stamped)
+            else:
+                for record in records:
+                    stamped = dict(record)
+                    stamped_records.append(stamped)
 
-        self._upsert_many(
-            table=table,
-            records=stamped_records,
-            key_fields=key_fields,
-        )
+            self._upsert_many(
+                table=table,
+                records=stamped_records,
+                key_fields=key_fields,
+            )
 
-        return len(stamped_records)
+            return len(stamped_records)
+        except Exception as e:
+            self.log.critical(f"upsert() exception: {e}")
 
     def _upsert_many(
         self, table: str, records: list[dict], key_fields: list[str]

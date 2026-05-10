@@ -13,8 +13,11 @@ from typing import Final
 class DModule:
 
     BROKER: Final[str] = "Broker"
+    BROKER_DB: Final[str] = "BrokerDb"
     BASE_MQ: Final[str] = "BaseMQ"
     CACHE_MGR: Final[str] = "CacheMgr"
     CLIENT_MQ: Final[str] = "MQClient"
     CLIENT_QT: Final[str] = "ClientQt"
+    DB_MGR: Final[str] = "DbMgr"
+    OANDA_MGR: Final[str] = "OandaMgr"
     SERVER_MQ: Final[str] = "MQServer"

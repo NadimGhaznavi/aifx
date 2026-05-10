@@ -7,6 +7,7 @@
 #    Website: https://aifx.osoyalce.com
 #    License: GPL 3.0
 
+import json
 from zmq.sugar.frame import Frame
 import zmq
 
@@ -14,6 +15,11 @@ from aifx.constants.DAiFx import DAiFx as AIFX
 
 
 class MQUtils:
+    @staticmethod
+    def decode_json(data: bytes | Frame) -> dict:
+        raw = MQUtils.ensure_bytes(data)
+        return json.loads(raw.decode(AIFX.UTF_8))
+
     @staticmethod
     def encode_json(data: str) -> bytes:
         return data.encode(AIFX.UTF_8)

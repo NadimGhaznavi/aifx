@@ -11,7 +11,6 @@ from dataclasses import dataclass
 
 from aifx.constants.DInstrument import DInstrument as INS
 from aifx.constants.DDb import DColInstrument as COL
-from aifx.constants.DNetwork import DNetwork as NET
 
 
 @dataclass(slots=True)
@@ -21,7 +20,6 @@ class Instrument:
     display_name: str
     pip_location: int
     margin_rate: float
-    pub_port: int = -1
 
     @classmethod
     def from_oanda(cls, ob: dict) -> "Instrument":
@@ -31,7 +29,6 @@ class Instrument:
             display_name=ob[INS.DISPLAY_NAME],
             pip_location=ob[INS.PIP_LOC],
             margin_rate=float(ob[INS.MARGIN_RATE]),
-            pub_port=-1,
         )
 
     @classmethod
@@ -42,7 +39,6 @@ class Instrument:
             display_name=ob[COL.DISPLAY_NAME],
             pip_location=int(ob[COL.PIP_LOCATION]),
             margin_rate=float(ob[COL.MARGIN_RATE]),
-            pub_port=int(ob.get(COL.PUB_PORT, -1)),
         )
 
     def to_dict(self) -> dict[str, object]:
@@ -52,5 +48,4 @@ class Instrument:
             COL.DISPLAY_NAME: self.display_name,
             COL.PIP_LOCATION: self.pip_location,
             COL.MARGIN_RATE: self.margin_rate,
-            COL.PUB_PORT: self.pub_port,
         }

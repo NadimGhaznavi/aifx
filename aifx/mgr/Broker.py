@@ -12,8 +12,14 @@ from collections.abc import Callable, Awaitable
 import asyncio
 
 from aifx.constants.DAiFx import DAiFx as AIFX
+from aifx.constants.DCandle import DCandle as CANDLE
 from aifx.constants.DDef import DDef as DEF
-from aifx.constants.DDb import DDbF as DBF, DTable as TABLE, DColInstrument as COL
+from aifx.constants.DDb import (
+    DDbF as DBF,
+    DTable as TABLE,
+    DColInstrument as C_INST,
+    DColCandles as C_CAND,
+)
 from aifx.constants.DFile import DFile as FILE
 from aifx.constants.DInstrument import DInstrument as INS
 from aifx.constants.DMethod import DMethod as METHOD
@@ -23,11 +29,11 @@ from aifx.constants.DMQ import DMQ as MQ, DMQEvent
 
 
 from aifx.utils.AiFxLog import AiFxLog
+from aifx.utils.Feed import Feed
 from aifx.db.DbMgr import DbMgr
 from aifx.db.BrokerDb import BrokerDb
 from aifx.forex.Instrument import Instrument
 from aifx.mgr.OandaMgr import OandaMgr
-from aifx.mgr.FeedMgr import FeedMgr
 from aifx.zmq.MQServer import MQServer
 from aifx.zmq.MQMsg import MQMsg
 from aifx.zmq.MQEvent import MQEvent
@@ -60,11 +66,13 @@ class Broker:
         self.log = AiFxLog(client_id=identity, log_file=log_file, log_level=log_level)
 
         # In memory database
-        self.db_mgr = DbMgr(DBF.CACHE, logfile=log_file)
-        self.broker_db = BrokerDb(db_mgr=self.db_mgr)
+        self.db_mgr = DbMgr(db_type=DBF.CACHE, log_level=log_level, log_file=log_file)
+        self.broker_db = BrokerDb(
+            db_mgr=self.db_mgr, log_level=log_level, log_file=log_file
+        )
 
         # Oanda connections and data exchange
-        self.oanda = OandaMgr()
+        self.oanda = OandaMgr(log_level=log_level, log_file=log_file)
 
         # Server methods that are exposed via MQ
         self._srv_methods = {
@@ -73,29 +81,59 @@ class Broker:
         }
         self.mq: MQServer | None = None
 
-        # Track active pub feeds
-        self._active_feeds = {}
-        self._feed_tasks: dict[str, asyncio.Task] = {}
+        # Track OANDA and ZeroMQ feeds
+        self._feeds: dict[str, Feed] = {}
 
         self.log.info("Initialized")
 
-    async def bg_feed_instrument(self, name: str) -> None:
-        self.log.info(f"OANDA feed loop started: {name}")
+    async def bg_feed_instrument(self, feed: Feed) -> None:
+        self.log.info(f"OANDA feed started: {feed.name}")
+
+        # We're pulling 5 second candlestick data
+        # The FEED_INTERVAL is 5 seconds
+        # Set the count to 10 to ensure we get all the data
+        count = MQ.FEED_INTERVAL * 2
 
         try:
             while True:
-                code, data = self.oanda.get_candles(
-                    pair_name=name,
-                    count=5,
-                    granularity=CAN
+                candles = self.oanda.get_candles(
+                    pair_name=feed.name, count=count, granularity=CANDLE.GRAN_S5
                 )
-                # upsert into DB
-                # publish only if changed
+
+                if candles is None:
+                    self.log.warning(f"Failed to fetch candles: {feed.name}")
+                    await asyncio.sleep(MQ.FEED_INTERVAL)
+                    continue
+
+                candles = sorted(
+                    candles,
+                    key=lambda c: (c.y, c.mo, c.d, c.h, c.mi, c.s),
+                )
+                rows = self.db_mgr.upsert(
+                    table=TABLE.CANDLES,
+                    records=[candle.to_dict() for candle in candles],
+                    key_fields=[
+                        C_CAND.INSTRUMENT,
+                        C_CAND.GRANULARITY,
+                        C_CAND.Y,
+                        C_CAND.MO,
+                        C_CAND.D,
+                        C_CAND.H,
+                        C_CAND.MI,
+                        C_CAND.S,
+                    ],
+                )
+                self.log.debug(f"Candle upserted: {feed.name}, rows={rows}")
+                num_rows = self.db_mgr.num_rows(table=TABLE.CANDLES)
+                self.log.debug(f"Candles table has {num_rows} rows of data")
                 await asyncio.sleep(MQ.FEED_INTERVAL)
 
         except asyncio.CancelledError:
-            self.log.info(f"OANDA feed loop stopped: {name}")
+            self.log.info(f"OANDA feed loop stopped: {feed.name}")
             raise
+
+        except Exception as e:
+            self.log.critical(f"Background feed exception: {e}")
 
     async def bg_mq_events(self) -> None:
         assert self.mq is not None
@@ -112,6 +150,35 @@ class Broker:
         except asyncio.CancelledError:
             raise
 
+    async def bg_publish_instrument(self, feed: Feed) -> None:
+        self.log.info(f"Starting MQ feed: {feed.name}")
+
+        assert self.mq is not None
+
+        topic = self.mq.topic(f"candles.{feed.name}")
+        last_key = None
+
+        feeds = self._feeds
+
+        try:
+            while True:
+                candle = self.broker_db.get_latest_candle(feed.name)
+                self.log.debug(f"Latest candle: {candle}")
+
+                if candle is not None:
+                    key = (candle.y, candle.mo, candle.d, candle.h, candle.mi, candle.s)
+
+                    if key != last_key:
+                        await self.mq.publish(topic=topic, payload=candle.to_dict())
+                        last_key = key
+                        self.log.debug(f"Published candle: {feed.name}")
+
+                await asyncio.sleep(MQ.FEED_INTERVAL)
+
+        except asyncio.CancelledError:
+            self.log.info(f"MQ feed stopped: {feed.name}")
+            raise
+
     async def get_instruments_oanda(self):
         return await asyncio.to_thread(self.oanda.get_instruments)
 
@@ -126,12 +193,6 @@ class Broker:
 
         if instruments:
             instruments = sorted(instruments, key=lambda ins: ins.name)
-
-            cur_pub_port = NET.BROKER_PUB_PORTS_START
-
-            for ins in instruments:
-                ins.pub_port = cur_pub_port
-                cur_pub_port += 1
 
             self.db_mgr.upsert(
                 table=TABLE.INSTRUMENTS,
@@ -174,33 +235,34 @@ class Broker:
     async def start_feed(self, msg: MQMsg):
         instrument = msg.payload
 
-        name = instrument[COL.NAME]
-        pub_port = instrument[COL.PUB_PORT]
+        feeds = self._feeds
 
-        if name in self._active_feeds:
-            self.log.info(f"Feed already started: {name}, pub_port={pub_port}")
+        feed = Feed(name=instrument[C_INST.NAME])
+
+        if feed.name in feeds:
+            self.log.info(f"Feed already started: {feed.name}")
             return {
-                COL.NAME: name,
-                COL.PUB_PORT: pub_port,
+                C_INST.NAME: feed.name,
                 INS.STARTED: True,
             }
 
-        self.log.info(f"New feed request: {name}, pub_port={pub_port}")
+        self.log.info(f"New feed request: {feed.name}")
+        feeds[feed.name] = feed
 
-        self._active_feeds[name] = {
-            COL.NAME: name,
-            COL.PUB_PORT: pub_port,
-            INS.INSTRUMENT: instrument,
-        }
-
-        # Start an asyncio loop to ETL the OANDA candle data
-        self._feed_tasks[name] = asyncio.create_task(
-            self.bg_feed_instrument(name), name=f"feed-{name}"
+        # Loop: Feed OANDA data into the DB
+        feed.oanda_task = asyncio.create_task(
+            self.bg_feed_instrument(feed=feed), name=f"feed-{feed.name}"
         )
+        feed.oanda_running = True
+
+        # Loop: Publish DB data on a PUB socket
+        feed.pub_task = asyncio.create_task(
+            self.bg_publish_instrument(feed=feed), name=f"pub-{feed.name}"
+        )
+        feed.pub_running = True
 
         return {
-            COL.NAME: name,
-            COL.PUB_PORT: pub_port,
+            C_INST.NAME: feed.name,
             INS.STARTED: True,
         }
 

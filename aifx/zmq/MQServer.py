@@ -19,6 +19,7 @@ import json
 import time
 
 from aifx.constants.DAiFx import DAiFx as AIFX
+from aifx.constants.DDb import DColCandles as C_CAND
 from aifx.constants.DDef import DDef as DEF
 from aifx.constants.DLogging import DAiFxLog as LOG
 from aifx.constants.DMethod import DMethod as METHOD
@@ -44,6 +45,7 @@ class MQServer:
         hostname: str = NET.BROKER_HOSTNAME,
         port: int = NET.BROKER_PORT,
         hb_port: int = NET.BROKER_HB_PORT,
+        pub_port: int = NET.BROKER_PUB_PORT,
         identity: str = MODULE.SERVER_MQ,
         topic_prefix: str = MQ.TOPIC_PREFIX,
         srv_methods: dict[str, MsgHandler] | None = None,
@@ -58,6 +60,7 @@ class MQServer:
         self._hostname = hostname
         self._port = port
         self._hb_port = hb_port
+        self._pub_port = pub_port
         self._topic_prefix = topic_prefix
         self._identity = identity
         self._srv_methods = srv_methods or {}
@@ -69,18 +72,25 @@ class MQServer:
         self.log.info(f"Hostname set: {hostname}")
         self.log.info(f"Control port set: {port}")
         self.log.info(f"Heartbeat port set: {hb_port}")
+        self.log.info(f"PUB port set: {pub_port}")
         self.log.info(f"ZeroMQ identity set: {identity}")
         self.log.info(f"Topic prefix set: {topic_prefix}")
-        self.log.info(f"Methods registered: {srv_methods}")
+        methods = []
+        for method in srv_methods.keys():
+            methods.append(method)
+        self.log.info(f"Methods registered: {methods}")
 
         # Addresses
         self._address = f"{NETF.TCP}{self._hostname}:{self._port}"
         self._hb_address = f"{NETF.TCP}{self._hostname}:{self._hb_port}"
+        self._pub_address = f"{NETF.TCP}{self._hostname}:{self._pub_port}"
 
         # Sockets
         self._ctx = zmq.asyncio.Context()
         self._socket = self._ctx.socket(zmq.ROUTER)
         self._hb_socket = self._ctx.socket(zmq.ROUTER)
+        self._pub_socket = self._ctx.socket(zmq.PUB)
+        self._pub_socket.linger = 0
 
         # ----- Tasks and Stop Events -----
         # Monitor the ROUTER/DEALER control port
@@ -108,10 +118,6 @@ class MQServer:
         self._prune_stop_event = asyncio.Event()
 
         self._started = False
-
-    # ----- Static methods -----
-
-    # ----- End of static methods -----
 
     async def bg_hb_listen(self) -> None:
         try:
@@ -188,6 +194,7 @@ class MQServer:
                         pass
                     except Exception as e:
                         self.log.critical(f"Critical exception: {e}")
+                        self.log.critical(f"STACKTRACE: {traceback.format_exc()}")
                         print(f"Critical exception: {e}")
 
                 else:
@@ -198,7 +205,7 @@ class MQServer:
             raise
         except Exception as e:
             self.log.critical(f"Caught an exception: {e}")
-            print(f"Caught an exception: {e}")
+            self.log.critical(f"STACKTRACE: {traceback.format_exc()}")
             return
 
     # Pruning loop
@@ -224,13 +231,26 @@ class MQServer:
             raise
         except Exception as e:
             self.log.critical(f"Caught an exception: {e}")
-            print(f"Caught an exception: {e}")
+            self.log.critical(f"STACKTRACE: {traceback.format_exc()}")
             return
 
     # Return a boolean representing the heartbeat status:
     # True is connected.
     def connected(self) -> bool:
         return (time.monotonic() - self._last_heartbeat) < int(OANDA.TIMEOUT)
+
+    async def publish(self, topic: str, payload: dict) -> None:
+        topic_b = topic.encode(AIFX.UTF_8)
+        data_b = json.dumps(payload, separators=(",", ":")).encode(AIFX.UTF_8)
+        await self._pub_socket.send_multipart([topic_b, data_b])
+        year = payload[C_CAND.Y]
+        month = payload[C_CAND.MO]
+        day = payload[C_CAND.D]
+        hour = payload[C_CAND.H]
+        minute = payload[C_CAND.MI]
+        second = payload[C_CAND.S]
+        timestamp = f"{year}-{month}-{day} {hour}:{minute}:{second}"
+        self.log.debug(f"Published {topic} candle @ {timestamp}")
 
     async def quit(self) -> None:
         if not self._started:
@@ -287,6 +307,16 @@ class MQServer:
             "socket.close(linger=0)",
         )
 
+        MQUtils.ignore_zmq_teardown(
+            lambda: self._pub_socket.unbind(self._pub_address),
+            f"pub_socket.unbind({self._pub_address})",
+        )
+
+        MQUtils.ignore_zmq_teardown(
+            lambda: self._pub_socket.close(linger=0),
+            "pub_socket.close(linger=0)",
+        )
+
     async def recv(self) -> MQMsg:
         message_data = None
         message_data = await asyncio.wait_for(
@@ -324,6 +354,7 @@ class MQServer:
 
         self._socket.bind(self._address)
         self._hb_socket.bind(self._hb_address)
+        self._pub_socket.bind(self._pub_address)
 
         self._started = True
         self._hb_task = asyncio.create_task(self.bg_hb_listen(), name=MQF.HEARTBEAT)

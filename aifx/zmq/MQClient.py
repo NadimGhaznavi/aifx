@@ -16,8 +16,8 @@ import time
 import zmq
 from PySide6.QtCore import QObject, QTimer, Signal
 
+from aifx.constants.DAiFx import DAiFx as AIFX
 from aifx.constants.DDef import DDef as DEF
-from aifx.constants.DInstrument import DInstrument as INS
 from aifx.constants.DMethod import DMethod as METHOD
 from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DMQ import DMQ as MQ, DMQF as MQF
@@ -33,6 +33,7 @@ SubHandler = Callable[[str, dict], Any]
 
 class MQClient(QObject):
 
+    candle_received = Signal(str, object)
     connection_changed = Signal(bool)
     instruments_received = Signal(object)
     feed_started = Signal(object)
@@ -43,6 +44,7 @@ class MQClient(QObject):
         broker_hostname: str = NET.BROKER_HOSTNAME,
         broker_port: int = NET.BROKER_PORT,
         broker_hb_port: int = NET.BROKER_HB_PORT,
+        broker_pub_port: int = NET.BROKER_PUB_PORT,
         identity: str = MODULE.CLIENT_MQ,
         topic_prefix: str = MQ.TOPIC_PREFIX,
         sub_methods: dict[str, SubHandler] | None = None,
@@ -55,17 +57,20 @@ class MQClient(QObject):
         self._broker_hostname = broker_hostname
         self._broker_port = broker_port
         self._broker_hb_port = broker_hb_port
+        self._broker_pub_port = broker_pub_port
         self._identity = identity
         self._topic_prefix = topic_prefix
         self._sub_methods = sub_methods or {}
 
-        self._address = f"{NETF.TCP}{self._broker_hostname}:{self._broker_port}"
-        self._hb_address = f"{NETF.TCP}{self._broker_hostname}:{self._broker_hb_port}"
+        self._address = f"{NETF.TCP}{broker_hostname}:{broker_port}"
+        self._hb_address = f"{NETF.TCP}{broker_hostname}:{broker_hb_port}"
+        self._sub_address = f"{NETF.TCP}{broker_hostname}:{broker_pub_port}"
 
         self._ctx = zmq.Context()
 
         self._socket = self._ctx.socket(zmq.DEALER)
         self._hb_socket = self._ctx.socket(zmq.DEALER)
+        self._sub_socket = self._ctx.socket(zmq.SUB)
 
         self._socket.setsockopt(zmq.IDENTITY, self._identity.encode())
         self._hb_socket.setsockopt(zmq.IDENTITY, self._identity.encode())
@@ -80,11 +85,45 @@ class MQClient(QObject):
         self._last_connected = None
         self._hb_timer = QTimer(self)
         self._hb_timer.timeout.connect(self._heartbeat_tick)
+
         self._poll_hb_timer = QTimer(self)
         self._poll_hb_timer.timeout.connect(self._poll_heartbeat_reply)
 
+        self._sub_socket.connect(self._sub_address)
+        self._sub_timer = QTimer(self)
+        self._sub_timer.timeout.connect(self._bg_sub_listen)
+
         self._started = False
         self._stopped = False
+
+    def _bg_sub_listen(self) -> None:
+        while True:
+            try:
+                parts = self._sub_socket.recv_multipart(flags=zmq.NOBLOCK)
+            except zmq.Again:
+                break
+
+            if len(parts) != 2:
+                self.log.warning(f"Invalid SUB frame count: {len(parts)}")
+                continue
+
+            topic_b, payload_b = parts
+
+            topic = topic_b.decode(AIFX.UTF_8)
+            payload = MQUtils.decode_json(payload_b)
+
+            self.candle_received.emit(topic, payload)
+
+            handler = self._sub_methods.get(topic)
+
+            if handler is None:
+                self.log.warning(f"No SUB handler for topic: {topic}")
+                continue
+
+            handler(topic, payload)
+
+    def candle_topic(self, instrument: str) -> str:
+        return self.topic(f"candles.{instrument}")
 
     def connected(self) -> bool:
         return (time.time() - self._last_heartbeat) < (2 * int(MQ.HEARTBEAT_INTERVAL))
@@ -162,13 +201,16 @@ class MQClient(QObject):
         self._started = False
 
         self._hb_timer.stop()
-        self.log.info("ClientMQ.quit(): Heartbeat timer stopped")
+        self.log.info("Heartbeat timer stopped")
 
         self._poll_hb_timer.stop()
-        self.log.info("ClientMQ.quit(): Heartbeat poll timer stopped")
+        self.log.info("Heartbeat poll timer stopped")
 
         self._poll_timer.stop()
-        self.log.info("ClientMQ.quit(): Control poll timer stopped")
+        self.log.info("Control poll timer stopped")
+
+        self._sub_timer.stop()
+        self.log.info("SUB poll timer stopped")
 
         MQUtils.ignore_zmq_teardown(
             lambda: self._socket.close(linger=0),
@@ -178,6 +220,11 @@ class MQClient(QObject):
         MQUtils.ignore_zmq_teardown(
             lambda: self._hb_socket.close(linger=0),
             "hb_socket.close(linger=0)",
+        )
+
+        MQUtils.ignore_zmq_teardown(
+            lambda: self._sub_socket.close(linger=0),
+            "sub_socket.close(linger=0)",
         )
 
         MQUtils.ignore_zmq_teardown(
@@ -200,6 +247,7 @@ class MQClient(QObject):
         self._hb_timer.start(int(MQ.HEARTBEAT_INTERVAL) * 1000)
         self._poll_hb_timer.start(1000)
         self._poll_timer.start(100)
+        self._sub_timer.start(100)
         self._heartbeat_tick()
 
     def start_feed(self, instrument: dict) -> bool:
@@ -211,6 +259,10 @@ class MQClient(QObject):
         )
         return self.send(msg)
 
+    def subscribe(self, topic: str) -> None:
+        self.log.info(f"Subscribing: {topic}")
+        self._sub_socket.setsockopt_string(zmq.SUBSCRIBE, topic)
+
     def topic(self, suffix: str) -> str:
         return f"{self._topic_prefix}.{suffix}"
 
@@ -220,3 +272,7 @@ class MQClient(QObject):
         if now_connected != self._last_connected:
             self._last_connected = now_connected
             self.connection_changed.emit(now_connected)
+
+    def unsubscribe(self, topic: str) -> None:
+        self.log.info(f"Unsubscribing: {topic}")
+        self._sub_socket.setsockopt_string(zmq.UNSUBSCRIBE, topic)

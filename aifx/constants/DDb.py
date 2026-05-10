@@ -9,18 +9,30 @@
 
 from typing import Final
 
-from aifx.constants.DInstrument import DInstrument as INS
-
 
 class DColInstrument:
-    GRANULARITY: Final[str] = "granularity"
-    INSTRUMENT = INS.INSTRUMENT
     NAME: Final[str] = "name"
     TYPE: Final[str] = "type"
     DISPLAY_NAME: Final[str] = "display_name"
     PIP_LOCATION: Final[str] = "pip_location"
     MARGIN_RATE: Final[str] = "margin_rate"
-    PUB_PORT: Final[str] = "pub_port"
+    UPDATED_Y: Final[str] = "updated_y"
+    UPDATED_MO: Final[str] = "updated_mo"
+    UPDATED_D: Final[str] = "updated_d"
+    UPDATED_H: Final[str] = "updated_h"
+    UPDATED_MI: Final[str] = "updated_mi"
+    UPDATED_S: Final[str] = "updated_s"
+
+
+class DColCandles:
+    INSTRUMENT: Final[str] = "instrument"
+    GRANULARITY: Final[str] = "granularity"
+    Y: Final[str] = "y"
+    MO: Final[str] = "mo"
+    D: Final[str] = "d"
+    H: Final[str] = "h"
+    MI: Final[str] = "mi"
+    S: Final[str] = "s"
     VOLUME: Final[str] = "volume"
     MID_O: Final[str] = "mid_o"
     MID_H: Final[str] = "mid_h"

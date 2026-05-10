@@ -35,6 +35,7 @@ class ClientQt(QWidget):
         broker_hostname: str = NET.BROKER_HOSTNAME,
         broker_port: int = NET.BROKER_PORT,
         broker_hb_port: int = NET.BROKER_HB_PORT,
+        broker_pub_port: int = NET.BROKER_PUB_PORT,
         identity: str = MODULE.CLIENT_QT,
     ):
         super().__init__()
@@ -58,6 +59,7 @@ class ClientQt(QWidget):
             broker_hostname=broker_hostname,
             broker_port=broker_port,
             broker_hb_port=broker_hb_port,
+            broker_pub_port=broker_pub_port,
             identity=identity,
             topic_prefix=MQ.TOPIC_PREFIX,
             sub_methods={},
@@ -65,6 +67,7 @@ class ClientQt(QWidget):
         self.mq.connection_changed.connect(self.set_connection_status)
         self.mq.instruments_received.connect(self.update_instruments)
         self.mq.feed_started.connect(self.feed_started)
+        self.mq.candle_received.connect(self.handle_candle)
 
         self.wire_signals()
         self.log.info(QTL.SIGNALS_WIRED)
@@ -77,9 +80,10 @@ class ClientQt(QWidget):
         name = feed_data[COL.NAME]
         self.ui.lbl_current_pair.setStyleSheet("color: #bbaa66; font-weight bold;")
         self.ui.lbl_current_pair.setText(name)
-        pub_port = feed_data[COL.PUB_PORT]
-        hostname = self._broker_hostname
-        self.log.debug(f"feed_started(): {name} - port: {pub_port}, host: {hostname}")
+        self.log.debug(f"Feed Started: {name}")
+
+    def handle_candle(self, topic: str, candle: dict):
+        self.log.debug(f"Candle received: {topic}: {candle}")
 
     def set_connection_status(self, connected: bool):
 
@@ -113,12 +117,14 @@ class ClientQt(QWidget):
         instrument = self._instruments[name]
 
         display_name = instrument.get(COL.DISPLAY_NAME, name)
-        pub_port = instrument.get(COL.PUB_PORT)
 
         self.ui.lbl_current_pair.setText(f"{display_name} - {name}")
-        self.log.info(f"Selected instrument: {name}, pub_port={pub_port}")
+        self.log.info(f"Selected instrument: {name}")
 
         self.mq.start_feed(instrument=instrument)
+
+        topic = self.mq.candle_topic(name)
+        self.mq.subscribe(topic=topic)
 
     def load_ui(self):
         loader = QUiLoader()
