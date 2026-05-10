@@ -13,7 +13,6 @@ from typing import Final
 class DModule:
 
     BROKER: Final[str] = "Broker"
-    BROKER_BASE: Final[str] = "BrokerBase"
     BASE_MQ: Final[str] = "BaseMQ"
     CACHE_MGR: Final[str] = "CacheMgr"
     CLIENT_MQ: Final[str] = "MQClient"

@@ -28,7 +28,7 @@ from aifx.constants.DMsg import DMsg as MSG
 from aifx.constants.DNetwork import DNetwork as NET, DNetworkF as NETF
 from aifx.constants.DOanda import DOanda as OANDA
 
-from aifx.utils.AIFxLog import AiFxLog
+from aifx.utils.AiFxLog import AiFxLog
 from aifx.zmq.MQMsg import MQMsg
 from aifx.zmq.MQMsgBatch import MQMsgBatch
 from aifx.zmq.MQUtils import MQUtils

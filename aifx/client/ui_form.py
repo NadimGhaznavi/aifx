@@ -23,82 +23,128 @@ class Ui_Widget(object):
     def setupUi(self, Widget):
         if not Widget.objectName():
             Widget.setObjectName(u"Widget")
-        Widget.resize(800, 600)
-        self.widget = QWidget(Widget)
-        self.widget.setObjectName(u"widget")
-        self.widget.setGeometry(QRect(10, 10, 781, 581))
-        self.verticalLayout = QVBoxLayout(self.widget)
-        self.verticalLayout.setObjectName(u"verticalLayout")
-        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
-        self.horizontalLayout_2 = QHBoxLayout()
-        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.lbl_aifx = QLabel(self.widget)
+        Widget.resize(795, 650)
+        self.layoutWidget = QWidget(Widget)
+        self.layoutWidget.setObjectName(u"layoutWidget")
+        self.layoutWidget.setGeometry(QRect(12, 13, 771, 581))
+        self.vl_window = QVBoxLayout(self.layoutWidget)
+        self.vl_window.setObjectName(u"vl_window")
+        self.vl_window.setContentsMargins(0, 0, 0, 0)
+        self.hl_title = QHBoxLayout()
+        self.hl_title.setObjectName(u"hl_title")
+        self.lbl_aifx = QLabel(self.layoutWidget)
         self.lbl_aifx.setObjectName(u"lbl_aifx")
-        self.lbl_aifx.setAlignment(Qt.AlignBottom|Qt.AlignLeading|Qt.AlignLeft)
-
-        self.horizontalLayout_2.addWidget(self.lbl_aifx)
-
-        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
-
-        self.horizontalLayout_2.addItem(self.horizontalSpacer)
-
-        self.lbl_version = QLabel(self.widget)
-        self.lbl_version.setObjectName(u"lbl_version")
-        self.lbl_version.setTextFormat(Qt.AutoText)
-        self.lbl_version.setAlignment(Qt.AlignBottom|Qt.AlignLeading|Qt.AlignLeft)
-
-        self.horizontalLayout_2.addWidget(self.lbl_version)
-
-
-        self.verticalLayout.addLayout(self.horizontalLayout_2)
-
-        self.verticalSpacer = QSpacerItem(20, 223, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
-
-        self.verticalLayout.addItem(self.verticalSpacer)
-
-        self.horizontalLayout = QHBoxLayout()
-        self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.lbl_instrument = QLabel(self.widget)
-        self.lbl_instrument.setObjectName(u"lbl_instrument")
-
-        self.horizontalLayout.addWidget(self.lbl_instrument)
-
-        self.cb_instrument = QComboBox(self.widget)
-        self.cb_instrument.setObjectName(u"cb_instrument")
-        sizePolicy = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.cb_instrument.sizePolicy().hasHeightForWidth())
-        self.cb_instrument.setSizePolicy(sizePolicy)
+        sizePolicy.setHeightForWidth(self.lbl_aifx.sizePolicy().hasHeightForWidth())
+        self.lbl_aifx.setSizePolicy(sizePolicy)
+        self.lbl_aifx.setAlignment(Qt.AlignBottom|Qt.AlignLeading|Qt.AlignLeft)
 
-        self.horizontalLayout.addWidget(self.cb_instrument)
+        self.hl_title.addWidget(self.lbl_aifx)
 
+        self.hs_title = QSpacerItem(40, 20, QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Minimum)
 
-        self.verticalLayout.addLayout(self.horizontalLayout)
+        self.hl_title.addItem(self.hs_title)
 
-        self.verticalSpacer_2 = QSpacerItem(20, 223, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        self.lbl_version = QLabel(self.layoutWidget)
+        self.lbl_version.setObjectName(u"lbl_version")
+        sizePolicy.setHeightForWidth(self.lbl_version.sizePolicy().hasHeightForWidth())
+        self.lbl_version.setSizePolicy(sizePolicy)
+        self.lbl_version.setMouseTracking(True)
+        self.lbl_version.setTextFormat(Qt.AutoText)
+        self.lbl_version.setAlignment(Qt.AlignBottom|Qt.AlignRight|Qt.AlignTrailing)
 
-        self.verticalLayout.addItem(self.verticalSpacer_2)
+        self.hl_title.addWidget(self.lbl_version)
 
-        self.horizontalLayout_3 = QHBoxLayout()
-        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
-        self.lbl_connection = QLabel(self.widget)
+        self.hl_title.setStretch(1, 1)
+
+        self.vl_window.addLayout(self.hl_title)
+
+        self.vl_current_pair = QVBoxLayout()
+        self.vl_current_pair.setObjectName(u"vl_current_pair")
+        self.lbl_current_pair = QLabel(self.layoutWidget)
+        self.lbl_current_pair.setObjectName(u"lbl_current_pair")
+        font = QFont()
+        font.setPointSize(16)
+        self.lbl_current_pair.setFont(font)
+        self.lbl_current_pair.setAlignment(Qt.AlignCenter)
+
+        self.vl_current_pair.addWidget(self.lbl_current_pair)
+
+        self.wgt_plot = QWidget(self.layoutWidget)
+        self.wgt_plot.setObjectName(u"wgt_plot")
+
+        self.vl_current_pair.addWidget(self.wgt_plot)
+
+        self.vl_current_pair.setStretch(1, 1)
+
+        self.vl_window.addLayout(self.vl_current_pair)
+
+        self.hl_instrument = QHBoxLayout()
+        self.hl_instrument.setObjectName(u"hl_instrument")
+        self.lbl_instrument = QLabel(self.layoutWidget)
+        self.lbl_instrument.setObjectName(u"lbl_instrument")
+        sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        sizePolicy1.setHorizontalStretch(0)
+        sizePolicy1.setVerticalStretch(0)
+        sizePolicy1.setHeightForWidth(self.lbl_instrument.sizePolicy().hasHeightForWidth())
+        self.lbl_instrument.setSizePolicy(sizePolicy1)
+
+        self.hl_instrument.addWidget(self.lbl_instrument)
+
+        self.cb_instrument = QComboBox(self.layoutWidget)
+        self.cb_instrument.setObjectName(u"cb_instrument")
+        sizePolicy2 = QSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
+        sizePolicy2.setHorizontalStretch(0)
+        sizePolicy2.setVerticalStretch(0)
+        sizePolicy2.setHeightForWidth(self.cb_instrument.sizePolicy().hasHeightForWidth())
+        self.cb_instrument.setSizePolicy(sizePolicy2)
+        self.cb_instrument.setMinimumSize(QSize(350, 0))
+
+        self.hl_instrument.addWidget(self.cb_instrument)
+
+        self.hs_instrument = QSpacerItem(40, 20, QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
+
+        self.hl_instrument.addItem(self.hs_instrument)
+
+        self.btn_load = QPushButton(self.layoutWidget)
+        self.btn_load.setObjectName(u"btn_load")
+
+        self.hl_instrument.addWidget(self.btn_load)
+
+        self.hl_instrument.setStretch(2, 1)
+
+        self.vl_window.addLayout(self.hl_instrument)
+
+        self.hl_footer = QHBoxLayout()
+        self.hl_footer.setObjectName(u"hl_footer")
+        self.lbl_connection = QLabel(self.layoutWidget)
         self.lbl_connection.setObjectName(u"lbl_connection")
+        sizePolicy3 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+        sizePolicy3.setHorizontalStretch(0)
+        sizePolicy3.setVerticalStretch(0)
+        sizePolicy3.setHeightForWidth(self.lbl_connection.sizePolicy().hasHeightForWidth())
+        self.lbl_connection.setSizePolicy(sizePolicy3)
 
-        self.horizontalLayout_3.addWidget(self.lbl_connection)
+        self.hl_footer.addWidget(self.lbl_connection)
 
-        self.horizontalSpacer_2 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.hs_footer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
-        self.horizontalLayout_3.addItem(self.horizontalSpacer_2)
+        self.hl_footer.addItem(self.hs_footer)
 
-        self.btn_exit = QPushButton(self.widget)
+        self.btn_exit = QPushButton(self.layoutWidget)
         self.btn_exit.setObjectName(u"btn_exit")
+        sizePolicy.setHeightForWidth(self.btn_exit.sizePolicy().hasHeightForWidth())
+        self.btn_exit.setSizePolicy(sizePolicy)
 
-        self.horizontalLayout_3.addWidget(self.btn_exit)
+        self.hl_footer.addWidget(self.btn_exit)
 
+        self.hl_footer.setStretch(1, 1)
 
-        self.verticalLayout.addLayout(self.horizontalLayout_3)
+        self.vl_window.addLayout(self.hl_footer)
 
+        self.vl_window.setStretch(1, 1)
 
         self.retranslateUi(Widget)
 
@@ -109,7 +155,9 @@ class Ui_Widget(object):
         Widget.setWindowTitle(QCoreApplication.translate("Widget", u"Widget", None))
         self.lbl_aifx.setText(QCoreApplication.translate("Widget", u"<html><head/><body><p><span style=\" font-size:24pt; font-weight:700; color:#669f1e;\">AI FX</span></p></body></html>", None))
         self.lbl_version.setText(QCoreApplication.translate("Widget", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700; color:#669f1e;\">&lt;version&gt;</span></p></body></html>", None))
+        self.lbl_current_pair.setText(QCoreApplication.translate("Widget", u"N/A", None))
         self.lbl_instrument.setText(QCoreApplication.translate("Widget", u"Instrument:", None))
+        self.btn_load.setText(QCoreApplication.translate("Widget", u"Load", None))
         self.lbl_connection.setText(QCoreApplication.translate("Widget", u"<html><head/><body><p><span style=\" font-weight:700; color:#ff7800;\">Uninitialized</span></p></body></html>", None))
         self.btn_exit.setText(QCoreApplication.translate("Widget", u"Exit", None))
     # retranslateUi

@@ -22,7 +22,7 @@ from aifx.constants.DNetwork import DNetwork as NET
 from aifx.constants.DMQ import DMQ as MQ, DMQEvent
 
 
-from aifx.utils.AIFxLog import AiFxLog
+from aifx.utils.AiFxLog import AiFxLog
 from aifx.db.DbMgr import DbMgr
 from aifx.db.BrokerDb import BrokerDb
 from aifx.forex.Instrument import Instrument
@@ -100,19 +100,20 @@ class Broker:
         if not instruments:
             instruments = await self.get_instruments_oanda()
 
-            if instruments:
-                cur_pub_port = NET.BROKER_PUB_PORTS_START
+        if instruments:
+            instruments = sorted(instruments, key=lambda ins: ins.name)
 
-                for ins in instruments:
-                    ins.pub_port = cur_pub_port
-                    cur_pub_port += 1
+            cur_pub_port = NET.BROKER_PUB_PORTS_START
 
-                self.db_mgr.upsert(
-                    table=TABLE.INSTRUMENTS,
-                    records=[ins.to_dict() for ins in instruments],
-                    key_fields=["name"],
-                )
+            for ins in instruments:
+                ins.pub_port = cur_pub_port
+                cur_pub_port += 1
 
+            self.db_mgr.upsert(
+                table=TABLE.INSTRUMENTS,
+                records=[ins.to_dict() for ins in instruments],
+                key_fields=[INS.NAME],
+            )
         return {INS.INSTRUMENTS: [ins.to_dict() for ins in instruments]}
 
     async def handle_mq_event(self, event: MQEvent) -> None:

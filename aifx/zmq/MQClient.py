@@ -24,7 +24,7 @@ from aifx.constants.DMQ import DMQ as MQ
 from aifx.constants.DNetwork import DNetwork as NET, DNetworkF as NETF
 from aifx.constants.DQt import DQtL as QTL
 
-from aifx.utils.AIFxLog import AiFxLog
+from aifx.utils.AiFxLog import AiFxLog
 from aifx.zmq.MQMsg import MQMsg
 from aifx.zmq.MQUtils import MQUtils
 
@@ -195,6 +195,15 @@ class MQClient(QObject):
         self._poll_hb_timer.start(1000)
         self._poll_timer.start(100)
         self._heartbeat_tick()
+
+    def start_feed(self, instrument: dict) -> bool:
+        msg = MQMsg(
+            sender=self._identity,
+            target=MODULE.BROKER,
+            method=METHOD.START_FEED,
+            payload=instrument,
+        )
+        return self.send(msg)
 
     def topic(self, suffix: str) -> str:
         return f"{self._topic_prefix}.{suffix}"

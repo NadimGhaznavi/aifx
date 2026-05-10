@@ -11,6 +11,7 @@ from typing import Final
 
 from aifx.constants.DMethod import DMethod as METHOD
 
+
 class DMQ:
     CANDLES_TOPIC: Final[str] = "candles_topic"
     CLIENT_TIMEOUT: Final[int] = 30
@@ -35,3 +36,4 @@ class DMQEvent:
     CLIENT_ADDED = DMQF.CLIENT_ADDED
     CLIENT_REMOVED = DMQF.CLIENT_REMOVED
     GET_INSTRUMENTS = METHOD.GET_INSTRUMENTS
+    START_FEED = METHOD.START_FEED

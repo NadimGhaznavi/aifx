@@ -13,8 +13,6 @@ from aifx.constants.DInstrument import DInstrument as INS
 from aifx.constants.DDb import DColInstrument as COL
 from aifx.constants.DNetwork import DNetwork as NET
 
-FIRST_PUB_PORT = NET.BROKER_PUB_PORTS_START
-
 
 @dataclass(slots=True)
 class Instrument:
@@ -37,8 +35,15 @@ class Instrument:
         )
 
     @classmethod
-    def from_db(cls, ob):
-        return cls(name=ob["name"])
+    def from_db(cls, ob: dict) -> "Instrument":
+        return cls(
+            name=ob[COL.NAME],
+            type=ob[COL.TYPE],
+            display_name=ob[COL.DISPLAY_NAME],
+            pip_location=int(ob[COL.PIP_LOCATION]),
+            margin_rate=float(ob[COL.MARGIN_RATE]),
+            pub_port=int(ob.get(COL.PUB_PORT, -1)),
+        )
 
     def to_dict(self) -> dict[str, object]:
         return {
