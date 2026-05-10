@@ -16,6 +16,7 @@ from aifx.constants.DInstrument import DInstrument as INS
 class DMQ:
     CANDLES_TOPIC: Final[str] = "candles_topic"
     CLIENT_TIMEOUT: Final[int] = 30
+    FEED_INTERVAL: Final[int] = 5
     HEARTBEAT_INTERVAL: Final[float] = 1.0
     LISTEN_INTERVAL: Final[float] = 1.0
     MAX_BATCH_SIZE: Final[int] = 50

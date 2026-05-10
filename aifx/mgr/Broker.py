@@ -27,6 +27,7 @@ from aifx.db.DbMgr import DbMgr
 from aifx.db.BrokerDb import BrokerDb
 from aifx.forex.Instrument import Instrument
 from aifx.mgr.OandaMgr import OandaMgr
+from aifx.mgr.FeedMgr import FeedMgr
 from aifx.zmq.MQServer import MQServer
 from aifx.zmq.MQMsg import MQMsg
 from aifx.zmq.MQEvent import MQEvent
@@ -72,7 +73,29 @@ class Broker:
         }
         self.mq: MQServer | None = None
 
+        # Track active pub feeds
+        self._active_feeds = {}
+        self._feed_tasks: dict[str, asyncio.Task] = {}
+
         self.log.info("Initialized")
+
+    async def bg_feed_instrument(self, name: str) -> None:
+        self.log.info(f"OANDA feed loop started: {name}")
+
+        try:
+            while True:
+                code, data = self.oanda.get_candles(
+                    pair_name=name,
+                    count=5,
+                    granularity=CAN
+                )
+                # upsert into DB
+                # publish only if changed
+                await asyncio.sleep(MQ.FEED_INTERVAL)
+
+        except asyncio.CancelledError:
+            self.log.info(f"OANDA feed loop stopped: {name}")
+            raise
 
     async def bg_mq_events(self) -> None:
         assert self.mq is not None
@@ -154,7 +177,26 @@ class Broker:
         name = instrument[COL.NAME]
         pub_port = instrument[COL.PUB_PORT]
 
-        self.log.info(f"START_FEED received: {name}, pub_port={pub_port}")
+        if name in self._active_feeds:
+            self.log.info(f"Feed already started: {name}, pub_port={pub_port}")
+            return {
+                COL.NAME: name,
+                COL.PUB_PORT: pub_port,
+                INS.STARTED: True,
+            }
+
+        self.log.info(f"New feed request: {name}, pub_port={pub_port}")
+
+        self._active_feeds[name] = {
+            COL.NAME: name,
+            COL.PUB_PORT: pub_port,
+            INS.INSTRUMENT: instrument,
+        }
+
+        # Start an asyncio loop to ETL the OANDA candle data
+        self._feed_tasks[name] = asyncio.create_task(
+            self.bg_feed_instrument(name), name=f"feed-{name}"
+        )
 
         return {
             COL.NAME: name,

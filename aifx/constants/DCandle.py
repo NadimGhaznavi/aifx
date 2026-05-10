@@ -9,7 +9,6 @@
 
 from typing import Final
 
-
 class DCandleF:
-
     CANDLES: Final[str] = "candles"
+    GRAN_S5: Final[str] = "gran_s5"

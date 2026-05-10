@@ -98,6 +98,38 @@ class DbMgr:
                 updated_s INTEGER NOT NULL
             );
                                    
+            CREATE TABLE IF NOT EXISTS candles (
+                instrument TEXT NOT NULL,
+                granularity TEXT NOT NULL,
+                                   
+                y INTEGER NOT NULL,
+                m INTEGER NOT NULL,
+                d INTEGER NOT NULL,
+                h INTEGER NOT NULL,
+                mi INTEGER NOT NULL,
+                s INTEGER NOT NULL
+
+                volume INT NOT NULL,
+                                   
+                mid_o FLOAT NOT NULL,
+                mid_h FLOAT NOT NULL,
+                mid_l FLOAT NOT NULL,
+                mid_c FLOAT NOT NULL,
+                bid_o FLOAT NOT NULL,
+                bid_h FLOAT NOT NULL,
+                bid_l FLOAT NOT NULL,
+                bid_c FLOAT NOT NULL,
+                ask_o FLOAT NOT NULL,
+                ask_h FLOAT NOT NULL,
+                ask_l FLOAT NOT NULL,
+                ask_c FLOAT NOT NULL,
+                                   
+                PRIMARY KEY (instrument, granularity, y, mo, d, h, mi, s)
+            );
+
+            CREATE INDEX idx_candles_instrument_time ON candles(
+                instrument, granularity, y, m, d, h, mi, s
+            );
             """)
         self._add_updated_ts_column(TABLE.INSTRUMENTS)
         self._conn.commit()

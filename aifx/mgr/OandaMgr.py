@@ -19,12 +19,26 @@ from aifx.constants.DOanda import DOanda as OANDA
 from aifx.constants.DPrice import DPrice as PRICE
 
 from aifx.forex.Instrument import Instrument
+from aifx.forex.Candle import Candle
 
 
 class OandaMgr:
 
     def __init__(self):
         self.session = requests.Session()
+
+    def _fetch_candles(self, pair_name, count, granularity):
+        url = f"{OANDA.OANDA_URL}/{INS.INSTRUMENTS}/{pair_name}/{CANDLEF.CANDLES}"
+        params = dict(count=count, granularity=granularity, price=PRICE.MBA)
+
+        response = self.session.get(
+            url=url,
+            params=params,
+            headers=OANDA.SECURE_HEADER,
+            timeout=OANDA.TIMEOUT,
+        )
+
+        return response.status_code, response.json()
 
     def _fetch_instruments(self):
         url = f"{OANDA.OANDA_URL}/{ACCTF.ACCOUNTS}/{OANDA.ACCOUNT_ID}/{INS.INSTRUMENTS}"
@@ -53,18 +67,12 @@ class OandaMgr:
             return None
         return [Instrument.from_oanda(ob) for ob in data[INS.INSTRUMENTS]]
 
-    def fetch_candles(self, pair_name, count, granularity):
-        url = f"{OANDA.OANDA_URL}/{INS.INSTRUMENTS}/{pair_name}/{CANDLEF.CANDLES}"
-        params = dict(count=count, granularity=granularity, price=PRICE.MBA)
+    def get_candles(self, pair_name, count, granularity):
+        code, data = self._fetch_candles()
 
-        response = self.session.get(
-            url=url,
-            params=params,
-            headers=OANDA.SECURE_HEADER,
-            timeout=OANDA.TIMEOUT,
-        )
-
-        return response.status_code, response.json()
+        if code != 200:
+            return None
+        return [Candle.from_oanda(ob) for ob in data[CANDLE.CANDLES]]
 
     def stream_prices(self, instruments: list[str]):
         while True:
