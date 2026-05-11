@@ -27,3 +27,7 @@ class DCandle:
     C: Final[str] = "c"
     VOLUME = COL.VOLUME
     GRAN_S5: Final[str] = "S5"
+
+
+class DCandleF:
+    CANDLE_KEY: Final[str] = "candle_key"

@@ -24,15 +24,17 @@
         "constants/DQt.py",
         "db/BrokerDb.py",
         "db/DbMgr.py",
+        "forex/Candle.py",
         "forex/Instrument.py",
         "mgr/Broker.py",
         "mgr/OandaMgr.py",
         "utils/AiFxLog.py",
-	"zmq/ClientMQ.py",
-	"zmq/EventMQ.py",
+        "utils/Feed.py",
+        "zmq/MQClient.py",
+        "zmq/MQEvent.py",
 	"zmq/MQMsgBatch.py",
 	"zmq/MQMsg.py",
-	"zmq/ServerMQ.py",
-	"zmq/UtilsMQ.py"
+        "zmq/MQServer.py",
+        "zmq/MQUtils.py"
     ]
 }

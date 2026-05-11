@@ -123,8 +123,10 @@ class Broker:
                         C_CAND.S,
                     ],
                 )
-                self.log.debug(f"Candle upserted: {feed.name}, rows={rows}")
                 num_rows = self.db_mgr.num_rows(table=TABLE.CANDLES)
+                self.log.debug(
+                    f"Candles table upserted: {feed.name}, {num_rows} rows of data"
+                )
                 self.log.debug(f"Candles table has {num_rows} rows of data")
                 await asyncio.sleep(MQ.FEED_INTERVAL)
 

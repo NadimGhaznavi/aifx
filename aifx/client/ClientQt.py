@@ -9,6 +9,7 @@
 
 from pathlib import Path
 import sys
+from collections import deque
 
 from PySide6.QtWidgets import QApplication, QWidget
 from PySide6.QtCore import QFile, QTimer
@@ -16,9 +17,11 @@ from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWidgets import QVBoxLayout
 
-from aifx.constants.DDb import DColInstrument as COL
+import plotly.graph_objects as go
+
+from aifx.constants.DCandle import DCandleF as CANDLEF
+from aifx.constants.DDb import DColInstrument as C_INST, DColCandles as C_CAND
 from aifx.constants.DDef import DDef as DEF
-from aifx.constants.DInstrument import DInstrument as INS
 from aifx.constants.DNetwork import DNetwork as NET
 from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DMQ import DMQ as MQ
@@ -26,6 +29,10 @@ from aifx.constants.DQt import DQtL as QTL
 
 from aifx.utils.AiFxLog import AiFxLog
 from aifx.zmq.MQClient import MQClient
+from aifx.forex.Candle import Candle
+
+# Number of candles to cache for Plotly
+MAX_PLOTLY_CANDLES = 50
 
 
 class ClientQt(QWidget):
@@ -51,10 +58,13 @@ class ClientQt(QWidget):
         # In memory dictionary of instruments
         self._instruments: dict[str, dict] = {}
 
+        # Load the UI
         self.load_ui()
+        # Prepare the plotting widget
         self.setup_plot()
         self.log.info(QTL.UI_LOADED)
 
+        # Prepare the MQ client
         self.mq = MQClient(
             broker_hostname=broker_hostname,
             broker_port=broker_port,
@@ -67,7 +77,6 @@ class ClientQt(QWidget):
         self.mq.connection_changed.connect(self.set_connection_status)
         self.mq.instruments_received.connect(self.update_instruments)
         self.mq.feed_started.connect(self.feed_started)
-        self.mq.candle_received.connect(self.handle_candle)
 
         self.wire_signals()
         self.log.info(QTL.SIGNALS_WIRED)
@@ -76,14 +85,72 @@ class ClientQt(QWidget):
         QTimer.singleShot(0, self.start_mq)
         self.log.info(QTL.ENABLING_HEARTBEAT)
 
+        # Store candlestick data here
+        self._candles = {}
+
     def feed_started(self, feed_data):
-        name = feed_data[COL.NAME]
+        name = feed_data[C_INST.NAME]
         self.ui.lbl_current_pair.setStyleSheet("color: #bbaa66; font-weight bold;")
         self.ui.lbl_current_pair.setText(name)
         self.log.debug(f"Feed Started: {name}")
 
-    def handle_candle(self, topic: str, candle: dict):
-        self.log.debug(f"Candle received: {topic}: {candle}")
+    def on_candle_received(self, topic: str, candle: dict) -> None:
+        if topic not in self._candles:
+            self._candles[topic] = deque(maxlen=MAX_PLOTLY_CANDLES)
+
+        candles = self._candles[topic]
+
+        new_candle = Candle.from_db(candle)
+        if not candles:
+            candles.append(new_candle)
+            self.log.debug(f"First candle received: {topic}: {new_candle}")
+            return
+
+        if candles[-1].candle_key == new_candle.candle_key:
+            candles[-1] = new_candle
+            self.log.warning(f"Duplicate candle: {new_candle}")
+        else:
+            candles.append(new_candle)
+
+        self.log.debug(f"Candle received: {topic}: {new_candle}")
+
+        self.render_candles(topic)
+
+    def render_candles(self, topic: str) -> None:
+        candles = list(self._candles.get(topic, []))
+
+        if not candles:
+            return
+
+        x = [
+            f"{c.y:04d}-{c.mo:02d}-{c.d:02d} " f"{c.h:02d}:{c.mi:02d}:{c.s:02d}"
+            for c in candles
+        ]
+
+        fig = go.Figure(
+            data=[
+                go.Candlestick(
+                    x=x,
+                    open=[c.mid_o for c in candles],
+                    high=[c.mid_h for c in candles],
+                    low=[c.mid_l for c in candles],
+                    close=[c.mid_c for c in candles],
+                    name="MID",
+                )
+            ]
+        )
+
+        fig.update_layout(
+            title=topic,
+            xaxis_title="Time",
+            yaxis_title="Price",
+            xaxis_rangeslider_visible=False,
+            margin=dict(l=30, r=30, t=40, b=30),
+            template="plotly_dark",
+        )
+
+        html = fig.to_html(include_plotlyjs="cdn", full_html=False)
+        self.web_view.setHtml(html)
 
     def set_connection_status(self, connected: bool):
 
@@ -115,16 +182,16 @@ class ClientQt(QWidget):
             return
 
         instrument = self._instruments[name]
-
-        display_name = instrument.get(COL.DISPLAY_NAME, name)
+        display_name = instrument.get(C_INST.DISPLAY_NAME, name)
 
         self.ui.lbl_current_pair.setText(f"{display_name} - {name}")
         self.log.info(f"Selected instrument: {name}")
 
-        self.mq.start_feed(instrument=instrument)
-
         topic = self.mq.candle_topic(name)
+
+        self.mq.register_sub_handler(topic, self.on_candle_received)
         self.mq.subscribe(topic=topic)
+        self.mq.start_feed(instrument=instrument)
 
     def load_ui(self):
         loader = QUiLoader()
@@ -166,14 +233,14 @@ class ClientQt(QWidget):
         self.log.info("Instruments updated")
 
         self._instruments = {
-            instrument[COL.NAME]: instrument for instrument in instruments
+            instrument[C_INST.NAME]: instrument for instrument in instruments
         }
 
         self.ui.cb_instrument.clear()
 
         for instrument in instruments:
-            name = instrument[COL.NAME]
-            display_name = instrument.get(COL.DISPLAY_NAME, name)
+            name = instrument[C_INST.NAME]
+            display_name = instrument.get(C_INST.DISPLAY_NAME, name)
 
             self.ui.cb_instrument.addItem(
                 f"{display_name} - {name}",

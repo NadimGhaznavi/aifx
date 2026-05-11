@@ -11,7 +11,7 @@ import sqlite3
 from datetime import datetime, timezone
 
 from aifx.constants.DDef import DDef as DEF
-from aifx.constants.DDb import DDbF as DBF, DTable as TABLE
+from aifx.constants.DDb import DDbF as DBF, DTable as TABLE, DColCandles as C_CAND
 from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DOanda import DOanda as OANDA
 

@@ -6,12 +6,18 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>795</width>
-    <height>650</height>
+    <width>810</width>
+    <height>653</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Widget</string>
+  </property>
+  <property name="windowOpacity">
+   <double>1.000000000000000</double>
+  </property>
+  <property name="autoFillBackground">
+   <bool>true</bool>
   </property>
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">

@@ -112,8 +112,6 @@ class MQClient(QObject):
             topic = topic_b.decode(AIFX.UTF_8)
             payload = MQUtils.decode_json(payload_b)
 
-            self.candle_received.emit(topic, payload)
-
             handler = self._sub_methods.get(topic)
 
             if handler is None:
@@ -231,6 +229,10 @@ class MQClient(QObject):
             lambda: self._ctx.destroy(linger=0),
             "ctx.destroy(linger=0)",
         )
+
+    def register_sub_handler(self, topic: str, handler: SubHandler) -> None:
+        self.log.info(f"Registering SUB handler: {topic}")
+        self._sub_methods[topic] = handler
 
     def send(self, msg: MQMsg) -> bool:
         try:

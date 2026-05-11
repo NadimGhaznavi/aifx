@@ -33,6 +33,7 @@ class DColCandles:
     H: Final[str] = "h"
     MI: Final[str] = "mi"
     S: Final[str] = "s"
+    CANDLE_KEY: Final[str] = "candle_key"
     VOLUME: Final[str] = "volume"
     MID_O: Final[str] = "mid_o"
     MID_H: Final[str] = "mid_h"

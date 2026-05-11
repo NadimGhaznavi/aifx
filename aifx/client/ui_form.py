@@ -23,7 +23,9 @@ class Ui_Widget(object):
     def setupUi(self, Widget):
         if not Widget.objectName():
             Widget.setObjectName(u"Widget")
-        Widget.resize(795, 650)
+        Widget.resize(810, 653)
+        Widget.setWindowOpacity(1.000000000000000)
+        Widget.setAutoFillBackground(True)
         self.layoutWidget = QWidget(Widget)
         self.layoutWidget.setObjectName(u"layoutWidget")
         self.layoutWidget.setGeometry(QRect(12, 13, 771, 581))
