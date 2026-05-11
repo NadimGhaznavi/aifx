@@ -3,19 +3,23 @@ title: AI FX
 layout: default
 ---
 
+![Qt Client](/images/qt_client.png)
+
+---
+
 # Architecture
 
 - Python with PySide6 for Qt integration
-
 - Oanda API for market data
-- OandaMgr - Retrieval of OANDA data
 
-- Sqlite3 for in memory and file databases
-- DbMgr - File, cursor and connection management
+- Standalone Broker Console Application
+  - Oanda manager - Retrieval of OANDA data
+  - In memory database for caching
+  - ZeroMQ Server for interprocess communication
 
-- CacheMgr
-- Sits between the OandaMgr and the DbMgr
-- Ensures in memory Db is fresh
+- Standalone Python Qt Application
+  - Retrieves instruments from the broker
+  - Sends feed request to the broker
+  - Consumes and plots candlestick data
 
-- Plotly for candlestick and other visualizations
-
+![Class Diagram](/images/aifx-class-diagram.png)
