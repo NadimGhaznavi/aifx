@@ -23,12 +23,12 @@ class Ui_Widget(object):
     def setupUi(self, Widget):
         if not Widget.objectName():
             Widget.setObjectName(u"Widget")
-        Widget.resize(810, 653)
+        Widget.resize(1424, 653)
         Widget.setWindowOpacity(1.000000000000000)
         Widget.setAutoFillBackground(True)
         self.layoutWidget = QWidget(Widget)
         self.layoutWidget.setObjectName(u"layoutWidget")
-        self.layoutWidget.setGeometry(QRect(12, 13, 771, 581))
+        self.layoutWidget.setGeometry(QRect(12, 13, 1391, 581))
         self.vl_window = QVBoxLayout(self.layoutWidget)
         self.vl_window.setObjectName(u"vl_window")
         self.vl_window.setContentsMargins(0, 0, 0, 0)

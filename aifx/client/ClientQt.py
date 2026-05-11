@@ -10,6 +10,7 @@
 from pathlib import Path
 import sys
 from collections import deque
+import json
 
 from PySide6.QtWidgets import QApplication, QWidget
 from PySide6.QtCore import QFile, QTimer
@@ -19,8 +20,7 @@ from PySide6.QtWidgets import QVBoxLayout
 
 import plotly.graph_objects as go
 
-from aifx.constants.DCandle import DCandleF as CANDLEF
-from aifx.constants.DDb import DColInstrument as C_INST, DColCandles as C_CAND
+from aifx.constants.DDb import DColInstrument as C_INST
 from aifx.constants.DDef import DDef as DEF
 from aifx.constants.DNetwork import DNetwork as NET
 from aifx.constants.DModule import DModule as MODULE
@@ -114,7 +114,7 @@ class ClientQt(QWidget):
 
         self.log.debug(f"Candle received: {topic}: {new_candle}")
 
-        self.render_candles(topic)
+        self.update_plot(topic=topic)
 
     def render_candles(self, topic: str) -> None:
         candles = list(self._candles.get(topic, []))
@@ -137,7 +137,7 @@ class ClientQt(QWidget):
                     close=[c.mid_c for c in candles],
                     name="MID",
                 )
-            ]
+            ],
         )
 
         fig.update_layout(
@@ -172,7 +172,67 @@ class ClientQt(QWidget):
         plot_layout.setContentsMargins(0, 0, 0, 0)
 
         self.web_view = QWebEngineView(self.ui.wgt_plot)
+
         plot_layout.addWidget(self.web_view)
+
+        html = """
+        <html>
+        <head>
+        <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+        </head>
+        <body style="margin:0; background-color:#111;">
+        <div id="chart" style="width:100%; height:100vh;"></div>
+
+        <script>
+            const layout = {
+                template: "plotly_dark",
+                paper_bgcolor: "#111111",
+                plot_bgcolor: "#111111",
+                margin: {l: 40, r: 20, t: 20, b: 40},
+                xaxis: {
+                    rangeslider: {visible: false},
+                    gridcolor: "#333333"
+                },
+                yaxis: {
+                    gridcolor: "#333333"
+                }
+            };
+
+            const data = [{
+                type: "candlestick",
+                x: [],
+                open: [],
+                high: [],
+                low: [],
+                close: [],
+                name: "MID"
+            }];
+
+            Plotly.newPlot("chart", data, layout, {responsive: true});
+
+            function updateCandles(candles) {
+                const x = candles.map(c => c.x);
+                const open = candles.map(c => c.open);
+                const high = candles.map(c => c.high);
+                const low = candles.map(c => c.low);
+                const close = candles.map(c => c.close);
+
+                Plotly.react("chart", [{
+                    type: "candlestick",
+                    x: x,
+                    open: open,
+                    high: high,
+                    low: low,
+                    close: close,
+                    name: "MID"
+                }], layout, {responsive: true});
+            }
+        </script>
+        </body>
+        </html>
+        """
+
+        self.web_view.setHtml(html)
 
     def load_selected_instrument(self):
         name = self.ui.cb_instrument.currentData()
@@ -223,6 +283,25 @@ class ClientQt(QWidget):
     def start_mq(self):
         self.mq.start()
         self.log.info(QTL.MQ_CLIENT_STARTED)
+
+    def update_plot(self, topic: str) -> None:
+        candles = list(self._candles.get(topic, []))
+
+        payload = [
+            {
+                "x": (
+                    f"{c.y:04d}-{c.mo:02d}-{c.d:02d} " f"{c.h:02d}:{c.mi:02d}:{c.s:02d}"
+                ),
+                "open": c.mid_o,
+                "high": c.mid_h,
+                "low": c.mid_l,
+                "close": c.mid_c,
+            }
+            for c in candles
+        ]
+
+        js = f"updateCandles({json.dumps(payload)});"
+        self.web_view.page().runJavaScript(js)
 
     def wire_signals(self):
         # Wire up an exit button
