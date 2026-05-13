@@ -163,13 +163,27 @@ class DbMgr:
         sql = f"SELECT * FROM {table}"
         return len(list(self._cursor.execute(sql).fetchall()))
 
-    def select_all(self, table: str, order_by: str | None = None) -> list[sqlite3.Row]:
+    def select_all(
+        self,
+        table: str,
+        where: str | None = None,
+        params: tuple = (),
+        order_by: str | None = None,
+        limit: int | None = None,
+    ) -> list[sqlite3.Row]:
+
         sql = f"SELECT * FROM {table}"
+
+        if where is not None:
+            sql += f" WHERE {where}"
 
         if order_by is not None:
             sql += f" ORDER BY {order_by}"
 
-        return self._cursor.execute(sql).fetchall()
+        if limit is not None:
+            sql += f" LIMIT {limit}"
+
+        return self._cursor.execute(sql, params).fetchall()
 
     def select_one(
         self,

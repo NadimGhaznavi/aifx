@@ -94,6 +94,8 @@ class Broker:
         # Set the count to 10 to ensure we get all the data
         count = MQ.FEED_INTERVAL * 2
 
+        last_row_count = None
+
         try:
             while True:
                 candles = self.oanda.get_candles(
@@ -109,7 +111,7 @@ class Broker:
                     candles,
                     key=lambda c: (c.y, c.mo, c.d, c.h, c.mi, c.s),
                 )
-                rows = self.db_mgr.upsert(
+                self.db_mgr.upsert(
                     table=TABLE.CANDLES,
                     records=[candle.to_dict() for candle in candles],
                     key_fields=[
@@ -124,10 +126,9 @@ class Broker:
                     ],
                 )
                 num_rows = self.db_mgr.num_rows(table=TABLE.CANDLES)
-                self.log.debug(
-                    f"Candles table upserted: {feed.name}, {num_rows} rows of data"
-                )
-                self.log.debug(f"Candles table has {num_rows} rows of data")
+                if num_rows != last_row_count:
+                    last_row_count = num_rows
+                    self.log.debug(f"Candles table row count: {num_rows}")
                 await asyncio.sleep(MQ.FEED_INTERVAL)
 
         except asyncio.CancelledError:
@@ -158,27 +159,30 @@ class Broker:
         assert self.mq is not None
 
         topic = self.mq.topic(f"candles.{feed.name}")
-        last_key = None
-
-        feeds = self._feeds
 
         try:
             while True:
-                candle = self.broker_db.get_latest_candle(feed.name)
-                self.log.debug(f"Latest candle: {candle}")
+                candles = self.broker_db.get_recent_candles(feed.name, limit=10)
 
-                if candle is not None:
-                    key = (candle.y, candle.mo, candle.d, candle.h, candle.mi, candle.s)
-
-                    if key != last_key:
+                for candle in candles:
+                    if (
+                        feed.last_published_key is None
+                        or candle.candle_key > feed.last_published_key
+                    ):
                         await self.mq.publish(topic=topic, payload=candle.to_dict())
-                        last_key = key
-                        self.log.debug(f"Published candle: {feed.name}")
+                        feed.last_published_key = candle.candle_key
+                        self.log.debug(f"Published: {candle}")
 
                 await asyncio.sleep(MQ.FEED_INTERVAL)
 
         except asyncio.CancelledError:
             self.log.info(f"MQ feed stopped: {feed.name}")
+            raise
+
+        except Exception as e:
+            self.log.critical(
+                f"MQ feed crashed for {feed.name}: {type(e).__name__}: {e}"
+            )
             raise
 
     async def get_instruments_oanda(self):

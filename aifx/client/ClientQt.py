@@ -112,7 +112,7 @@ class ClientQt(QWidget):
         else:
             candles.append(new_candle)
 
-        self.log.debug(f"Candle received: {topic}: {new_candle}")
+        self.log.debug(f"Received: {new_candle}")
 
         self.update_plot(topic=topic)
 

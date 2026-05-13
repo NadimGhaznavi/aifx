@@ -77,7 +77,9 @@ class OandaMgr:
             pair_name=pair_name, count=count, granularity=granularity
         )
 
-        self.log.debug(f"get_candles(): {pair_name}, {count}, {granularity}, {code}")
+        self.log.debug(
+            f"Request: {pair_name}, count: {count}, granularity: {granularity}, return code: {code}"
+        )
 
         if code != 200:
             return None

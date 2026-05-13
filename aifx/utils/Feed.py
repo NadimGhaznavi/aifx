@@ -19,3 +19,4 @@ class Feed:
     oanda_running: bool = False
     pub_task: asyncio.Task | None = None
     pub_running: bool = False
+    last_published_key: str | None = None

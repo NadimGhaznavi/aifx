@@ -67,3 +67,27 @@ class BrokerDb:
             )
             for row in rows
         ]
+
+    def get_recent_candles(self, name: str, limit: int = 10) -> list[Candle]:
+        rows = self.db_mgr.select_all(
+            table=TABLE.CANDLES,
+            where=f"{C_CAND.INSTRUMENT} = ?",
+            params=(name,),
+            order_by=f"""
+                {C_CAND.Y} DESC,
+                {C_CAND.MO} DESC,
+                {C_CAND.D} DESC,
+                {C_CAND.H} DESC,
+                {C_CAND.MI} DESC,
+                {C_CAND.S} DESC
+            """,
+            limit=limit,
+        )
+
+        if not rows:
+            return []
+
+        candles = [Candle.from_db(row) for row in rows]
+
+        # select newest-first for efficient LIMIT, then publish oldest-first
+        return list(reversed(candles))

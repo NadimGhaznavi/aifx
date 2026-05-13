@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- Flash on reload
+- White border
+- Bug that missed rendering candles.
+- Cleaned up `QtClient` and `Broker` console log messages
+
+### Added
+
+- Stable broker/client messaging
+- Live candle streaming
+- Real-time chart updates
+- Instrument feed selection
+
+### Changed
+
+- Improved logging and process visibility
+
+---
+
+## [0.15.15] - 2026-05-10
+
+**Working GUI that shows OANDA candlestick data**
+
+---
+
 ## [0.15.12] - 2026-05-03 @ 16:32
 
 **Working GUI that fetches OANDA instruments and builds a drop down menu**

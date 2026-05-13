@@ -250,7 +250,7 @@ class MQServer:
         minute = payload[C_CAND.MI]
         second = payload[C_CAND.S]
         timestamp = f"{year}-{month}-{day} {hour}:{minute}:{second}"
-        self.log.debug(f"Published {topic} candle @ {timestamp}")
+        # self.log.debug(f"Published {topic} candle @ {timestamp}")
 
     async def quit(self) -> None:
         if not self._started:
