@@ -88,6 +88,15 @@ class ClientQt(QWidget):
         # Store candlestick data here
         self._candles = {}
 
+        # Track the active topic
+        self._active_topic: str | None = None
+
+    def clear_data(self) -> None:
+        self._candles.clear()
+
+        js = "updateCandles([]);"
+        self.web_view.page().runJavaScript(js)
+
     def feed_started(self, feed_data):
         name = feed_data[C_INST.NAME]
         self.ui.lbl_current_pair.setStyleSheet("color: #bbaa66; font-weight bold;")
@@ -115,6 +124,32 @@ class ClientQt(QWidget):
         self.log.debug(f"Received: {new_candle}")
 
         self.update_plot(topic=topic)
+
+    def on_instrument_changed(self):
+        ins_name = self.ui.cb_instrument.currentData()
+
+        if not ins_name:
+            self.log.warning("No instrument selected")
+            return
+
+        if topic != self._active_topic:
+            self.log.warning(f"Received off-topic candle: {topic}")
+            return
+
+        self.clear_data()
+        self._active_topic = ins_name
+
+        instrument = self._instruments[ins_name]
+        display_name = instrument.get(C_INST.DISPLAY_NAME, ins_name)
+
+        self.ui.lbl_current_pair.setText(f"{display_name} - {ins_name}")
+        self.log.info(f"Selected instrument: {ins_name}")
+
+        topic = self.mq.candle_topic(ins_name)
+
+        self.mq.register_sub_handler(topic, self.on_candle_received)
+        self.mq.subscribe(topic=topic)
+        self.mq.start_feed(instrument=instrument)
 
     def render_candles(self, topic: str) -> None:
         candles = list(self._candles.get(topic, []))
@@ -234,25 +269,6 @@ class ClientQt(QWidget):
 
         self.web_view.setHtml(html)
 
-    def load_selected_instrument(self):
-        name = self.ui.cb_instrument.currentData()
-
-        if not name:
-            self.log.warning("No instrument selected")
-            return
-
-        instrument = self._instruments[name]
-        display_name = instrument.get(C_INST.DISPLAY_NAME, name)
-
-        self.ui.lbl_current_pair.setText(f"{display_name} - {name}")
-        self.log.info(f"Selected instrument: {name}")
-
-        topic = self.mq.candle_topic(name)
-
-        self.mq.register_sub_handler(topic, self.on_candle_received)
-        self.mq.subscribe(topic=topic)
-        self.mq.start_feed(instrument=instrument)
-
     def load_ui(self):
         loader = QUiLoader()
         path = Path(__file__).resolve().parent / "form.ui"
@@ -306,7 +322,7 @@ class ClientQt(QWidget):
     def wire_signals(self):
         # Wire up an exit button
         self.ui.btn_exit.clicked.connect(self.shutdown)
-        self.ui.btn_load.clicked.connect(self.load_selected_instrument)
+        self.ui.btn_load.clicked.connect(self.on_instrument_changed)
 
     def update_instruments(self, instruments):
         self.log.info("Instruments updated")
