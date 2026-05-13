@@ -14,4 +14,4 @@ from aifx.constants.DLogging import DAiFxLog
 
 class DDef:
     DEFAULT_LOG_LEVEL: Final[DAiFxLog] = DAiFxLog.DEBUG
-    VERSION: Final[str] = "0.15.16"
+    VERSION: Final[str] = "0.15.17"

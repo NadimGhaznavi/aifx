@@ -3,6 +3,8 @@ title: AI FX
 layout: default
 ---
 
+# Instructions
+
 ![Qt Client](/images/qt_client.png)
 
 AI FX is a Python-based foreign exchange market analysis platform built around a
@@ -59,7 +61,7 @@ The Qt desktop client is responsible for:
 
 - `ClientQt`
 - `ClientMQ`
-- Plotly candlestick visualization
+- `Plotly` candlestick visualization
 
 ---
 
@@ -71,27 +73,6 @@ The Qt desktop client is responsible for:
 - SQLite3
 - Plotly
 - OANDA REST API
-
----
-
-# Current Status
-
-Version `v0.15.x` introduces:
-
-- Stable broker/client messaging
-- Live candle streaming
-- Real-time chart updates
-- Instrument feed selection
-- Improved logging and process visibility
-
-Future work includes:
-
-- Historical candle persistence
-- Technical indicators
-- AI/ML analysis layers
-- Multi-client subscriptions
-- Strategy visualization
-- Seemless reconnect on disconnect
 
 ---
 
