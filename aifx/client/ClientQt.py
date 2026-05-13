@@ -104,6 +104,10 @@ class ClientQt(QWidget):
         self.log.debug(f"Feed Started: {name}")
 
     def on_candle_received(self, topic: str, candle: dict) -> None:
+        if topic != self._active_topic:
+            self.log.warning(f"Received off-topic candle: {topic}")
+            return
+
         if topic not in self._candles:
             self._candles[topic] = deque(maxlen=MAX_PLOTLY_CANDLES)
 
@@ -132,12 +136,7 @@ class ClientQt(QWidget):
             self.log.warning("No instrument selected")
             return
 
-        if topic != self._active_topic:
-            self.log.warning(f"Received off-topic candle: {topic}")
-            return
-
         self.clear_data()
-        self._active_topic = ins_name
 
         instrument = self._instruments[ins_name]
         display_name = instrument.get(C_INST.DISPLAY_NAME, ins_name)
@@ -146,6 +145,13 @@ class ClientQt(QWidget):
         self.log.info(f"Selected instrument: {ins_name}")
 
         topic = self.mq.candle_topic(ins_name)
+        self._active_topic = topic
+
+        self.mq.get_recent_candles(
+            topic=topic,
+            instrument=instrument,
+            count=MAX_PLOTLY_CANDLES,
+        )
 
         self.mq.register_sub_handler(topic, self.on_candle_received)
         self.mq.subscribe(topic=topic)
