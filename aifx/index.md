@@ -3,7 +3,7 @@ title: AI FX
 layout: default
 ---
 
-# Instructions
+# Introduction
 
 ![Qt Client](/images/qt_client.png)
 
