@@ -15,8 +15,8 @@ Most tests here are `pytest` tests. They can be executed directly by providing t
 
 3rd party testing tools have also been integrated into this projectL:
 
-Testing Software |
-[flake8]()
+- [flake8](https://flake8.pycqa.org/en/latest/)
+- 
 
 ---
 
