@@ -32,7 +32,6 @@ from aifx.zmq.MQClient import MQClient
 from aifx.forex.Candle import Candle
 
 # Number of candles to cache for Plotly
-MAX_PLOTLY_CANDLES = 50
 
 
 class ClientQt(QWidget):
@@ -109,7 +108,7 @@ class ClientQt(QWidget):
             return
 
         if topic not in self._candles:
-            self._candles[topic] = deque(maxlen=MAX_PLOTLY_CANDLES)
+            self._candles[topic] = deque(maxlen=DEF.MAX_PLOTLY_CANDLES)
 
         candles = self._candles[topic]
 
@@ -124,6 +123,10 @@ class ClientQt(QWidget):
             self.log.warning(f"Duplicate candle: {new_candle}")
         else:
             candles.append(new_candle)
+
+        recent = list(reversed(candles[-DEF.RECENT_CANDLE_MAX :]))
+        self.recent_candles_model.load_data(recent)
+        self.ui.tbl_recent_candles.resizeColumnsToContents()
 
         self.log.debug(f"Received: {new_candle}")
 
@@ -150,7 +153,7 @@ class ClientQt(QWidget):
         self.mq.get_recent_candles(
             topic=topic,
             instrument=instrument,
-            count=MAX_PLOTLY_CANDLES,
+            count=DEF.MAX_PLOTLY_CANDLES,
         )
 
         self.mq.register_sub_handler(topic, self.on_candle_received)
@@ -274,6 +277,13 @@ class ClientQt(QWidget):
         """
 
         self.web_view.setHtml(html)
+
+    def setup_recent_candles_table(self) -> None:
+        self.recent_candles_model = RecentCandlesModel()
+        self.ui.tbl_recent_candles.setModel(self.recent_candles_model)
+
+        self.ui.tbl_recent_candles.verticalHeader().setVisible(False)
+        self.ui.tbl_recent_candles.resizeColumnsToContents()
 
     def load_ui(self):
         loader = QUiLoader()

@@ -15,26 +15,26 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QComboBox, QHBoxLayout, QLabel,
-    QPushButton, QSizePolicy, QSpacerItem, QVBoxLayout,
-    QWidget)
+from PySide6.QtWidgets import (QApplication, QComboBox, QHBoxLayout, QHeaderView,
+    QLabel, QPushButton, QSizePolicy, QSpacerItem,
+    QTableView, QVBoxLayout, QWidget)
 
 class Ui_Widget(object):
     def setupUi(self, Widget):
         if not Widget.objectName():
             Widget.setObjectName(u"Widget")
-        Widget.resize(1424, 653)
+        Widget.resize(1424, 1065)
         Widget.setWindowOpacity(1.000000000000000)
         Widget.setAutoFillBackground(True)
-        self.layoutWidget = QWidget(Widget)
-        self.layoutWidget.setObjectName(u"layoutWidget")
-        self.layoutWidget.setGeometry(QRect(12, 13, 1391, 581))
-        self.vl_window = QVBoxLayout(self.layoutWidget)
-        self.vl_window.setObjectName(u"vl_window")
-        self.vl_window.setContentsMargins(0, 0, 0, 0)
+        self.widget = QWidget(Widget)
+        self.widget.setObjectName(u"widget")
+        self.widget.setGeometry(QRect(10, 14, 1401, 881))
+        self.verticalLayout = QVBoxLayout(self.widget)
+        self.verticalLayout.setObjectName(u"verticalLayout")
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.hl_title = QHBoxLayout()
         self.hl_title.setObjectName(u"hl_title")
-        self.lbl_aifx = QLabel(self.layoutWidget)
+        self.lbl_aifx = QLabel(self.widget)
         self.lbl_aifx.setObjectName(u"lbl_aifx")
         sizePolicy = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
         sizePolicy.setHorizontalStretch(0)
@@ -49,7 +49,7 @@ class Ui_Widget(object):
 
         self.hl_title.addItem(self.hs_title)
 
-        self.lbl_version = QLabel(self.layoutWidget)
+        self.lbl_version = QLabel(self.widget)
         self.lbl_version.setObjectName(u"lbl_version")
         sizePolicy.setHeightForWidth(self.lbl_version.sizePolicy().hasHeightForWidth())
         self.lbl_version.setSizePolicy(sizePolicy)
@@ -61,11 +61,11 @@ class Ui_Widget(object):
 
         self.hl_title.setStretch(1, 1)
 
-        self.vl_window.addLayout(self.hl_title)
+        self.verticalLayout.addLayout(self.hl_title)
 
         self.vl_current_pair = QVBoxLayout()
         self.vl_current_pair.setObjectName(u"vl_current_pair")
-        self.lbl_current_pair = QLabel(self.layoutWidget)
+        self.lbl_current_pair = QLabel(self.widget)
         self.lbl_current_pair.setObjectName(u"lbl_current_pair")
         font = QFont()
         font.setPointSize(16)
@@ -74,18 +74,28 @@ class Ui_Widget(object):
 
         self.vl_current_pair.addWidget(self.lbl_current_pair)
 
-        self.wgt_plot = QWidget(self.layoutWidget)
+        self.wgt_plot = QWidget(self.widget)
         self.wgt_plot.setObjectName(u"wgt_plot")
 
         self.vl_current_pair.addWidget(self.wgt_plot)
 
         self.vl_current_pair.setStretch(1, 1)
 
-        self.vl_window.addLayout(self.vl_current_pair)
+        self.verticalLayout.addLayout(self.vl_current_pair)
+
+        self.hl_recent_candles = QHBoxLayout()
+        self.hl_recent_candles.setObjectName(u"hl_recent_candles")
+        self.tbl_recent_candles = QTableView(self.widget)
+        self.tbl_recent_candles.setObjectName(u"tbl_recent_candles")
+
+        self.hl_recent_candles.addWidget(self.tbl_recent_candles)
+
+
+        self.verticalLayout.addLayout(self.hl_recent_candles)
 
         self.hl_instrument = QHBoxLayout()
         self.hl_instrument.setObjectName(u"hl_instrument")
-        self.lbl_instrument = QLabel(self.layoutWidget)
+        self.lbl_instrument = QLabel(self.widget)
         self.lbl_instrument.setObjectName(u"lbl_instrument")
         sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         sizePolicy1.setHorizontalStretch(0)
@@ -95,7 +105,7 @@ class Ui_Widget(object):
 
         self.hl_instrument.addWidget(self.lbl_instrument)
 
-        self.cb_instrument = QComboBox(self.layoutWidget)
+        self.cb_instrument = QComboBox(self.widget)
         self.cb_instrument.setObjectName(u"cb_instrument")
         sizePolicy2 = QSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
         sizePolicy2.setHorizontalStretch(0)
@@ -110,18 +120,18 @@ class Ui_Widget(object):
 
         self.hl_instrument.addItem(self.hs_instrument)
 
-        self.btn_load = QPushButton(self.layoutWidget)
+        self.btn_load = QPushButton(self.widget)
         self.btn_load.setObjectName(u"btn_load")
 
         self.hl_instrument.addWidget(self.btn_load)
 
         self.hl_instrument.setStretch(2, 1)
 
-        self.vl_window.addLayout(self.hl_instrument)
+        self.verticalLayout.addLayout(self.hl_instrument)
 
         self.hl_footer = QHBoxLayout()
         self.hl_footer.setObjectName(u"hl_footer")
-        self.lbl_connection = QLabel(self.layoutWidget)
+        self.lbl_connection = QLabel(self.widget)
         self.lbl_connection.setObjectName(u"lbl_connection")
         sizePolicy3 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         sizePolicy3.setHorizontalStretch(0)
@@ -135,7 +145,7 @@ class Ui_Widget(object):
 
         self.hl_footer.addItem(self.hs_footer)
 
-        self.btn_exit = QPushButton(self.layoutWidget)
+        self.btn_exit = QPushButton(self.widget)
         self.btn_exit.setObjectName(u"btn_exit")
         sizePolicy.setHeightForWidth(self.btn_exit.sizePolicy().hasHeightForWidth())
         self.btn_exit.setSizePolicy(sizePolicy)
@@ -144,9 +154,8 @@ class Ui_Widget(object):
 
         self.hl_footer.setStretch(1, 1)
 
-        self.vl_window.addLayout(self.hl_footer)
+        self.verticalLayout.addLayout(self.hl_footer)
 
-        self.vl_window.setStretch(1, 1)
 
         self.retranslateUi(Widget)
 

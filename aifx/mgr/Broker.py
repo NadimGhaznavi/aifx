@@ -13,6 +13,7 @@ import asyncio
 
 from aifx.constants.DAiFx import DAiFx as AIFX
 from aifx.constants.DCandle import DCandle as CANDLE
+from aifx.constants.DCandle import DCandleF as CANDLEF
 from aifx.constants.DDef import DDef as DEF
 from aifx.constants.DDb import (
     DDbF as DBF,
@@ -21,7 +22,8 @@ from aifx.constants.DDb import (
     DColCandles as C_CAND,
 )
 from aifx.constants.DFile import DFile as FILE
-from aifx.constants.DInstrument import DInstrument as INS
+from aifx.constants.DFrequency import DFrequency as FREQ
+from aifx.constants.DInstrument import DInstrument as INS, DInstrumentF as INSF
 from aifx.constants.DMethod import DMethod as METHOD
 from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DNetwork import DNetwork as NET
@@ -77,6 +79,7 @@ class Broker:
         # Server methods that are exposed via MQ
         self._srv_methods = {
             METHOD.GET_INSTRUMENTS: self.get_instruments,
+            METHOD.GET_RECENT_CANDLES: self.get_recent_candles,
             METHOD.START_FEED: self.start_feed,
         }
         self.mq: MQServer | None = None
@@ -185,27 +188,69 @@ class Broker:
             )
             raise
 
+    async def get_candles_oanda(self, instrument, count):
+        return await asyncio.to_thread(
+            self.oanda.get_candles(
+                pair_name=instrument, count=count, granularity=FREQ.S5
+            )
+        )
+
     async def get_instruments_oanda(self):
         return await asyncio.to_thread(self.oanda.get_instruments)
 
     async def get_instruments(self, _msg: MQMsg):
 
-        self.log.debug("get_instruments()")
+        self.log.debug("Request: Instruments")
 
         instruments = self.broker_db.get_instruments()
 
         if not instruments:
             instruments = await self.get_instruments_oanda()
 
-        if instruments:
-            instruments = sorted(instruments, key=lambda ins: ins.name)
+            if instruments:
+                instruments = sorted(instruments, key=lambda ins: ins.name)
+                self.db_mgr.upsert(
+                    table=TABLE.INSTRUMENTS,
+                    records=[ins.to_dict() for ins in instruments],
+                    key_fields=[INS.NAME],
+                )
 
-            self.db_mgr.upsert(
-                table=TABLE.INSTRUMENTS,
-                records=[ins.to_dict() for ins in instruments],
-                key_fields=[INS.NAME],
-            )
-        return {INS.INSTRUMENTS: [ins.to_dict() for ins in instruments]}
+        if instruments:
+            return {INSF.INSTRUMENTS: [ins.to_dict() for ins in instruments]}
+
+        return {}
+
+    async def get_recent_candles(self, msg: MQMsg):
+        self.log.debug(f"Request: Recent candles")
+
+        candles = self.broker_db.get_recent_candles(
+            name=msg.payload[C_CAND.INSTRUMENT], limit=msg.payload[DBF.LIMIT]
+        )
+
+        instrument = msg.payload[INSF.INSTRUMENT]
+        count = msg.payload[DBF.LIMIT]
+
+        if not candles:
+            candles = await self.get_candles_oanda(instrument=instrument, count=count)
+
+            if candles:
+                self.db_mgr.upsert(
+                    table=TABLE.CANDLES,
+                    records=[candle.to_dict() for candle in candles],
+                    key_fields=[
+                        C_CAND.Y,
+                        C_CAND.MO,
+                        C_CAND.D,
+                        C_CAND.H,
+                        C_CAND.MI,
+                        C_CAND.s,
+                    ],
+                )
+
+        if candles:
+            return {CANDLEF.CANDLES: [candle.to_dict() for candle in candles]}
+
+        return {CANDLEF.CANDLES: []}
 
     async def handle_mq_event(self, event: MQEvent) -> None:
         client_id = event.routing_id.decode(AIFX.UTF_8)

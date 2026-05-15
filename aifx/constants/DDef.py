@@ -15,3 +15,5 @@ from aifx.constants.DLogging import DAiFxLog
 class DDef:
     DEFAULT_LOG_LEVEL: Final[DAiFxLog] = DAiFxLog.DEBUG
     VERSION: Final[str] = "0.15.17"
+    MAX_PLOTLY_CANDLES = 50
+    RECENT_CANDLE_MAX = 6

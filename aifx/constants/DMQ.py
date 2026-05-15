@@ -10,7 +10,7 @@
 from typing import Final
 
 from aifx.constants.DMethod import DMethod as METHOD
-from aifx.constants.DInstrument import DInstrument as INS
+from aifx.constants.DInstrument import DInstrumentF as INSF
 
 
 class DMQ:
@@ -31,7 +31,7 @@ class DMQF:
     CLIENT_REMOVED: Final[str] = "client_removed"
     CONTROL: Final[str] = "control"
     HEARTBEAT: Final[str] = "heartbeat"
-    INSTRUMENTS = INS.INSTRUMENTS
+    INSTRUMENTS = INSF.INSTRUMENTS
     PRUNING: Final[str] = "pruning"
     START_FEED_REPLY: Final[str] = "start_feed_reply"
 

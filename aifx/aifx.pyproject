@@ -26,6 +26,7 @@
         "db/DbMgr.py",
         "forex/Candle.py",
         "forex/Instrument.py",
+        "forex/RecentCandlesModel.py",
         "mgr/Broker.py",
         "mgr/OandaMgr.py",
         "utils/AiFxLog.py",

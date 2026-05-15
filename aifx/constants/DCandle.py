@@ -14,7 +14,6 @@ from aifx.constants.DDb import DColCandles as COL
 
 
 class DCandle:
-    CANDLES: Final[str] = "candles"
     COMPLETE: Final[str] = "complete"
     INSTRUMENT = INS.INSTRUMENT
     TIME: Final[str] = "time"
@@ -31,3 +30,4 @@ class DCandle:
 
 class DCandleF:
     CANDLE_KEY: Final[str] = "candle_key"
+    CANDLES: Final[str] = "candles"

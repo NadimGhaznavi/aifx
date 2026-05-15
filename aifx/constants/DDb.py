@@ -51,6 +51,7 @@ class DColCandles:
 
 class DDbF:
     CACHE: Final[str] = "cache"
+    LIMIT: Final[str] = "limit"
     MEMORY: Final[str] = ":memory:"
 
 

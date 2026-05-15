@@ -12,9 +12,9 @@ import requests
 import time
 
 from aifx.constants.DAccount import DAccountF as ACCTF
-from aifx.constants.DCandle import DCandle as CANDLE
+from aifx.constants.DCandle import DCandle as CANDLE, DCandleF as CANDLEF
 from aifx.constants.DDef import DDef as DEF
-from aifx.constants.DInstrument import DInstrument as INS
+from aifx.constants.DInstrument import DInstrumentF as INSF
 from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DOanda import DOanda as OANDA
 from aifx.constants.DPrice import DPrice as PRICE
@@ -33,7 +33,7 @@ class OandaMgr:
         self.session = requests.Session()
 
     def _fetch_candles(self, pair_name, count, granularity):
-        url = f"{OANDA.OANDA_URL}/{INS.INSTRUMENTS}/{pair_name}/{CANDLE.CANDLES}"
+        url = f"{OANDA.OANDA_URL}/{INSF.INSTRUMENTS}/{pair_name}/{CANDLEF.CANDLES}"
         params = dict(count=count, granularity=granularity, price=PRICE.MBA)
 
         response = self.session.get(
@@ -46,7 +46,9 @@ class OandaMgr:
         return response.status_code, response.json()
 
     def _fetch_instruments(self):
-        url = f"{OANDA.OANDA_URL}/{ACCTF.ACCOUNTS}/{OANDA.ACCOUNT_ID}/{INS.INSTRUMENTS}"
+        url = (
+            f"{OANDA.OANDA_URL}/{ACCTF.ACCOUNTS}/{OANDA.ACCOUNT_ID}/{INSF.INSTRUMENTS}"
+        )
 
         try:
             response = self.session.get(
@@ -70,7 +72,7 @@ class OandaMgr:
 
         if code != 200:
             return None
-        return [Instrument.from_oanda(ob) for ob in data[INS.INSTRUMENTS]]
+        return [Instrument.from_oanda(ob) for ob in data[INSF.INSTRUMENTS]]
 
     def get_candles(self, pair_name, count, granularity):
         code, data = self._fetch_candles(
@@ -86,7 +88,7 @@ class OandaMgr:
 
         return [
             Candle.from_oanda(pair_name, granularity, ob)
-            for ob in data[CANDLE.CANDLES]
+            for ob in data[CANDLEF.CANDLES]
             if ob[CANDLE.COMPLETE]
         ]
 
@@ -109,7 +111,7 @@ class OandaMgr:
         response = self.session.get(
             url,
             headers=OANDA.SECURE_HEADER,
-            params={INS.INSTRUMENTS: ",".join(instruments)},
+            params={INSF.INSTRUMENTS: ",".join(instruments)},
             stream=True,
             timeout=(OANDA.TIMEOUT, None),
         )
