@@ -9,16 +9,24 @@ Even at an early stage in the project, the complexity has risen to the point tha
 
 ---
 
-# Unit Tests
+# Test Exectution
 
-These are `pytest` tests. They can be executed directly or with poetry with `poetry run pytest -v` from the base project directory.
+Most tests here are `pytest` tests. They can be executed directly by providing the path to test file or with `poetry run pytest -v` to run all tests. Execute this command from the base project directory.
+
+3rd party testing tools have also been integrated into this projectL:
+
+Testing Software |
+[flake8]()
+
+---
+
+# Unit Tests
 
 ---
 
 ## Fixture
 
-A `tests/pytest.conf` file to hold test fixtures provides a core element in the testing system.
-
+- Fixture: [The tests/conftest.conf](/tests/conftest.py)
 - Test file: [/tests/conftest.py](/tests/conftest.py)
 - Test functions:
   - `sample_candle()`

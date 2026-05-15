@@ -11,7 +11,7 @@ import sqlite3
 from datetime import datetime, timezone
 
 from aifx.constants.DDef import DDef as DEF
-from aifx.constants.DDb import DDbF as DBF, DTable as TABLE, DColCandles as C_CAND
+from aifx.constants.DDb import DDbF as DBF, DTable as TABLE
 from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DOanda import DOanda as OANDA
 
@@ -104,20 +104,16 @@ class DbMgr:
                 updated_mi INTEGER NOT NULL,
                 updated_s INTEGER NOT NULL
             );
-                                   
             CREATE TABLE IF NOT EXISTS candles (
                 instrument TEXT NOT NULL,
                 granularity TEXT NOT NULL,
-                                   
                 y INTEGER NOT NULL,
                 mo INTEGER NOT NULL,
                 d INTEGER NOT NULL,
                 h INTEGER NOT NULL,
                 mi INTEGER NOT NULL,
                 s INTEGER NOT NULL,
-
                 volume INT NOT NULL,
-                                   
                 mid_o REAL NOT NULL,
                 mid_h REAL NOT NULL,
                 mid_l REAL NOT NULL,
@@ -130,10 +126,8 @@ class DbMgr:
                 ask_h REAL NOT NULL,
                 ask_l REAL NOT NULL,
                 ask_c REAL NOT NULL,
-                                   
                 PRIMARY KEY (instrument, granularity, y, mo, d, h, mi, s)
             );
-
             CREATE INDEX IF NOT EXISTS idx_candles_instrument_time ON candles(
                 instrument, granularity, y, mo, d, h, mi, s
             );

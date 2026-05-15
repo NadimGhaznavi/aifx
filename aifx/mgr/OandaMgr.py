@@ -80,7 +80,8 @@ class OandaMgr:
         )
 
         self.log.debug(
-            f"Request: {pair_name}, count: {count}, granularity: {granularity}, return code: {code}"
+            f"Request: {pair_name}, count: {count}, ",
+            f"granularity: {granularity}, return code: {code}",
         )
 
         if code != 200:
@@ -106,8 +107,10 @@ class OandaMgr:
                 time.sleep(OANDA.RETRY)
 
     def _try_stream_prices(self, instruments: list[str]):
-        url = f"{OANDA.OANDA_STREAMING_URL}/v3/{ACCTF.ACCOUNTS}/{OANDA.ACCOUNT_ID}/pricing/stream"
-
+        url = (
+            f"{OANDA.OANDA_STREAMING_URL}/v3/{ACCTF.ACCOUNTS}/",
+            f"{OANDA.ACCOUNT_ID}/pricing/stream",
+        )
         response = self.session.get(
             url,
             headers=OANDA.SECURE_HEADER,

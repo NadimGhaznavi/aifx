@@ -14,6 +14,7 @@ class DAiFx:
 
     UTF_8: Final[str] = "utf-8"
 
+
 class DAiFxL:
     AIFX: Final[str] = "AI FX"
     AIFX_STARTUP: Final[str] = "AiFx starting up..."

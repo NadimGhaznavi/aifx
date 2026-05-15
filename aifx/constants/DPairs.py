@@ -7,6 +7,8 @@
 #    Website: https://aifx.osoyalce.com
 #    License: GPL 3.0from typing import Final
 
+from typing import Final
+
 
 class DPair:
 

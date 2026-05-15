@@ -34,7 +34,6 @@ from aifx.utils.AiFxLog import AiFxLog
 from aifx.utils.Feed import Feed
 from aifx.db.DbMgr import DbMgr
 from aifx.db.BrokerDb import BrokerDb
-from aifx.forex.Instrument import Instrument
 from aifx.mgr.OandaMgr import OandaMgr
 from aifx.zmq.MQServer import MQServer
 from aifx.zmq.MQMsg import MQMsg
@@ -221,7 +220,7 @@ class Broker:
         return {}
 
     async def get_recent_candles(self, msg: MQMsg):
-        self.log.debug(f"Request: Recent candles")
+        self.log.debug("Request: Recent candles")
 
         candles = self.broker_db.get_recent_candles(
             name=msg.payload[C_CAND.INSTRUMENT], limit=msg.payload[DBF.LIMIT]

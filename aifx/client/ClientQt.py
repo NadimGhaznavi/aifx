@@ -30,6 +30,7 @@ from aifx.constants.DQt import DQtL as QTL
 from aifx.utils.AiFxLog import AiFxLog
 from aifx.zmq.MQClient import MQClient
 from aifx.forex.Candle import Candle
+from aifx.forex.RecentCandlesModel import RecentCandlesModel
 
 # Number of candles to cache for Plotly
 

@@ -9,7 +9,6 @@
 
 from dataclasses import dataclass
 import asyncio
-import zmq
 
 
 @dataclass(slots=True)

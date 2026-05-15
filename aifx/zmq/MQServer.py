@@ -16,10 +16,8 @@ import asyncio
 import zmq
 import zmq.asyncio
 import json
-import time
 
 from aifx.constants.DAiFx import DAiFx as AIFX
-from aifx.constants.DDb import DColCandles as C_CAND
 from aifx.constants.DDef import DDef as DEF
 from aifx.constants.DLogging import DAiFxLog as LOG
 from aifx.constants.DMethod import DMethod as METHOD
@@ -243,13 +241,6 @@ class MQServer:
         topic_b = topic.encode(AIFX.UTF_8)
         data_b = json.dumps(payload, separators=(",", ":")).encode(AIFX.UTF_8)
         await self._pub_socket.send_multipart([topic_b, data_b])
-        year = payload[C_CAND.Y]
-        month = payload[C_CAND.MO]
-        day = payload[C_CAND.D]
-        hour = payload[C_CAND.H]
-        minute = payload[C_CAND.MI]
-        second = payload[C_CAND.S]
-        timestamp = f"{year}-{month}-{day} {hour}:{minute}:{second}"
         # self.log.debug(f"Published {topic} candle @ {timestamp}")
 
     async def quit(self) -> None:
@@ -268,7 +259,8 @@ class MQServer:
                 pass
             except Exception as e:
                 print(
-                    f"DEBUG: Heartbeat task exception during quit: {type(e).__name__}: {e}"
+                    "DEBUG: Heartbeat task exception during quit: ",
+                    f"{type(e).__name__}: {e}",
                 )
             finally:
                 self._hb_task = None
@@ -500,7 +492,6 @@ class MQServer:
 
         await lock.acquire()
 
-        timer = getattr(self, timer_name)
         count = getattr(self, count_name)
 
         # Start batch

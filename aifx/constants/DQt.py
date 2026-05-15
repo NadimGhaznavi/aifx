@@ -9,8 +9,10 @@
 
 from typing import Final
 
+
 class DQtF:
     UTF_8: Final[str] = "utf-8"
+
 
 class DQtL:
     AIFX: Final[str] = "AI FX"

@@ -9,10 +9,7 @@
 #
 
 from typing import Any
-from dataclasses import dataclass, field
-
-from aifx.constants.DMsg import DMsg as MSG
-from aifx.constants.DDef import DDef as DEF
+from dataclasses import dataclass
 
 
 @dataclass(slots=True, frozen=True)
