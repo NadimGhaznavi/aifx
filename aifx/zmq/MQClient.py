@@ -83,7 +83,7 @@ class MQClient(QObject):
 
         self._hb_socket.connect(self._hb_address)
         self._last_heartbeat = 0.0
-        self._last_connected = None
+        self._last_connected: bool | None = None
         self._hb_timer = QTimer(self)
         self._hb_timer.timeout.connect(self._heartbeat_tick)
 
@@ -135,8 +135,10 @@ class MQClient(QObject):
         )
         try:
             self._socket.send(msg.to_json(), flags=zmq.NOBLOCK)
+            return True
         except Exception as e:
             self.log.critical(f"Exception: {e}")
+            return False
 
     def get_recent_candles(self, topic, instrument, count) -> bool:
         msg = MQMsg(
@@ -150,8 +152,10 @@ class MQClient(QObject):
         )
         try:
             self._socket.send(msg.to_json(), flags=zmq.NOBLOCK)
+            return True
         except Exception as e:
             self.log.critical(f"Exception: {e}")
+            return False
 
     def _handle_control_reply(self, reply: MQMsg) -> None:
         if reply.method == METHOD.GET_INSTRUMENTS_REPLY:
@@ -159,7 +163,7 @@ class MQClient(QObject):
             return
 
         elif reply.method == METHOD.START_FEED_REPLY:
-            self.log.debug(reply.payload)
+            self.log.debug(f"Start feed reply payload: {reply.payload}")
             self.feed_started.emit(reply.payload)
             return
 
