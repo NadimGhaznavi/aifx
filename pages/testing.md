@@ -60,6 +60,23 @@ ignore_missing_imports = true
 
 ---
 
+## AiFxLog Tests
+
+- Module: [/aifx/utils/AiFxLog](/aifx/utils/AiFxLog.py)
+- Test file: [/tests/unit/test_aifxlog.py](/tests/unit/test_aifxlog.py)
+- Test functions:
+  - `test_aifxlog_uses_module_name_as_logger_client_id()`
+  - `test_aifxlog_sets_configured_log_level()`
+  - `test_aifxlog_adds_one_console_handler()`
+  - `test_aifxlog_does_not_duplicate_console_handlers()`
+  - `test_aifxlog_adds_one_file_handler()`
+  - `test_aifxlog_does_not_duplicate_file_handlers()`
+  - `test_loglevel_changes_logger_level()`
+  - `test_invalid_log_level_raises_key_error()`
+  - `test_logging_methods_accept_normal_messages()`
+
+---
+
 ## Fixture
 
 - Fixture: [The tests/conftest.py](/tests/conftest.py)

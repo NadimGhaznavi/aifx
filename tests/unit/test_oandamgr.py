@@ -169,7 +169,6 @@ def test_fetch_candles_passes_request_details_and_returns_response() -> None:
 
 def test_get_candles_returns_none_on_non_200() -> None:
     mgr = _mgr()
-    mgr.log.debug = MagicMock()
     mgr._fetch_candles = MagicMock(return_value=(500, {}))
 
     assert mgr.get_candles("USD_CAD", count=5, granularity=CANDLE.GRAN_S5) is None
@@ -177,7 +176,6 @@ def test_get_candles_returns_none_on_non_200() -> None:
 
 def test_get_candles_converts_only_complete_candles() -> None:
     mgr = _mgr()
-    mgr.log.debug = MagicMock()
     complete = _candle_payload("2026-05-14T19:30:05.000000000Z", complete=True)
     incomplete = _candle_payload("2026-05-14T19:30:10.000000000Z", complete=False)
     mgr._fetch_candles = MagicMock(
