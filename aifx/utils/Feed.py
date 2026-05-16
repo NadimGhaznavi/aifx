@@ -7,8 +7,8 @@
 #    Website: https://aifx.osoyalce.com
 #    License: GPL 3.0
 
-from dataclasses import dataclass
 import asyncio
+from dataclasses import dataclass
 
 
 @dataclass(slots=True)

@@ -7,30 +7,27 @@
 #    Website: https://aifx.osoyalce.com
 #    License: GPL 3.0
 
-from pathlib import Path
+import json
 import sys
 from collections import deque
-import json
+from pathlib import Path
 
-from PySide6.QtWidgets import QApplication, QWidget
+import plotly.graph_objects as go
 from PySide6.QtCore import QFile, QTimer
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWebEngineWidgets import QWebEngineView
-from PySide6.QtWidgets import QVBoxLayout
-
-import plotly.graph_objects as go
+from PySide6.QtWidgets import QApplication, QVBoxLayout, QWidget
 
 from aifx.constants.DDb import DColInstrument as C_INST
 from aifx.constants.DDef import DDef as DEF
-from aifx.constants.DNetwork import DNetwork as NET
 from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DMQ import DMQ as MQ
+from aifx.constants.DNetwork import DNetwork as NET
 from aifx.constants.DQt import DQtL as QTL
-
-from aifx.utils.AiFxLog import AiFxLog
-from aifx.zmq.MQClient import MQClient
 from aifx.forex.Candle import Candle
 from aifx.forex.RecentCandlesModel import RecentCandlesModel
+from aifx.utils.AiFxLog import AiFxLog
+from aifx.zmq.MQClient import MQClient
 
 # Number of candles to cache for Plotly
 
@@ -86,7 +83,7 @@ class ClientQt(QWidget):
         self.log.info(QTL.ENABLING_HEARTBEAT)
 
         # Store candlestick data here
-        self._candles = {}
+        self._candles: dict[str, deque[Candle]] = {}
 
         # Track the active topic
         self._active_topic: str | None = None
@@ -125,7 +122,8 @@ class ClientQt(QWidget):
         else:
             candles.append(new_candle)
 
-        recent = list(reversed(candles[-DEF.RECENT_CANDLE_MAX :]))
+        recent_candles = list(candles)[-DEF.RECENT_CANDLE_MAX :]
+        recent = list(reversed(recent_candles))
         self.recent_candles_model.load_data(recent)
         self.ui.tbl_recent_candles.resizeColumnsToContents()
 

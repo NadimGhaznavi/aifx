@@ -9,8 +9,8 @@
 
 from typing import Final
 
-from aifx.constants.DInstrument import DInstrument as INS
 from aifx.constants.DDb import DColCandles as COL
+from aifx.constants.DInstrument import DInstrument as INS
 
 
 class DCandle:

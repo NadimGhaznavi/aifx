@@ -8,8 +8,9 @@
 #    License: GPL 3.0
 
 import json
-from zmq.sugar.frame import Frame
+
 import zmq
+from zmq.sugar.frame import Frame
 
 from aifx.constants.DAiFx import DAiFx as AIFX
 
