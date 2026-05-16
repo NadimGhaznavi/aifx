@@ -7,8 +7,8 @@ layout: default
 
 - Files managed using `git`
 - [GitHub Repository](https://github.com/NadimGhaznavi/aifx)
-- [Git Branching Strategy](/devops/Git-Branching-Strategy.html)
-- [Git Commit Message Standard](/devops/Git-Commit-Standard.html)
+- [Git Branching Strategy](/pages/devops/Git-Branching-Strategy.html)
+- [Git Commit Message Standard](/pages/devops/Git-Commit-Standard.html)
 
 ---
 
@@ -21,4 +21,4 @@ layout: default
 
 # Testing
 
-- [Testing Strategy](/tests/index.md)
+- [Testing Framework](/pages/testing.html)
