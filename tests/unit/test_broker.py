@@ -18,6 +18,7 @@ from aifx.constants.DInstrument import DInstrument as INS
 from aifx.constants.DInstrument import DInstrumentF as INSF
 from aifx.constants.DMethod import DMethod as METHOD
 from aifx.mgr.Broker import Broker
+from aifx.utils.Feed import Feed
 from aifx.zmq.MQMsg import MQMsg
 
 
@@ -51,6 +52,12 @@ def test_get_instruments_returns_cached_db_instruments(sample_instrument) -> Non
         broker.get_instruments_oanda.assert_not_awaited()
 
     asyncio.run(run())
+
+
+def test_broker_registers_shutdown_method() -> None:
+    broker = _broker()
+
+    assert broker._srv_methods[METHOD.SHUTDOWN] == broker.shutdown
 
 
 def test_get_instruments_fetches_oanda_when_cache_is_empty(
@@ -217,5 +224,73 @@ def test_start_feed_is_idempotent_for_existing_feed() -> None:
                 feed.pub_task,
                 return_exceptions=True,
             )
+
+    asyncio.run(run())
+
+
+def test_shutdown_returns_ack_and_schedules_quit() -> None:
+    async def run() -> None:
+        broker = _broker()
+        broker.quit = AsyncMock()
+
+        result = await broker.shutdown(
+            MQMsg(sender="client", target="broker", method=METHOD.SHUTDOWN)
+        )
+
+        assert result == {METHOD.SHUTDOWN: True}
+        assert broker._shutdown_task is not None
+        await asyncio.wait_for(broker._shutdown_task, timeout=1)
+        broker.quit.assert_awaited_once_with()
+
+    asyncio.run(run())
+
+
+def test_quit_cancels_tasks_stops_mq_and_closes_db() -> None:
+    async def wait_until_cancelled() -> None:
+        await asyncio.Event().wait()
+
+    async def run() -> None:
+        broker = _broker()
+        broker.mq = MagicMock()
+        broker.mq.quit = AsyncMock()
+        broker.db_mgr.close = MagicMock()
+        feed = Feed(name="USD_CAD")
+        feed.oanda_task = asyncio.create_task(wait_until_cancelled())
+        feed.oanda_running = True
+        feed.pub_task = asyncio.create_task(wait_until_cancelled())
+        feed.pub_running = True
+        broker._feeds[feed.name] = feed
+        broker._mq_events_task = asyncio.create_task(wait_until_cancelled())
+        broker._mq_task = asyncio.create_task(wait_until_cancelled())
+        broker._started = True
+
+        await broker.quit()
+
+        assert broker._stopped is True
+        assert broker._started is False
+        assert feed.oanda_running is False
+        assert feed.pub_running is False
+        assert feed.oanda_task.cancelled()
+        assert feed.pub_task.cancelled()
+        assert broker._mq_events_task.cancelled()
+        assert broker._mq_task.cancelled()
+        broker.mq.quit.assert_awaited_once_with()
+        broker.db_mgr.close.assert_called_once_with()
+
+    asyncio.run(run())
+
+
+def test_quit_is_idempotent() -> None:
+    async def run() -> None:
+        broker = _broker()
+        broker.mq = MagicMock()
+        broker.mq.quit = AsyncMock()
+        broker.db_mgr.close = MagicMock()
+
+        await broker.quit()
+        await broker.quit()
+
+        broker.mq.quit.assert_awaited_once_with()
+        broker.db_mgr.close.assert_called_once_with()
 
     asyncio.run(run())

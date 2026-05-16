@@ -21,5 +21,7 @@ class DMethod:
     HEARTBEAT_REPLY: Final[str] = f"{HEARTBEAT}_reply"
     PING: Final[str] = "ping"
     PING_REPLY: Final[str] = f"{PING}_reply"
+    SHUTDOWN: Final[str] = "shutdown"
+    SHUTDOWN_REPLY: Final[str] = f"{SHUTDOWN}_reply"
     START_FEED: Final[str] = "start_feed"
     START_FEED_REPLY: Final[str] = f"{START_FEED}_reply"

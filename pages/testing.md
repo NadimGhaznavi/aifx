@@ -110,11 +110,15 @@ ignore_missing_imports = true
   - `test_get_instruments_returns_cached_db_instruments()`
   - `test_get_instruments_fetches_oanda_when_cache_is_empty()`
   - `test_get_instruments_returns_empty_dict_when_no_data()`
+  - `test_broker_registers_shutdown_method()`
   - `test_get_recent_candles_returns_cached_db_candles()`
   - `test_get_recent_candles_fetches_oanda_when_cache_is_empty()`
   - `test_get_recent_candles_returns_empty_list_when_no_data()`
   - `test_start_feed_creates_feed_and_background_tasks()`
   - `test_start_feed_is_idempotent_for_existing_feed()`
+  - `test_shutdown_returns_ack_and_schedules_quit()`
+  - `test_quit_cancels_tasks_stops_mq_and_closes_db()`
+  - `test_quit_is_idempotent()`
 
 ---
 
@@ -181,6 +185,26 @@ ignore_missing_imports = true
 
 ---
 
+## MQClient Tests
+
+- Module: [/aifx/zmq/MQClient](/aifx/zmq/MQClient.py)
+- Test file: [/tests/unit/test_mqclient.py](/tests/unit/test_mqclient.py)
+- Test functions:
+  - `test_mqclient_initializes_sockets_and_addresses()`
+  - `test_mqclient_builds_topics()`
+  - `test_mqclient_connected_uses_recent_heartbeat()`
+  - `test_mqclient_register_subscribe_and_unsubscribe()`
+  - `test_mqclient_send_serializes_message()`
+  - `test_mqclient_send_returns_false_when_socket_would_block()`
+  - `test_mqclient_get_instruments_sends_request()`
+  - `test_mqclient_get_recent_candles_sends_request()`
+  - `test_mqclient_start_feed_sends_start_feed_message()`
+  - `test_mqclient_poll_control_reply_emits_instruments()`
+  - `test_mqclient_bg_sub_listen_dispatches_registered_handler()`
+  - `test_mqclient_quit_closes_sockets_and_context()`
+
+---
+
 ## MQMsg Tests
 
 - Module: [/aifx/zmq/MQMsg](/aifx/zmq/MQMsg.py)
@@ -195,6 +219,24 @@ ignore_missing_imports = true
   - `test_from_dict_defaults_missing_or_none_payload_to_empty_dict()`
   - `test_from_dict_rejects_non_dict_payload()`
   - `test_from_json_round_trips_from_to_json()`
+
+---
+
+## MQServer Tests
+
+- Module: [/aifx/zmq/MQServer](/aifx/zmq/MQServer.py)
+- Test file: [/tests/unit/test_mqserver.py](/tests/unit/test_mqserver.py)
+- Test functions:
+  - `test_mqserver_initializes_addresses_and_sockets()`
+  - `test_mqserver_builds_topic()`
+  - `test_mqserver_connected_uses_recent_heartbeat()`
+  - `test_mqserver_publish_sends_topic_and_compact_json()`
+  - `test_mqserver_send_serializes_message()`
+  - `test_mqserver_recv_parses_message()`
+  - `test_mqserver_register_client_adds_new_client_and_event()`
+  - `test_mqserver_register_existing_client_updates_without_event()`
+  - `test_mqserver_remove_client_removes_client_and_event()`
+  - `test_mqserver_quit_returns_when_not_started()`
 
 ---
 
