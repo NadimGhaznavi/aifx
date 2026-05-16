@@ -57,6 +57,7 @@ class ClientQt(QWidget):
 
         # Load the UI
         self.load_ui()
+        self.setup_recent_candles_table()
         # Prepare the plotting widget
         self.setup_plot()
         self.log.info(QTL.UI_LOADED)
