@@ -31,7 +31,9 @@ and renders real-time candlestick charts in a standalone Qt desktop client.
 
 ![Class Diagram](/images/aifx-class-diagram.png)
 
-## Broker Process
+---
+
+# Broker Process
 
 The broker is responsible for:
 
@@ -40,7 +42,7 @@ The broker is responsible for:
 - Caching recent data in an in-memory SQLite database
 - Publishing candle updates over ZeroMQ
 
-### Core Components
+## Core Components
 
 - `OandaMgr`
 - `BrokerDb`
@@ -48,7 +50,7 @@ The broker is responsible for:
 
 ---
 
-## Qt Client
+# Qt Client
 
 The Qt desktop client is responsible for:
 
@@ -57,7 +59,7 @@ The Qt desktop client is responsible for:
 - Consuming ZeroMQ candle streams
 - Rendering live candlestick charts
 
-### Core Components
+## Core Components
 
 - `ClientQt`
 - `ClientMQ`
@@ -73,6 +75,15 @@ The Qt desktop client is responsible for:
 - SQLite3
 - Plotly
 - OANDA REST API
+
+---
+
+# Dev Ops
+
+- [Dev Ops](/pages/devops/index.html)
+  - Version control
+  - PyPI integration
+  - [Testing Framework](/pages/testing.html)
 
 ---
 

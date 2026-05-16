@@ -19,7 +19,7 @@ A link to my [notes](/tutorial/index.md) on the [tutorial](https://www.youtube.c
 
 # AI FX Project Beginnings
 
-- [AI FX Project](/aifx/index.html)
+- [AI FX Project](/pages/aifx.html)
 
 ---
 
