@@ -85,6 +85,22 @@ ignore_missing_imports = true
 
 ---
 
+## Broker Tests
+
+- Module: [/aifx/mgr/Broker](/aifx/mgr/Broker.py)
+- Test file: [/tests/unit/test_broker.py](/tests/unit/test_broker.py)
+- Test functions:
+  - `test_get_instruments_returns_cached_db_instruments()`
+  - `test_get_instruments_fetches_oanda_when_cache_is_empty()`
+  - `test_get_instruments_returns_empty_dict_when_no_data()`
+  - `test_get_recent_candles_returns_cached_db_candles()`
+  - `test_get_recent_candles_fetches_oanda_when_cache_is_empty()`
+  - `test_get_recent_candles_returns_empty_list_when_no_data()`
+  - `test_start_feed_creates_feed_and_background_tasks()`
+  - `test_start_feed_is_idempotent_for_existing_feed()`
+
+---
+
 ## DbMgr Tests
 
 - Module: [/aifx/db/DbMgr](/aifx/db/DbMgr.py)
@@ -122,6 +138,29 @@ ignore_missing_imports = true
   - `test_to_dict()`
   - `test_from_db_round_trip()`
   - `test_from_oanda()`
+
+---
+
+## Feed Tests
+
+- Module: [/aifx/utils/Feed](/aifx/utils/Feed.py)
+- Test file: [/tests/unit/test_feed.py](/tests/unit/test_feed.py)
+- Test functions:
+  - `test_feed_stores_name_and_defaults_runtime_state()`
+  - `test_feed_runtime_state_can_be_updated()`
+  - `test_feed_supports_dataclass_equality_for_same_state()`
+
+---
+
+## MQEvent Tests
+
+- Module: [/aifx/zmq/MQEvent](/aifx/zmq/MQEvent.py)
+- Test file: [/tests/unit/test_mqevent.py](/tests/unit/test_mqevent.py)
+- Test functions:
+  - `test_mqevent_stores_event_type_and_defaults_optional_fields()`
+  - `test_mqevent_stores_routing_id_client_id_and_payload()`
+  - `test_mqevent_supports_dataclass_equality()`
+  - `test_mqevent_is_frozen()`
 
 ---
 
@@ -171,3 +210,37 @@ ignore_missing_imports = true
   - `test_split_router_frames_rejects_too_few_frames()`
   - `test_ignore_zmq_teardown_suppresses_zmq_error()`
   - `test_ignore_zmq_teardown_does_not_suppress_other_errors()`
+
+---
+
+## OandaMgr Tests
+
+- Module: [/aifx/mgr/OandaMgr](/aifx/mgr/OandaMgr.py)
+- Test file: [/tests/unit/test_oandamgr.py](/tests/unit/test_oandamgr.py)
+- Test functions:
+  - `test_fetch_instruments_returns_status_and_data_on_http_200()`
+  - `test_fetch_instruments_returns_none_tuple_on_non_200()`
+  - `test_fetch_instruments_returns_none_tuple_on_request_exception()`
+  - `test_get_instruments_returns_none_when_fetch_fails()`
+  - `test_get_instruments_converts_oanda_payloads_to_instruments()`
+  - `test_fetch_candles_passes_request_details_and_returns_response()`
+  - `test_get_candles_returns_none_on_non_200()`
+  - `test_get_candles_converts_only_complete_candles()`
+
+---
+
+## RecentCandlesModel Tests
+
+- Module: [/aifx/forex/RecentCandlesModel](/aifx/forex/RecentCandlesModel.py)
+- Test file: [/tests/unit/test_recentcandlesmodel.py](/tests/unit/test_recentcandlesmodel.py)
+- Test functions:
+  - `test_recent_candles_model_starts_empty()`
+  - `test_recent_candles_model_loads_candles()`
+  - `test_recent_candles_model_horizontal_headers()`
+  - `test_recent_candles_model_vertical_headers_are_one_based()`
+  - `test_recent_candles_model_ignores_non_display_header_roles()`
+  - `test_recent_candles_model_formats_display_values()`
+  - `test_recent_candles_model_aligns_display_values_right()`
+  - `test_recent_candles_model_returns_none_for_invalid_index()`
+  - `test_recent_candles_model_returns_none_for_unhandled_data_role()`
+  - `test_recent_candles_model_clear_removes_rows()`
