@@ -64,6 +64,71 @@ check_feature_branch() {
     print_status "Git feature branch: $CURRENT_BRANCH"
 }
 
+commit_and_push_branch() {
+    local commit_message=$1
+    local branch
+
+    if [[ -z "$commit_message" ]]; then
+        print_error "No commit message provided to commit_and_push_branch"
+        exit 1
+    fi
+
+    branch=$(git branch --show-current 2>/dev/null || true)
+
+    if [[ -z "$branch" ]]; then
+        print_error "Not currently on a named git branch. Cannot commit and push."
+        exit 1
+    fi
+
+    if [[ -z "$(git status --porcelain)" ]]; then
+        print_warning "No changes to commit on $branch"
+    else
+        print_status "Committing changes on $branch..."
+        git add pyproject.toml "$DDEF_FILE" CHANGELOG.md
+        git commit -m "$commit_message"
+        print_success "✓ Committed changes on $branch"
+    fi
+
+    print_status "Pushing $branch..."
+    git push -u origin "$branch"
+    print_success "✓ Pushed $branch"
+}
+
+create_and_switch_branch() {
+    local branch=$1
+
+    if [[ -z "$branch" ]]; then
+        print_error "No branch name provided to create_and_switch_branch"
+        exit 1
+    fi
+
+    print_status "Creating and switching to $branch branch..."
+    git checkout -b "$branch"
+    print_success "✓ Created and switched to $branch branch"
+}
+
+# Execute a git merge
+merge_branch() {
+    local source_branch=$1
+    local merge_message=$2
+
+    if [[ -z "$source_branch" ]]; then
+        print_error "No source branch provided to merge_branch"
+        exit 1
+    fi
+
+    if [[ -z "$merge_message" ]]; then
+        print_error "No merge message provided to merge_branch"
+        exit 1
+    fi
+
+    print_status "Merging $source_branch into $(git branch --show-current)..."
+
+    git merge --no-ff "$source_branch" -m "$merge_message"
+
+    print_success "✓ Merged $source_branch"
+}
+
 # ----- Functions to print colored output -----
 print_status() {
     echo -e "${BLUE}[INFO]${NC} $1"
@@ -92,6 +157,33 @@ switch_to_branch() {
     print_status "Switching to $branch branch..."
     git checkout "$branch"
     print_success "✓ Switched to $branch branch"
+}
+
+tag_and_push_release() {
+    local version=$1
+    local tag_message=$2
+    local tag_name
+
+    if [[ -z "$version" ]]; then
+        print_error "No version provided to tag_and_push_release"
+        exit 1
+    fi
+
+    if [[ -z "$tag_message" ]]; then
+        print_error "No tag message provided to tag_and_push_release"
+        exit 1
+    fi
+
+    tag_name="v$version"
+
+    print_status "Creating release tag $tag_name..."
+    git tag -a "$tag_name" -m "$tag_message"
+
+    print_status "Pushing main and tag $tag_name..."
+    git push origin main
+    git push origin "$tag_name"
+
+    print_success "✓ Pushed main and tag $tag_name"
 }
 
 # Function to update version in a file
@@ -183,7 +275,7 @@ if ! [[ $NEW_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     exit 1
 fi
 
-# Validatethe branch format
+# Validate the branch format
 if [[ "$NEW_FEATURE_BRANCH" != feat/* && "$NEW_FEATURE_BRANCH" != feature/* ]]; then
     print_error "New feature branch must be named feat/... or feature/..."
     print_error "Provided branch: $NEW_FEATURE_BRANCH"
@@ -219,7 +311,13 @@ fi
 echo ""
 print_status "Starting version update process..."
 
+# Switch to dev and merge in the current feature branch
 switch_to_branch "dev"
+merge_branch "$CURRENT_BRANCH" "Merge $RELEASE_COMMENT into dev"
+
+# Create a new release branch
+RELEASE_BRANCH="release/v$NEW_VERSION"
+create_and_switch_branch "$RELEASE_BRANCH"
 
 # Update pyproject.toml
 update_file_version "pyproject.toml" \
@@ -282,9 +380,30 @@ print_status "Testing Python package import..."
 if python -c "import aifx; print(f'✓ Main package version: {aifx.__version__}')" 2>/dev/null; then
     print_success "Python import test passed"
 else
-    print_warning "Python import test failed - you may need to reinstall the package"
+    print_error "Python import test failed - you may need to reinstall the package"
     echo "  Run: pip install -e ."
+    exit 1
 fi
 
 echo ""
-print_success "Version update completed successfully!"
+
+# Setup the release branch
+commit_and_push_branch "$RELEASE_COMMENT"
+
+# Switch to main
+switch_to_branch "main"
+# Merge in the new release
+merge_branch "$RELEASE_BRANCH" "Merge $RELEASE_COMMENT into main"
+# Tag the files and push out the new release
+tag_and_push_release "$NEW_VERSION" "$RELEASE_COMMENT"
+
+# Switch back to dev and merge release changes
+switch_to_branch "dev"
+merge_branch "$RELEASE_BRANCH" "Merge $RELEASE_COMMENT back into dev"
+git push origin dev
+
+# Create next feature branch
+create_and_switch_branch "$NEW_FEATURE_BRANCH"
+
+print_success "Release $NEW_VERSION completed successfully"
+print_success "Now on new feature branch: $NEW_FEATURE_BRANCH"
