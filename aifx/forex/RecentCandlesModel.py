@@ -37,7 +37,10 @@ class RecentCandlesModel(QAbstractTableModel):
         return self.column_count
 
     def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole):
-        if role == Qt.ItemDataRole.DisplayRole and orientation == Qt.Orientation.Horizontal:
+        if (
+            role == Qt.ItemDataRole.DisplayRole
+            and orientation == Qt.Orientation.Horizontal
+        ):
             return self.HEADERS[section]
 
         if role == Qt.ItemDataRole.DisplayRole:

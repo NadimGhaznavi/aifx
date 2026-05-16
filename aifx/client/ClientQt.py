@@ -352,6 +352,8 @@ class ClientQt(QWidget):
     def update_instruments(self, instruments):
         self.log.info("Instruments updated")
 
+        selected = self.ui.cb_instrument.currentData()
+
         self._instruments = {
             instrument[C_INST.NAME]: instrument for instrument in instruments
         }
@@ -366,6 +368,11 @@ class ClientQt(QWidget):
                 f"{display_name} - {name}",
                 name,
             )
+
+        if selected:
+            index = self.ui.cb_instrument.findData(selected)
+            if index >= 0:
+                self.ui.cb_instrument.setCurrentIndex(index)
 
 
 def main():
