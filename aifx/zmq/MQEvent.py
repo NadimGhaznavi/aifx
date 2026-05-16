@@ -8,8 +8,8 @@
 #    License: GPL 3.0
 #
 
-from typing import Any
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass(slots=True, frozen=True)

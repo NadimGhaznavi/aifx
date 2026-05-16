@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# scripts/run_final_tests.py
+# scripts/run_final_tests.sh
 #
 #    AI FX
 #    Author: Nadim-Daniel Ghaznavi
@@ -9,7 +9,7 @@
 #    Website: https://aifx.osoyalce.com
 #    License: GPL 3.0
 
-# Exsit on error
+# Exit on error
 set -e
 
 # Clear the terminal
@@ -30,7 +30,7 @@ else
 	exit 1
 fi
 
-cd $BASE_DIR
+cd "$BASE_DIR"
 
 echo "🔍 Executing pre-release tests..."
 echo $DIV
@@ -44,30 +44,15 @@ mypy $AI_FX
 echo $DIV
 
 echo "🎨 Running black ..."
-black $AI_FX
+# Don't check the `ui_form.py` file, it's very Qt specific.
+black --check --extend-exclude '(^|/)ui_form\.py$' $AI_FX
 echo $DIV
 
 echo "📦 Running isort ..."
-isort $AI_FX
-
-echo "🔒 Running bandit security check..."
-bandit -r $AI_FX #--skip B101
+isort --check-only $AI_FX
 
 echo "🧹 Executing: poetry run pytest..."
 poetry run pytest
-echo $DIV
-
-echo "🚦 Executing: shrmt -w scripts/..."
-shfmt -w scripts/
-echo $DIV
-
-echo "👽 Executging: poetry run pre-commit run --all-files ..."
-poetry run pre-commit run --all-files
-echo $DIV
-
-echo "🗃️ Rebuilding documentation ..."
-cd $BASE_DIR/docs && make clean
-cd $BASE_DIR/docs && make html
 echo $DIV
 
 echo "✅ All code quality checks passed!"

@@ -7,31 +7,30 @@
 #    Website: https://aifx.osoyalce.com
 #    License: GPL 3.0
 
-import asyncio
-import inspect
-import json
-import time
-import traceback
-from collections.abc import Awaitable, Callable, Mapping
 from typing import Any
-
+from collections.abc import Callable, Awaitable
+import inspect
+import traceback
+import time
+import asyncio
 import zmq
 import zmq.asyncio
+import json
 
 from aifx.constants.DAiFx import DAiFx as AIFX
 from aifx.constants.DDef import DDef as DEF
 from aifx.constants.DMethod import DMethod as METHOD
 from aifx.constants.DModule import DModule as MODULE
-from aifx.constants.DMQ import DMQ as MQ
-from aifx.constants.DMQ import DMQF as MQF
-from aifx.constants.DMQ import DMQEvent
-from aifx.constants.DNetwork import DNetwork as NET
-from aifx.constants.DNetwork import DNetworkF as NETF
+from aifx.constants.DMQ import DMQ as MQ, DMQF as MQF, DMQEvent
+from aifx.constants.DMsg import DMsg as MSG
+from aifx.constants.DNetwork import DNetwork as NET, DNetworkF as NETF
 from aifx.constants.DOanda import DOanda as OANDA
+
 from aifx.utils.AiFxLog import AiFxLog
-from aifx.zmq.MQEvent import MQEvent
 from aifx.zmq.MQMsg import MQMsg
+from aifx.zmq.MQMsgBatch import MQMsgBatch
 from aifx.zmq.MQUtils import MQUtils
+from aifx.zmq.MQEvent import MQEvent
 
 MsgHandler = Callable[[MQMsg], Any | Awaitable[Any]]
 
@@ -46,7 +45,7 @@ class MQServer:
         pub_port: int = NET.BROKER_PUB_PORT,
         identity: str = MODULE.SERVER_MQ,
         topic_prefix: str = MQ.TOPIC_PREFIX,
-        srv_methods: Mapping[str, MsgHandler] | None = None,
+        srv_methods: dict[str, MsgHandler] | None = None,
     ) -> None:
 
         self.log = AiFxLog(
@@ -359,3 +358,173 @@ class MQServer:
 
     def topic(self, suffix: str) -> str:
         return f"{self._topic_prefix}.{suffix}"
+
+    async def UNUSED_flush_timed_out_batch(
+        self,
+        *,
+        batch: MQMsgBatch,
+        topic: str,
+        method: str,
+    ) -> None:
+        local_storage = None
+        now = time.monotonic()
+
+        await batch.acquire_lock()
+        try:
+            if batch.has_timed_out(now):
+                local_storage = batch.pop_batch()
+        finally:
+            batch.release_lock()
+
+        if local_storage is not None:
+            await self._bg_publish(
+                topic=topic,
+                method=method,
+                payload=local_storage,
+            )
+
+    async def UNUSED_publish_candles(self, payload: dict) -> None:
+        """
+        Received a new message to publish.
+        """
+        await self._batched_publish(
+            batch=self._candles_batch,
+            payload=payload,
+            topic=MQ.CANDLES_TOPIC,
+            method=METHOD.CANDLES_BATCH,
+        )
+
+    async def UNUSED_bg_check_batches(self) -> None:
+        try:
+            while not self.check_batches_stop_event.is_set():
+                await self._flush_timed_out_batch(
+                    batch=self._candles_batch,
+                    topic=MQ.CANDLES_TOPIC,
+                    method=METHOD.CANDLES_BATCH,
+                )
+                await asyncio.sleep(0.05)
+
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:
+            self.log.critical(f"ERROR: {e}")
+            self.log.critical(f"STACKTRACE: {traceback.format_exc()}")
+
+    async def UNUSED_batched_publish(
+        self, batch: MQMsgBatch, payload: dict, topic: str, method: str
+    ) -> None:
+        """
+        A better name for this function is _enqueue_and_maybe_publish(), but
+        that's too verbose, even for me! :)
+        """
+        local_storage = None
+        await batch.acquire_lock()
+        try:
+            if batch.is_empty():
+                count_msg = MQMsg(
+                    sender=self._identity,
+                    method=METHOD.COUNTER,
+                    payload={MSG.COUNT: batch.batch_num()},
+                )
+                batch.append(count_msg.to_dict())
+                batch.append(payload)
+
+            elif batch.batch_size() >= (MQ.MAX_BATCH_SIZE - 1):
+                batch.append(payload)
+                local_storage = batch.pop_batch()
+
+            else:
+                batch.append(payload)
+
+        except Exception as e:
+            self.log.critical(f"ERROR: {e}")
+            self.log.critical(f"STACKTRACE: {traceback.format_exc()}")
+
+        finally:
+            batch.release_lock()
+
+        if local_storage is not None:
+            envelope = {
+                MSG.SENDER: MODULE.AIFX_BROKER,
+                MSG.METHOD: method,
+                MSG.PAYLOAD: {MSG.MESSAGES: local_storage},
+                MSG.PROTOCOL_VERSION: MSG.PROTOCOL_VERSION,
+            }
+            topic = self.topic(topic).encode(AIFX.UTF_8)
+            data = json.dumps(envelope, separators=(",", ":")).encode(AIFX.UTF_8)
+            await self.pub_socket.send_multipart([topic, data])
+
+        # if self.check_batches_task is None:
+        #    self.check_batches_task = asyncio.create_task(
+        #        self.bg_check_batches(), name="check-batches"
+        #    )
+
+    async def UNUSED_bg_publish(
+        self,
+        *,
+        topic: str,
+        method: str,
+        payload: list[dict],
+    ) -> None:
+        envelope = {
+            MSG.SENDER: self._identity,
+            MSG.METHOD: method,
+            MSG.PAYLOAD: {MSG.MESSAGES: payload},
+            MSG.PROTOCOL_VERSION: MSG.PROTOCOL_VERSION,
+        }
+        topic_b = self.topic(topic).encode(AIFX.UTF_8)
+        data = json.dumps(envelope, separators=(",", ":")).encode(AIFX.UTF_8)
+        await self.pub_socket.send_multipart([topic_b, data])
+
+    async def UNUSED_enqueue_and_maybe_flush(
+        self,
+        lock: asyncio.Lock,
+        msgs: list,
+        timer_name: str,
+        count_name: str,
+        payload: dict,
+        topic: str,
+        method: str,
+    ) -> None:
+
+        await lock.acquire()
+
+        count = getattr(self, count_name)
+
+        # Start batch
+        if len(msgs) == 0:
+            setattr(self, timer_name, time.monotonic())
+
+            count_msg = {
+                MSG.SENDER: self._identity,
+                MSG.METHOD: METHOD.COUNTER,
+                MSG.PAYLOAD: {MSG.COUNT: count},
+                MSG.PROTOCOL_VERSION: MSG.PROTOCOL_VERSION,
+            }
+
+            msgs.append(count_msg)
+            msgs.append(payload)
+
+            setattr(self, count_name, count + 1)
+            lock.release()
+            return
+
+        # Normal append
+        msgs.append(payload)
+
+        # Size flush
+        if len(msgs) >= MQ.MAX_BATCH_SIZE:
+            local_storage = msgs.copy()
+            msgs.clear()
+            setattr(self, timer_name, None)
+
+            lock.release()
+
+            await self._publish(
+                topic=topic,
+                method=method,
+                payload=local_storage,
+            )
+            return
+
+        lock.release()

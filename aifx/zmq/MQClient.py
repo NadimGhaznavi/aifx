@@ -10,9 +10,10 @@
 
 # aifx/zmq/ClientMQ.py
 
+import time
 from collections.abc import Callable
 from typing import Any
-import time
+
 import zmq
 from PySide6.QtCore import QObject, QTimer, Signal
 
@@ -22,9 +23,10 @@ from aifx.constants.DDef import DDef as DEF
 from aifx.constants.DInstrument import DInstrumentF as INSF
 from aifx.constants.DMethod import DMethod as METHOD
 from aifx.constants.DModule import DModule as MODULE
-from aifx.constants.DMQ import DMQ as MQ, DMQF as MQF
-from aifx.constants.DNetwork import DNetwork as NET, DNetworkF as NETF
-
+from aifx.constants.DMQ import DMQ as MQ
+from aifx.constants.DMQ import DMQF as MQF
+from aifx.constants.DNetwork import DNetwork as NET
+from aifx.constants.DNetwork import DNetworkF as NETF
 from aifx.utils.AiFxLog import AiFxLog
 from aifx.zmq.MQMsg import MQMsg
 from aifx.zmq.MQUtils import MQUtils
@@ -83,7 +85,7 @@ class MQClient(QObject):
 
         self._hb_socket.connect(self._hb_address)
         self._last_heartbeat = 0.0
-        self._last_connected = None
+        self._last_connected: bool | None = None
         self._hb_timer = QTimer(self)
         self._hb_timer.timeout.connect(self._heartbeat_tick)
 
@@ -135,8 +137,10 @@ class MQClient(QObject):
         )
         try:
             self._socket.send(msg.to_json(), flags=zmq.NOBLOCK)
+            return True
         except Exception as e:
             self.log.critical(f"Exception: {e}")
+            return False
 
     def get_recent_candles(self, topic, instrument, count) -> bool:
         msg = MQMsg(
@@ -150,8 +154,10 @@ class MQClient(QObject):
         )
         try:
             self._socket.send(msg.to_json(), flags=zmq.NOBLOCK)
+            return True
         except Exception as e:
             self.log.critical(f"Exception: {e}")
+            return False
 
     def _handle_control_reply(self, reply: MQMsg) -> None:
         if reply.method == METHOD.GET_INSTRUMENTS_REPLY:
@@ -159,7 +165,7 @@ class MQClient(QObject):
             return
 
         elif reply.method == METHOD.START_FEED_REPLY:
-            self.log.debug(reply.payload)
+            self.log.debug(f"Start feed reply payload: {reply.payload}")
             self.feed_started.emit(reply.payload)
             return
 

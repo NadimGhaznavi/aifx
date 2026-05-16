@@ -7,37 +7,35 @@
 #    Website: https://aifx.osoyalce.com
 #    License: GPL 3.0
 
-from typing import Any
-from collections.abc import Callable, Awaitable
 import asyncio
+from collections.abc import Awaitable, Callable
+from typing import Any
 
 from aifx.constants.DAiFx import DAiFx as AIFX
 from aifx.constants.DCandle import DCandle as CANDLE
 from aifx.constants.DCandle import DCandleF as CANDLEF
+from aifx.constants.DDb import DColCandles as C_CAND
+from aifx.constants.DDb import DColInstrument as C_INST
+from aifx.constants.DDb import DDbF as DBF
+from aifx.constants.DDb import DTable as TABLE
 from aifx.constants.DDef import DDef as DEF
-from aifx.constants.DDb import (
-    DDbF as DBF,
-    DTable as TABLE,
-    DColInstrument as C_INST,
-    DColCandles as C_CAND,
-)
 from aifx.constants.DFile import DFile as FILE
 from aifx.constants.DFrequency import DFrequency as FREQ
-from aifx.constants.DInstrument import DInstrument as INS, DInstrumentF as INSF
+from aifx.constants.DInstrument import DInstrument as INS
+from aifx.constants.DInstrument import DInstrumentF as INSF
 from aifx.constants.DMethod import DMethod as METHOD
 from aifx.constants.DModule import DModule as MODULE
+from aifx.constants.DMQ import DMQ as MQ
+from aifx.constants.DMQ import DMQEvent
 from aifx.constants.DNetwork import DNetwork as NET
-from aifx.constants.DMQ import DMQ as MQ, DMQEvent
-
-
+from aifx.db.BrokerDb import BrokerDb
+from aifx.db.DbMgr import DbMgr
+from aifx.mgr.OandaMgr import OandaMgr
 from aifx.utils.AiFxLog import AiFxLog
 from aifx.utils.Feed import Feed
-from aifx.db.DbMgr import DbMgr
-from aifx.db.BrokerDb import BrokerDb
-from aifx.mgr.OandaMgr import OandaMgr
-from aifx.zmq.MQServer import MQServer
-from aifx.zmq.MQMsg import MQMsg
 from aifx.zmq.MQEvent import MQEvent
+from aifx.zmq.MQMsg import MQMsg
+from aifx.zmq.MQServer import MQServer
 
 MsgHandler = Callable[[MQMsg], Any | Awaitable[Any]]
 
@@ -54,7 +52,7 @@ class Broker:
         port=NET.BROKER_PORT,
         hb_port=NET.BROKER_HB_PORT,
         identity=MODULE.BROKER,
-    ):
+    ) -> None:
 
         self._log_level = log_level
         self._log_file = log_file
@@ -242,7 +240,7 @@ class Broker:
                         C_CAND.D,
                         C_CAND.H,
                         C_CAND.MI,
-                        C_CAND.s,
+                        C_CAND.S,
                     ],
                 )
 
@@ -252,6 +250,9 @@ class Broker:
         return {CANDLEF.CANDLES: []}
 
     async def handle_mq_event(self, event: MQEvent) -> None:
+        if event.routing_id is None:
+            self.log.error(f"MQ event has no routing id: {event.event_type}")
+            return
         client_id = event.routing_id.decode(AIFX.UTF_8)
         match event.event_type:
             case DMQEvent.CLIENT_ADDED:

@@ -10,11 +10,11 @@
 import sqlite3
 from datetime import datetime, timezone
 
+from aifx.constants.DDb import DDbF as DBF
+from aifx.constants.DDb import DTable as TABLE
 from aifx.constants.DDef import DDef as DEF
-from aifx.constants.DDb import DDbF as DBF, DTable as TABLE
 from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DOanda import DOanda as OANDA
-
 from aifx.utils.AiFxLog import AiFxLog
 
 STALE_VALUE = {TABLE.INSTRUMENTS: OANDA.MAX_INSTRUMENT_AGE}
@@ -153,7 +153,7 @@ class DbMgr:
 
         return age > STALE_VALUE[table]
 
-    def num_rows(self, table: TABLE) -> int:
+    def num_rows(self, table: str) -> int:
         sql = f"SELECT * FROM {table}"
         return len(list(self._cursor.execute(sql).fetchall()))
 
@@ -230,6 +230,7 @@ class DbMgr:
             return len(stamped_records)
         except Exception as e:
             self.log.critical(f"upsert() exception: {e}")
+            return -1
 
     def _upsert_many(
         self, table: str, records: list[dict], key_fields: list[str]

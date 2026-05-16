@@ -10,8 +10,8 @@
 import logging
 from typing import Any, Dict, Optional
 
-from aifx.constants.DLogging import DAiFxLog, LOG_LEVELS
 from aifx.constants.DDef import DDef as DDEF
+from aifx.constants.DLogging import LOG_LEVELS
 
 
 class AiFxLog:
@@ -29,7 +29,7 @@ class AiFxLog:
         client_id: str,
         log_file: Optional[str] = None,
         to_console: bool = True,
-        log_level: DAiFxLog = DDEF.DEFAULT_LOG_LEVEL,
+        log_level: str = DDEF.DEFAULT_LOG_LEVEL,
     ) -> None:
         """
         Initialize the HydraLog instance with specified configuration.
@@ -83,7 +83,7 @@ class AiFxLog:
 
         self._logger.propagate = False
 
-    def loglevel(self, loglevel: DAiFxLog) -> None:
+    def loglevel(self, loglevel: str) -> None:
         """
         Set the logging level for this logger instance.
 

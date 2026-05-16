@@ -9,8 +9,8 @@
 
 from dataclasses import dataclass
 
-from aifx.constants.DInstrument import DInstrument as INS
 from aifx.constants.DDb import DColInstrument as COL
+from aifx.constants.DInstrument import DInstrument as INS
 
 
 @dataclass(slots=True)
