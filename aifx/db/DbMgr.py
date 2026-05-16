@@ -230,6 +230,7 @@ class DbMgr:
             return len(stamped_records)
         except Exception as e:
             self.log.critical(f"upsert() exception: {e}")
+            return -1
 
     def _upsert_many(
         self, table: str, records: list[dict], key_fields: list[str]

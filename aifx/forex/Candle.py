@@ -7,6 +7,8 @@
 #    Website: https://aifx.osoyalce.com
 #    License: GPL 3.0
 
+from collections.abc import Mapping
+from typing import Any
 from dataclasses import dataclass
 
 from datetime import datetime
@@ -89,7 +91,7 @@ class Candle:
         )
 
     @classmethod
-    def from_db(cls, ob: dict) -> "Candle":
+    def from_db(cls, ob: Mapping[str, Any]) -> "Candle":
         return cls(
             instrument=ob[C_CAND.INSTRUMENT],
             granularity=ob[C_CAND.GRANULARITY],
