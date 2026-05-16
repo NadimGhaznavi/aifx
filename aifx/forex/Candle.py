@@ -8,10 +8,9 @@
 #    License: GPL 3.0
 
 from collections.abc import Mapping
-from typing import Any
 from dataclasses import dataclass
-
 from datetime import datetime
+from typing import Any
 
 from aifx.constants.DCandle import DCandle as CANDLE
 from aifx.constants.DDb import DColCandles as C_CAND

@@ -9,6 +9,7 @@
 
 
 from typing import Final
+
 from aifx.constants.DLogging import DAiFxLog
 
 

@@ -9,8 +9,8 @@
 
 from typing import Final
 
-from aifx.constants.DMethod import DMethod as METHOD
 from aifx.constants.DInstrument import DInstrumentF as INSF
+from aifx.constants.DMethod import DMethod as METHOD
 
 
 class DMQ:

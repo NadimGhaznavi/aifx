@@ -10,9 +10,10 @@
 
 # aifx/zmq/ClientMQ.py
 
+import time
 from collections.abc import Callable
 from typing import Any
-import time
+
 import zmq
 from PySide6.QtCore import QObject, QTimer, Signal
 
@@ -22,9 +23,10 @@ from aifx.constants.DDef import DDef as DEF
 from aifx.constants.DInstrument import DInstrumentF as INSF
 from aifx.constants.DMethod import DMethod as METHOD
 from aifx.constants.DModule import DModule as MODULE
-from aifx.constants.DMQ import DMQ as MQ, DMQF as MQF
-from aifx.constants.DNetwork import DNetwork as NET, DNetworkF as NETF
-
+from aifx.constants.DMQ import DMQ as MQ
+from aifx.constants.DMQ import DMQF as MQF
+from aifx.constants.DNetwork import DNetwork as NET
+from aifx.constants.DNetwork import DNetworkF as NETF
 from aifx.utils.AiFxLog import AiFxLog
 from aifx.zmq.MQMsg import MQMsg
 from aifx.zmq.MQUtils import MQUtils

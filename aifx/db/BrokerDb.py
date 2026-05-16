@@ -8,18 +8,14 @@
 #    License: GPL 3.0
 #
 
-from aifx.constants.DDb import (
-    DTable as TABLE,
-    DColInstrument as C_INST,
-    DColCandles as C_CAND,
-)
+from aifx.constants.DDb import DColCandles as C_CAND
+from aifx.constants.DDb import DColInstrument as C_INST
+from aifx.constants.DDb import DTable as TABLE
 from aifx.constants.DDef import DDef as DEF
 from aifx.constants.DModule import DModule as MODULE
-
 from aifx.db.DbMgr import DbMgr
-from aifx.forex.Instrument import Instrument
 from aifx.forex.Candle import Candle
-
+from aifx.forex.Instrument import Instrument
 from aifx.utils.AiFxLog import AiFxLog
 
 

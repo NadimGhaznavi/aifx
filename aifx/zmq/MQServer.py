@@ -7,28 +7,31 @@
 #    Website: https://aifx.osoyalce.com
 #    License: GPL 3.0
 
-from typing import Any
-from collections.abc import Callable, Awaitable
-import inspect
-import traceback
-import time
 import asyncio
+import inspect
+import json
+import time
+import traceback
+from collections.abc import Awaitable, Callable, Mapping
+from typing import Any
+
 import zmq
 import zmq.asyncio
-import json
 
 from aifx.constants.DAiFx import DAiFx as AIFX
 from aifx.constants.DDef import DDef as DEF
 from aifx.constants.DMethod import DMethod as METHOD
 from aifx.constants.DModule import DModule as MODULE
-from aifx.constants.DMQ import DMQ as MQ, DMQF as MQF, DMQEvent
-from aifx.constants.DNetwork import DNetwork as NET, DNetworkF as NETF
+from aifx.constants.DMQ import DMQ as MQ
+from aifx.constants.DMQ import DMQF as MQF
+from aifx.constants.DMQ import DMQEvent
+from aifx.constants.DNetwork import DNetwork as NET
+from aifx.constants.DNetwork import DNetworkF as NETF
 from aifx.constants.DOanda import DOanda as OANDA
-
 from aifx.utils.AiFxLog import AiFxLog
+from aifx.zmq.MQEvent import MQEvent
 from aifx.zmq.MQMsg import MQMsg
 from aifx.zmq.MQUtils import MQUtils
-from aifx.zmq.MQEvent import MQEvent
 
 MsgHandler = Callable[[MQMsg], Any | Awaitable[Any]]
 
@@ -43,7 +46,7 @@ class MQServer:
         pub_port: int = NET.BROKER_PUB_PORT,
         identity: str = MODULE.SERVER_MQ,
         topic_prefix: str = MQ.TOPIC_PREFIX,
-        srv_methods: dict[str, MsgHandler] | None = None,
+        srv_methods: Mapping[str, MsgHandler] | None = None,
     ) -> None:
 
         self.log = AiFxLog(

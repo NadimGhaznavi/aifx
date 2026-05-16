@@ -8,20 +8,21 @@
 #    License: GPL 3.0
 
 import json
-import requests
 import time
 
+import requests
+
 from aifx.constants.DAccount import DAccountF as ACCTF
-from aifx.constants.DCandle import DCandle as CANDLE, DCandleF as CANDLEF
+from aifx.constants.DCandle import DCandle as CANDLE
+from aifx.constants.DCandle import DCandleF as CANDLEF
 from aifx.constants.DDef import DDef as DEF
 from aifx.constants.DInstrument import DInstrumentF as INSF
 from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DOanda import DOanda as OANDA
 from aifx.constants.DPrice import DPrice as PRICE
-
-from aifx.utils.AiFxLog import AiFxLog
-from aifx.forex.Instrument import Instrument
 from aifx.forex.Candle import Candle
+from aifx.forex.Instrument import Instrument
+from aifx.utils.AiFxLog import AiFxLog
 
 
 class OandaMgr:

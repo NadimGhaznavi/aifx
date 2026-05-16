@@ -10,8 +10,8 @@
 import logging
 from typing import Any, Dict, Optional
 
-from aifx.constants.DLogging import LOG_LEVELS
 from aifx.constants.DDef import DDef as DDEF
+from aifx.constants.DLogging import LOG_LEVELS
 
 
 class AiFxLog:

@@ -7,9 +7,8 @@
 #    Website: https://aifx.osoyalce.com
 #    License: GPL 3.0
 
-from typing import Final, Mapping
-
 import logging
+from typing import Final, Mapping
 
 
 class DAiFxLog:
