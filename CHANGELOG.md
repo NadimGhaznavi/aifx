@@ -9,8 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [Release 0.15.20] - 2026-05-16 13:39
+## [Release 0.15.21] - 2026-05-16 14:32
 
+
+### Added
+
+- **Formal Testing**
+  - Custom `pytest` tests
+  - 3rd party testing tools
+    - black
+    - flake8
+    - mypy
+    - isort
+- **Website Docs**
+  - Testing docs
+  - DevOps docs
+
+---
+
+## [Release 0.15.20] - 2026-05-16 13:44
+
+**Tested Release Script again**
+
+---
 
 ## [Release 0.15.19] - 2026-05-16 12:04
 
