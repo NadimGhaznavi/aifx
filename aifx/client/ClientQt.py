@@ -86,7 +86,7 @@ class ClientQt(QWidget):
         self.log.info(QTL.ENABLING_HEARTBEAT)
 
         # Store candlestick data here
-        self._candles = {}
+        self._candles: dict[str, deque[Candle]] = {}
 
         # Track the active topic
         self._active_topic: str | None = None
@@ -125,7 +125,8 @@ class ClientQt(QWidget):
         else:
             candles.append(new_candle)
 
-        recent = list(reversed(candles[-DEF.RECENT_CANDLE_MAX :]))
+        recent_candles = list(candles)[-DEF.RECENT_CANDLE_MAX :]
+        recent = list(reversed(recent_candles))
         self.recent_candles_model.load_data(recent)
         self.ui.tbl_recent_candles.resizeColumnsToContents()
 

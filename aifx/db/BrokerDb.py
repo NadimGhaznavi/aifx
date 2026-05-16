@@ -49,7 +49,7 @@ class BrokerDb:
         if row is None:
             return None
 
-        return Candle.from_db(row)
+        return Candle.from_db(dict(row))
 
     def get_instruments(self):
         rows = self.db_mgr.select_all(table=TABLE.INSTRUMENTS, order_by="name")
@@ -87,7 +87,7 @@ class BrokerDb:
         if not rows:
             return []
 
-        candles = [Candle.from_db(row) for row in rows]
+        candles = [Candle.from_db(dict(row)) for row in rows]
 
         # select newest-first for efficient LIMIT, then publish oldest-first
         return list(reversed(candles))
