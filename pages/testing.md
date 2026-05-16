@@ -1,5 +1,5 @@
 ---
-title: Testing
+title: Testing Framework
 layout: default
 ---
 
@@ -15,8 +15,44 @@ Most tests here are `pytest` tests. They can be executed directly by providing t
 
 3rd party testing tools have also been integrated into this projectL:
 
+## flake8
+
 - [flake8](https://flake8.pycqa.org/en/latest/)
-- 
+
+Configuration: 
+
+```
+- (aifx_venv) dan@sally:/opt/dev/aifx$ cat .flake8
+[flake8]
+max-line-length = 88
+extend-ignore = E203
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    aifx/ui_form.py,
+    aifx/client/ui_form.py
+```
+
+## mypy
+
+- [mypy](https://mypy-lang.org/)
+
+Configuration (from `pyproject.toml`):
+
+```
+[[tool.mypy.overrides]]
+module = ["plotly", "plotly.*"]
+ignore_missing_imports = true
+```
+
+## black
+
+- [Black](https://black.readthedocs.io/en/stable/)
+
+## isort
+
+- [isort](https://isort.readthedocs.io/en/latest/)
 
 ---
 
@@ -32,6 +68,20 @@ Most tests here are `pytest` tests. They can be executed directly by providing t
   - `sample_candle()`
   - `sample_instrument()`
   - `db_mgr()`
+
+---
+
+## BrokerDb Tests
+
+- Module [/aifx/db/BrokerDb](/aifx/db/BrokerDb.py)
+- Test file: [/tests/unit/test_brokerdb.py](/tests/unit/test_brokerdb.py)
+- Test functions:
+  - `test_get_instruments_returns_none_when_empty()`
+  - `test_get_instruments_returns_instruments_sorted_by_name()`
+  - `test_get_latest_candle_returns_none_when_empty()`
+  - `test_get_latest_candle_returns_newest_candle_for_instrument()`
+  - `test_get_recent_candles_returns_empty_list_when_empty()`
+  - `test_get_recent_candles_filters_by_instrument_and_returns_oldest_first()`
 
 ---
 
