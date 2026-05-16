@@ -9,12 +9,15 @@
 #
 
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt
+from PySide6.QtGui import QColor
 
 from aifx.forex.Candle import Candle
 
 
 class RecentCandlesModel(QAbstractTableModel):
     HEADERS = ("Time", "Open", "High", "Low", "Close", "Vol")
+    BEARISH_BG = QColor(80, 24, 24)
+    BULLISH_BG = QColor(24, 72, 32)
 
     def __init__(self, candles: list[Candle] | None = None):
         super().__init__()
@@ -65,6 +68,15 @@ class RecentCandlesModel(QAbstractTableModel):
 
         if role == Qt.ItemDataRole.TextAlignmentRole:
             return Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+
+        if role == Qt.ItemDataRole.BackgroundRole:
+            if candle.mid_c < candle.mid_o:
+                return self.BEARISH_BG
+
+            if candle.mid_c > candle.mid_o:
+                return self.BULLISH_BG
+
+            return None
 
         return None
 

@@ -7,6 +7,8 @@
 #    Website: https://aifx.osoyalce.com
 #    License: GPL 3.0
 
+from dataclasses import replace
+
 import pytest
 from PySide6.QtCore import QCoreApplication, QModelIndex, Qt
 
@@ -104,6 +106,35 @@ def test_recent_candles_model_aligns_display_values_right(qt_app, sample_candle)
     alignment = model.data(model.index(0, 0), Qt.ItemDataRole.TextAlignmentRole)
 
     assert alignment == Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+
+
+def test_recent_candles_model_colors_bullish_candles_green(qt_app, sample_candle) -> None:
+    candle = replace(sample_candle, mid_o=1.1, mid_c=1.2)
+    model = RecentCandlesModel([candle])
+
+    assert (
+        model.data(model.index(0, 0), Qt.ItemDataRole.BackgroundRole)
+        == RecentCandlesModel.BULLISH_BG
+    )
+
+
+def test_recent_candles_model_colors_bearish_candles_red(qt_app, sample_candle) -> None:
+    candle = replace(sample_candle, mid_o=1.2, mid_c=1.1)
+    model = RecentCandlesModel([candle])
+
+    assert (
+        model.data(model.index(0, 0), Qt.ItemDataRole.BackgroundRole)
+        == RecentCandlesModel.BEARISH_BG
+    )
+
+
+def test_recent_candles_model_leaves_neutral_candles_uncolored(
+    qt_app, sample_candle
+) -> None:
+    candle = replace(sample_candle, mid_o=1.1, mid_c=1.1)
+    model = RecentCandlesModel([candle])
+
+    assert model.data(model.index(0, 0), Qt.ItemDataRole.BackgroundRole) is None
 
 
 def test_recent_candles_model_returns_none_for_invalid_index(qt_app) -> None:
