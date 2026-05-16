@@ -5,7 +5,34 @@
 [[ ${_HELPER_SH_LOADED:-} ]] && return
 _HELPER_SH_LOADED=1
 
-DIV="----------------------------------------------------------------------------"
+DIV="-" * 50
+
+# Ensure release starts from a feature branch
+check_feature_branch() {
+    local branch
+
+    branch=$(git branch --show-current 2>/dev/null || true)
+
+    if [[ -z "$branch" ]]; then
+        print_error "Not currently on a named git branch. Are you in detached HEAD state?"
+        exit 1
+    fi
+
+    if [[ "$branch" == "main" || "$branch" == "dev" || "$branch" == release/* ]]; then
+        print_error "This script must be run from a feature branch."
+        print_error "Current branch: $branch"
+        exit 1
+    fi
+
+    if [[ "$branch" != feat/* && "$branch" != feature/* ]]; then
+        print_error "This script must be run from a feature branch named feat/... or feature/..."
+        print_error "Current branch: $branch"
+        exit 1
+    fi
+
+    CURRENT_BRANCH="$branch"
+    print_status "Git feature branch: $CURRENT_BRANCH"
+}
 
 dev_branch_process() {
 	# Print out the current git status

@@ -27,7 +27,7 @@ class DAiFxLog:
     CRITICAL: Final[str] = "critical"
 
 
-LOG_LEVELS: Mapping[DAiFxLog, int] = {
+LOG_LEVELS: Mapping[str, int] = {
     DAiFxLog.INFO: logging.INFO,
     DAiFxLog.DEBUG: logging.DEBUG,
     DAiFxLog.WARNING: logging.WARNING,

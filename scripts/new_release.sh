@@ -9,6 +9,11 @@
 
 set -e  # Exit on any error
 
+# ----- Project info -----
+PROJECT_NAME="AI FX"
+PROJECT_DIR="aifx"
+DDEF_FILE="$PROJECT_DIR/constants/DDef.py"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -16,7 +21,50 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Function to print colored output
+# ----- Function Definitions -----
+
+# Check clean Git: Ensure working tree is clean before release flow starts
+check_clean_git() {
+    if [[ -n "$(git status --porcelain)" ]]; then
+        print_error "Git working tree is not clean."
+        echo ""
+        git status --short
+        echo ""
+        print_error "Please commit or stash your changes before running this release script."
+        exit 1
+    fi
+
+    print_success "Git working tree is clean"
+}
+
+# Ensure release starts from a feature branch
+check_feature_branch() {
+    local branch
+
+    branch=$(git branch --show-current 2>/dev/null || true)
+
+    if [[ -z "$branch" ]]; then
+        print_error "Not currently on a named git branch. Are you in detached HEAD state?"
+        exit 1
+    fi
+
+    if [[ "$branch" == "main" || "$branch" == "dev" || "$branch" == release/* ]]; then
+        print_error "This script must be run from a feature branch."
+        print_error "Current branch: $branch"
+        exit 1
+    fi
+
+    if [[ "$branch" != feat/* && "$branch" != feature/* ]]; then
+        print_error "Feature branch must be named feat/... or feature/..."
+        print_error "Current branch: $branch"
+        exit 1
+    fi
+
+    CURRENT_BRANCH="$branch"
+    print_status "Git feature branch: $CURRENT_BRANCH"
+}
+
+# ----- Functions to print colored output -----
 print_status() {
     echo -e "${BLUE}[INFO]${NC} $1"
 }
@@ -33,61 +81,30 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Check if version argument is provided
-if [ $# -eq 0 ]; then
-    print_error "No version number provided"
-    echo "Usage: $0 <new_version>"
-    echo "Example: $0 0.6.0"
-    echo ""
-    echo "The version should follow semantic versioning (MAJOR.MINOR.PATCH)"
-    exit 1
-fi
+switch_to_branch() {
+    local branch=$1
 
-NEW_VERSION=$1
+    if [[ -z "$branch" ]]; then
+        print_error "No branch name provided to switch_to_branch"
+        exit 1
+    fi
 
-# Validate version format (basic check for X.Y.Z)
-if ! [[ $NEW_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-    print_error "Invalid version format: $NEW_VERSION"
-    echo "Version must follow semantic versioning format: MAJOR.MINOR.PATCH (e.g., 1.2.3)"
-    exit 1
-fi
-
-print_status "Updating AI Hydra version to $NEW_VERSION..."
-
-# Check if we're in the right directory
-if [ ! -f "pyproject.toml" ]; then
-    print_error "pyproject.toml not found. Please run this script from the project root directory."
-    exit 1
-fi
-
-# Get current version for comparison
-CURRENT_VERSION=$(grep "version = " pyproject.toml | head -1 | sed 's/.*version = "\([^"]*\)".*/\1/')
-print_status "Current version: $CURRENT_VERSION"
-print_status "New version: $NEW_VERSION"
-
-# Confirm update
-echo ""
-read -p "Do you want to proceed with the version update? (y/N): " -n 1 -r
-echo ""
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    print_warning "Version update cancelled"
-    exit 0
-fi
-
-echo ""
-print_status "Starting version update process..."
+    print_status "Switching to $branch branch..."
+    git checkout "$branch"
+    print_success "✓ Switched to $branch branch"
+}
 
 # Function to update version in a file
 update_file_version() {
     local file=$1
-    local pattern=$2
-    local replacement=$3
-    local description=$4
-    
+    local sed_script=$2
+    local description=$3
+
     if [ -f "$file" ]; then
         print_status "Updating $description: $file"
-        if sed -i.bak "$pattern" "$file"; then
-            rm -f "$file.bak"  # Remove backup file created by sed
+
+        if sed -i.bak -E "$sed_script" "$file"; then
+            rm -f "$file.bak"
             print_success "✓ Updated $file"
         else
             print_error "✗ Failed to update $file"
@@ -139,37 +156,89 @@ update_changelog() {
     fi
 }
 
+
+# ----- End of functions -----
+
+# Check if required arguments are provided
+if [ $# -ne 3 ]; then
+    print_error "Invalid number of arguments"
+    echo "Usage: $0 <new_version> <release_comment> <new_feature_branch>"
+    echo "Example: $0 0.15.20 \"v0.15.20 - DevOps Flow Release\" feat/newWidget"
+    echo ""
+    echo "Arguments:"
+    echo "  new_version         Semantic version number, e.g. 0.15.20"
+    echo "  release_comment     Git commit/tag message, e.g. \"v0.15.20 - DevOps Flow Release\""
+    echo "  new_feature_branch  New feature branch to create after release, e.g. feat/newWidget"
+    exit 1
+fi
+
+NEW_VERSION=$1
+RELEASE_COMMENT=$2
+NEW_FEATURE_BRANCH=$3
+
+# Validate version format (basic check for X.Y.Z)
+if ! [[ $NEW_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    print_error "Invalid version format: $NEW_VERSION"
+    echo "Version must follow semantic versioning format: MAJOR.MINOR.PATCH (e.g., 1.2.3)"
+    exit 1
+fi
+
+# Validatethe branch format
+if [[ "$NEW_FEATURE_BRANCH" != feat/* && "$NEW_FEATURE_BRANCH" != feature/* ]]; then
+    print_error "New feature branch must be named feat/... or feature/..."
+    print_error "Provided branch: $NEW_FEATURE_BRANCH"
+    exit 1
+fi
+
+print_status "Updating $PROJECT_NAME version to $NEW_VERSION..."
+
+# Check if we're in the right directory
+if [ ! -f "pyproject.toml" ]; then
+    print_error "pyproject.toml not found. Please run this script from the project root directory."
+    exit 1
+fi
+
+# Get current pyproject version for comparison
+CURRENT_VERSION=$(grep "version = " pyproject.toml | head -1 | sed 's/.*version = "\([^"]*\)".*/\1/')
+print_status "Current version: $CURRENT_VERSION"
+print_status "New version: $NEW_VERSION"
+
+# Get current git branch
+check_feature_branch
+
+# Ensure the current git environment is clean
+check_clean_git
+
+read -p "Proceed with release $NEW_VERSION from feature branch '$CURRENT_BRANCH'? (y/N): " -n 1 -r
+echo ""
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    print_warning "Version update cancelled"
+    exit 0
+fi
+
+echo ""
+print_status "Starting version update process..."
+
+switch_to_branch "dev"
+
 # Update pyproject.toml
 update_file_version "pyproject.toml" \
-    "s/version = \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/version = \"$NEW_VERSION\"/" \
-    "s/version = \"[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\"/version = \"$NEW_VERSION\"/" \
+    "s/version = \"[0-9]+\.[0-9]+\.[0-9]+\"/version = \"$NEW_VERSION\"/" \
     "primary version (pyproject.toml)"
 
-# Update main package __init__.py
-update_file_version "ai_hydra/__init__.py" \
-    "s/__version__ = \"[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\"/__version__ = \"$NEW_VERSION\"/" \
-    "main package version"
-
-# Update TUI package __init__.py
-update_file_version "ai_hydra/tui/__init__.py" \
-    "s/__version__ = \"[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\"/__version__ = \"$NEW_VERSION\"/" \
-    "TUI package version"
+# Update VERSION in aifx/constants/DDef.py
+update_file_version "$DDEF_FILE" \
+    "s/VERSION: Final\[str\] = \"[0-9]+\.[0-9]+\.[0-9]+\"/VERSION: Final[str] = \"$NEW_VERSION\"/" \
+    "aifx/constants/DDef version"
 
 # Update documentation conf.py
-if [ -f "docs/_source/conf.py" ]; then
-    print_status "Updating documentation version: docs/_source/conf.py"
-    sed -i.bak "s/release = '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*'/release = '$NEW_VERSION'/" docs/_source/conf.py
-    sed -i.bak "s/version = '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*'/version = '$NEW_VERSION'/" docs/_source/conf.py
-    rm -f docs/_source/conf.py.bak
-    print_success "✓ Updated docs/_source/conf.py"
-fi
-
-# Update setup.py if it exists (DEPRECATED - setup.py has been removed)
-# This section is kept for backward compatibility but setup.py is no longer used
-if [ -f "setup.py" ]; then
-    print_warning "Found setup.py - this file should be removed as it's no longer used"
-    print_warning "The project now uses pyproject.toml exclusively for packaging"
-fi
+#if [ -f "docs/_source/conf.py" ]; then
+#    print_status "Updating documentation version: docs/_source/conf.py"
+#    sed -i.bak "s/release = '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*'/release = '$NEW_VERSION'/" docs/_source/conf.py
+#    sed -i.bak "s/version = '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*'/version = '$NEW_VERSION'/" docs/_source/conf.py
+#    rm -f docs/_source/conf.py.bak
+#    print_success "✓ Updated docs/_source/conf.py"
+#fi
 
 # Update CHANGELOG.md with new release heading
 update_changelog "$NEW_VERSION"
@@ -188,29 +257,17 @@ if [ -f "pyproject.toml" ]; then
     grep "version.*=" pyproject.toml | head -1
 fi
 
-# Check main package
-if [ -f "ai_hydra/__init__.py" ]; then
-    echo "🐍 ai_hydra/__init__.py:"
-    grep "__version__" ai_hydra/__init__.py
-fi
-
-# Check TUI package
-if [ -f "ai_hydra/tui/__init__.py" ]; then
-    echo "🖥️  ai_hydra/tui/__init__.py:"
-    grep "__version__" ai_hydra/tui/__init__.py
+# Check DDef VERSION constant
+if [ -f "$DDEF_FILE" ]; then
+    echo "🐍 aifx/constants/DDef.py:"
+    grep "VERSION" aifx/constants/DDef.py | head -1
 fi
 
 # Check documentation
-if [ -f "docs/_source/conf.py" ]; then
-    echo "📚 docs/_source/conf.py:"
-    grep -E "(release|version) = " docs/_source/conf.py
-fi
-
-# Check setup.py (DEPRECATED)
-if [ -f "setup.py" ]; then
-    echo "⚠️  setup.py (DEPRECATED - should be removed):"
-    grep "version=" setup.py | head -1
-fi
+#if [ -f "docs/_source/conf.py" ]; then
+#    echo "📚 docs/_source/conf.py:"
+#    grep -E "(release|version) = " docs/_source/conf.py
+#fi
 
 # Check CHANGELOG.md
 if [ -f "CHANGELOG.md" ]; then
@@ -222,7 +279,7 @@ echo ""
 
 # Test Python import
 print_status "Testing Python package import..."
-if python -c "import ai_hydra; print(f'✓ Main package version: {ai_hydra.__version__}')" 2>/dev/null; then
+if python -c "import aifx; print(f'✓ Main package version: {aifx.__version__}')" 2>/dev/null; then
     print_success "Python import test passed"
 else
     print_warning "Python import test failed - you may need to reinstall the package"
@@ -231,18 +288,3 @@ fi
 
 echo ""
 print_success "Version update completed successfully!"
-
-echo ""
-echo "📋 Next Steps:"
-echo "1. Review all changes: git diff"
-echo "2. Review CHANGELOG.md to ensure release notes are complete"
-echo "3. Run tests: pytest tests/"
-echo "4. Build documentation: cd docs && make html"
-echo "5. Commit changes: git add . && git commit -m 'Release version $NEW_VERSION'"
-echo "6. Create tag: git tag -a v$NEW_VERSION -m 'Release version $NEW_VERSION'"
-echo "7. Push changes: git push origin main --tags"
-echo ""
-echo "💡 Tip: Use 'git checkout .' to revert all changes if needed"
-
-echo ""
-print_status "Version update process complete! 🎉"

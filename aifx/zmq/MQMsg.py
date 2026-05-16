@@ -67,7 +67,7 @@ class MQMsg:
         self._sender = value
 
     @property
-    def target(self) -> str:
+    def target(self) -> str | None:
         """Get the message target identifier."""
         return self._target
 
