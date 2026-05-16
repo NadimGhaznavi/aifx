@@ -54,7 +54,7 @@ def test_recent_candles_model_vertical_headers_are_one_based(qt_app, sample_cand
     assert model.headerData(0, Qt.Orientation.Vertical) == "1"
 
 
-def test_recent_candles_model_ignores_non_display_header_roles(qt_app) -> None:
+def test_recent_candles_model_aligns_headers_right(qt_app) -> None:
     model = RecentCandlesModel()
 
     assert (
@@ -62,6 +62,19 @@ def test_recent_candles_model_ignores_non_display_header_roles(qt_app) -> None:
             0,
             Qt.Orientation.Horizontal,
             Qt.ItemDataRole.TextAlignmentRole,
+        )
+        == Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+    )
+
+
+def test_recent_candles_model_ignores_unhandled_header_roles(qt_app) -> None:
+    model = RecentCandlesModel()
+
+    assert (
+        model.headerData(
+            0,
+            Qt.Orientation.Horizontal,
+            Qt.ItemDataRole.ToolTipRole,
         )
         is None
     )
