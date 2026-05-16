@@ -45,6 +45,7 @@ textual-plot = "^0.10.1"
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.4.1"
 pytest-mock = "^3.14.1"
+types-requests = "^2.33.0.20260513"
 
 [tool.poetry.scripts]
 aifxqt = "aifx.client.ClientQt:main"
