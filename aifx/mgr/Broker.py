@@ -244,7 +244,7 @@ class Broker:
             name=msg.payload[C_CAND.INSTRUMENT], limit=msg.payload[DBF.LIMIT]
         )
 
-        instrument = msg.payload[INSF.INSTRUMENT]
+        instrument = msg.payload[C_CAND.INSTRUMENT]
         count = msg.payload[DBF.LIMIT]
 
         if not candles:

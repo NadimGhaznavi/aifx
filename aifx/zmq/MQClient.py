@@ -18,9 +18,10 @@ import zmq
 from PySide6.QtCore import QObject, QTimer, Signal
 
 from aifx.constants.DAiFx import DAiFx as AIFX
+from aifx.constants.DDb import DColCandles as C_CAND
+from aifx.constants.DDb import DColInstrument as C_INST
 from aifx.constants.DDb import DDbF as DBF
 from aifx.constants.DDef import DDef as DEF
-from aifx.constants.DInstrument import DInstrumentF as INSF
 from aifx.constants.DMethod import DMethod as METHOD
 from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DMQ import DMQ as MQ
@@ -40,6 +41,7 @@ class MQClient(QObject):
     connection_changed = Signal(bool)
     instruments_received = Signal(object)
     feed_started = Signal(object)
+    recent_candles = Signal(str, object)
 
     def __init__(
         self,
@@ -146,9 +148,9 @@ class MQClient(QObject):
         msg = MQMsg(
             sender=self._identity,
             target=self._broker_hostname,
-            method=METHOD.GET_INSTRUMENTS,
+            method=METHOD.GET_RECENT_CANDLES,
             payload={
-                INSF.INSTRUMENTS: instrument,
+                C_CAND.INSTRUMENT: instrument[C_INST.NAME],
                 DBF.LIMIT: count,
             },
         )
@@ -165,8 +167,11 @@ class MQClient(QObject):
             return
 
         elif reply.method == METHOD.START_FEED_REPLY:
-            self.log.debug(f"Start feed reply payload: {reply.payload}")
             self.feed_started.emit(reply.payload)
+            return
+
+        elif reply.method == METHOD.GET_RECENT_CANDLES_REPLY:
+            pass
             return
 
         self.log.critical(f"Unhandled control reply: {reply.method}")

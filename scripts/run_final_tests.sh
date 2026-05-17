@@ -52,7 +52,7 @@ echo "📦 Running isort ..."
 isort --check-only $AI_FX
 
 echo "🧹 Executing: poetry run pytest..."
-poetry run pytest
+poetry run pytest -v
 echo $DIV
 
 echo "✅ All code quality checks passed!"

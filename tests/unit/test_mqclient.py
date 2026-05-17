@@ -14,8 +14,9 @@ import zmq
 from PySide6.QtCore import QCoreApplication
 
 from aifx.constants.DDb import DDbF as DBF
+from aifx.constants.DDb import DColCandles as C_CAND
+from aifx.constants.DDb import DColInstrument as C_INST
 from aifx.constants.DInstrument import DInstrument as INS
-from aifx.constants.DInstrument import DInstrumentF as INSF
 from aifx.constants.DMethod import DMethod as METHOD
 from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DMQ import DMQ as MQ
@@ -182,13 +183,13 @@ def test_mqclient_get_instruments_sends_request(fake_client) -> None:
 def test_mqclient_get_recent_candles_sends_request(fake_client) -> None:
     client, ctx = fake_client
 
-    assert client.get_recent_candles("topic", "USD_CAD", 5) is True
+    assert client.get_recent_candles("topic", {C_INST.NAME: "USD_CAD"}, 5) is True
     msg = MQMsg.from_json(ctx.sockets[0].sent[0])
     assert msg.sender == MODULE.CLIENT_MQ
     assert msg.target == "broker.local"
-    assert msg.method == METHOD.GET_INSTRUMENTS
+    assert msg.method == METHOD.GET_RECENT_CANDLES
     assert msg.payload == {
-        INSF.INSTRUMENTS: "USD_CAD",
+        C_CAND.INSTRUMENT: "USD_CAD",
         DBF.LIMIT: 5,
     }
 
