@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "aifx"
-version = "0.15.22"
+version = "0.15.23"
 license = "GPL-3.0-or-later"
 description = "AI-driven FOREX experimentation framework."
 authors = ["Nadim-Daniel Ghaznavi <nghaznavi@gmail.com>"]
@@ -46,6 +46,9 @@ textual-plot = "^0.10.1"
 [[tool.mypy.overrides]]
 module = ["plotly", "plotly.*"]
 ignore_missing_imports = true
+
+[tool.isort]
+extend_skip = ["aifx/client/ui_form.py"]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.4.1"

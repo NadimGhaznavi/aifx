@@ -81,8 +81,8 @@ class OandaMgr:
         )
 
         self.log.debug(
-            f"Request: {pair_name}, count: {count}, ",
-            f"granularity: {granularity}, return code: {code}",
+            f"Request: {pair_name}, count: {count}, "
+            f"granularity: {granularity}, return code: {code}"
         )
 
         if code != 200:
