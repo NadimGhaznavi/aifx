@@ -13,7 +13,8 @@ from collections import deque
 from pathlib import Path
 
 import plotly.graph_objects as go
-from PySide6.QtCore import QFile, QTimer
+from PySide6.QtCore import QFile, Qt, QTimer
+from PySide6.QtGui import QColor, QPalette
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWidgets import QApplication, QVBoxLayout, QWidget
@@ -31,6 +32,70 @@ from aifx.zmq.MQClient import MQClient
 
 # Number of candles to cache for Plotly
 RECENT_CANDLES_COLUMN_PADDING = 50
+
+
+def apply_dark_theme(app: QApplication) -> None:
+    app.setStyle("Fusion")
+
+    palette = QPalette()
+    palette.setColor(QPalette.ColorRole.Window, QColor(32, 32, 32))
+    palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.white)
+    palette.setColor(QPalette.ColorRole.Base, QColor(24, 24, 24))
+    palette.setColor(QPalette.ColorRole.AlternateBase, QColor(36, 36, 36))
+    palette.setColor(QPalette.ColorRole.ToolTipBase, QColor(48, 48, 48))
+    palette.setColor(QPalette.ColorRole.ToolTipText, Qt.GlobalColor.white)
+    palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.white)
+    palette.setColor(QPalette.ColorRole.Button, QColor(45, 45, 45))
+    palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.white)
+    palette.setColor(QPalette.ColorRole.BrightText, Qt.GlobalColor.red)
+    palette.setColor(QPalette.ColorRole.Highlight, QColor(96, 127, 58))
+    palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.white)
+    app.setPalette(palette)
+
+    app.setStyleSheet("""
+        QWidget {
+            background-color: #202020;
+            color: #eeeeee;
+        }
+        QLabel {
+            color: #eeeeee;
+        }
+        QPushButton, QComboBox {
+            background-color: #2d2d2d;
+            border: 1px solid #555555;
+            color: #eeeeee;
+            padding: 4px 8px;
+        }
+        QPushButton:hover, QComboBox:hover {
+            border-color: #7a9f45;
+        }
+        QPushButton:pressed {
+            background-color: #3a3a3a;
+        }
+        QComboBox QAbstractItemView {
+            background-color: #242424;
+            color: #eeeeee;
+            selection-background-color: #607f3a;
+            selection-color: #ffffff;
+        }
+        QTableView {
+            background-color: #181818;
+            alternate-background-color: #242424;
+            color: #eeeeee;
+            gridline-color: #3a3a3a;
+            selection-background-color: #607f3a;
+            selection-color: #ffffff;
+        }
+        QHeaderView::section {
+            background-color: #2d2d2d;
+            color: #eeeeee;
+            border: 1px solid #444444;
+            padding: 4px;
+        }
+        QScrollBar:vertical, QScrollBar:horizontal {
+            background-color: #202020;
+        }
+    """)
 
 
 class ClientQt(QWidget):
@@ -396,6 +461,7 @@ class ClientQt(QWidget):
 
 def main():
     app = QApplication(sys.argv)
+    apply_dark_theme(app)
 
     widget = ClientQt()
     widget.ui.show()
