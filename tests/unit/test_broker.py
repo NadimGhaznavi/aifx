@@ -10,6 +10,7 @@
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
 
+from aifx.constants.DCandle import DCandle as CANDLE
 from aifx.constants.DCandle import DCandleF as CANDLEF
 from aifx.constants.DDb import DColCandles as C_CAND
 from aifx.constants.DDb import DColInstrument as C_INST
@@ -36,6 +37,32 @@ def _recent_candles_msg(instrument: str = "USD_CAD", limit: int = 10) -> MQMsg:
             DBF.LIMIT: limit,
         },
     )
+
+
+def _oanda_candle_payload() -> dict:
+    return {
+        CANDLE.COMPLETE: True,
+        CANDLE.TIME: "2026-05-14T19:30:05.000000000Z",
+        CANDLE.VOLUME: 42,
+        CANDLE.MID: {
+            CANDLE.O: "1.1001",
+            CANDLE.H: "1.1002",
+            CANDLE.L: "1.1000",
+            CANDLE.C: "1.10015",
+        },
+        CANDLE.BID: {
+            CANDLE.O: "1.0991",
+            CANDLE.H: "1.0992",
+            CANDLE.L: "1.0990",
+            CANDLE.C: "1.09915",
+        },
+        CANDLE.ASK: {
+            CANDLE.O: "1.1011",
+            CANDLE.H: "1.1012",
+            CANDLE.L: "1.1010",
+            CANDLE.C: "1.10115",
+        },
+    }
 
 
 def test_get_instruments_returns_cached_db_instruments(sample_instrument) -> None:
@@ -105,7 +132,7 @@ def test_get_recent_candles_returns_cached_db_candles(sample_candle) -> None:
 
         result = await broker.get_recent_candles(_recent_candles_msg())
 
-        assert result == {CANDLEF.CANDLES: [sample_candle.to_dict()]}
+        assert result[CANDLEF.CANDLES] == [sample_candle.to_dict()]
         broker.get_candles_oanda.assert_not_awaited()
 
     asyncio.run(run())
@@ -122,12 +149,40 @@ def test_get_recent_candles_fetches_oanda_when_cache_is_empty(
 
         result = await broker.get_recent_candles(_recent_candles_msg(limit=5))
 
-        assert result == {CANDLEF.CANDLES: [sample_candle.to_dict()]}
+        assert result[CANDLEF.CANDLES] == [sample_candle.to_dict()]
         broker.get_candles_oanda.assert_awaited_once_with(
             instrument="USD_CAD",
             count=5,
         )
         broker.db_mgr.upsert.assert_called_once()
+
+    asyncio.run(run())
+
+
+def test_get_recent_candles_converts_oanda_payload_to_reply_format() -> None:
+    async def run() -> None:
+        broker = _broker()
+        broker.broker_db.get_recent_candles = MagicMock(return_value=[])
+        broker.oanda._fetch_candles = MagicMock(
+            return_value=(200, {CANDLEF.CANDLES: [_oanda_candle_payload()]})
+        )
+        broker.get_candles_oanda = AsyncMock(
+            side_effect=lambda instrument, count: broker.oanda.get_candles(
+                pair_name=instrument,
+                count=count,
+                granularity=CANDLE.GRAN_S5,
+            )
+        )
+        broker.db_mgr.upsert = MagicMock(return_value=1)
+
+        result = await broker.get_recent_candles(_recent_candles_msg(limit=5))
+
+        assert result[CANDLEF.CANDLES][0][C_CAND.INSTRUMENT] == "USD_CAD"
+        assert result[CANDLEF.CANDLES][0][C_CAND.GRANULARITY] == "S5"
+        assert result[CANDLEF.CANDLES][0][C_CAND.MID_C] == 1.10015
+        broker.oanda._fetch_candles.assert_called_once()
+        broker.db_mgr.upsert.assert_called_once()
+        await broker.quit()
 
     asyncio.run(run())
 
@@ -141,7 +196,7 @@ def test_get_recent_candles_returns_empty_list_when_no_data() -> None:
 
         result = await broker.get_recent_candles(_recent_candles_msg())
 
-        assert result == {CANDLEF.CANDLES: []}
+        assert result[CANDLEF.CANDLES] == []
         broker.db_mgr.upsert.assert_not_called()
 
     asyncio.run(run())

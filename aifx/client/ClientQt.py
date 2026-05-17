@@ -76,6 +76,7 @@ class ClientQt(QWidget):
         self.mq.connection_changed.connect(self.set_connection_status)
         self.mq.instruments_received.connect(self.update_instruments)
         self.mq.feed_started.connect(self.feed_started)
+        self.mq.recent_candles.connect(self.on_recent_candles)
 
         self.wire_signals()
         self.log.info(QTL.SIGNALS_WIRED)
@@ -160,6 +161,24 @@ class ClientQt(QWidget):
         self.mq.register_sub_handler(topic, self.on_candle_received)
         self.mq.subscribe(topic=topic)
         self.mq.start_feed(instrument=instrument)
+
+    def on_recent_candles(self, topic: str, candles: list[dict]) -> None:
+        if topic != self._active_topic:
+            self.log.warning(f"Received off-topic recent candles: {topic}")
+            return
+
+        recent_candles = [Candle.from_db(candle) for candle in candles]
+        self._candles[topic] = deque(
+            recent_candles,
+            maxlen=DEF.MAX_PLOTLY_CANDLES,
+        )
+
+        recent = list(reversed(recent_candles[-DEF.RECENT_CANDLE_MAX :]))
+        self.recent_candles_model.load_data(recent)
+        self.resize_recent_candles_columns()
+
+        self.log.debug(f"Recent candles received: {topic}: {len(recent_candles)}")
+        self.update_plot(topic=topic)
 
     def render_candles(self, topic: str) -> None:
         candles = list(self._candles.get(topic, []))

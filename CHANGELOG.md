@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Release 0.15.23] - 2026-05-16 23:07
 
+### Added
+- Additional tests
+- **Show a screenful of historical candle data when an instrument is loaded**
+  - `ClientQt`, `MQClient`, `MQServer`, `Broker` classes updated
+  - Updated constants files
+- Additional website content to the testing section
 
 ### Fixed
 - Fixed broken *Publish to PyPI* link
@@ -18,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ## [Release 0.15.22] - 2026-05-16 15:07
+
+### Added 
+
+- Additional unit tests
 
 ---
 

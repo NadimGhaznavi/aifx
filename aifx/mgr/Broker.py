@@ -207,9 +207,10 @@ class Broker:
 
     async def get_candles_oanda(self, instrument, count):
         return await asyncio.to_thread(
-            self.oanda.get_candles(
-                pair_name=instrument, count=count, granularity=FREQ.S5
-            )
+            self.oanda.get_candles,
+            pair_name=instrument,
+            count=count,
+            granularity=FREQ.S5,
         )
 
     async def get_instruments_oanda(self):
@@ -244,7 +245,7 @@ class Broker:
             name=msg.payload[C_CAND.INSTRUMENT], limit=msg.payload[DBF.LIMIT]
         )
 
-        instrument = msg.payload[INSF.INSTRUMENT]
+        instrument = msg.payload[C_CAND.INSTRUMENT]
         count = msg.payload[DBF.LIMIT]
 
         if not candles:
@@ -265,9 +266,15 @@ class Broker:
                 )
 
         if candles:
-            return {CANDLEF.CANDLES: [candle.to_dict() for candle in candles]}
+            return {
+                INSF.TOPIC: msg.payload.get(INSF.TOPIC),
+                CANDLEF.CANDLES: [candle.to_dict() for candle in candles],
+            }
 
-        return {CANDLEF.CANDLES: []}
+        return {
+            INSF.TOPIC: msg.payload.get(INSF.TOPIC),
+            CANDLEF.CANDLES: [],
+        }
 
     async def handle_mq_event(self, event: MQEvent) -> None:
         if event.routing_id is None:
