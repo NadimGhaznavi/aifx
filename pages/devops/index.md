@@ -14,7 +14,7 @@ layout: default
 
 # PyPI Integration
 
-- *GitHub workflow*, [Publish to PyPI](/.github/workflows/publish-to-pypi.yml)
+- *GitHub workflow*, [Publish to PyPI](/aifx/blob/main/.github/workflows/publish-to-pypi.yml)
   - Automatic publishing for tagged releases, e.g. `v0.15.13`
 
 ---
