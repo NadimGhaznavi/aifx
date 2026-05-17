@@ -152,6 +152,21 @@ ignore_missing_imports = true
 
 ---
 
+## ClientDb Tests
+
+- Module: [/aifx/db/ClientDb](/aifx/db/ClientDb.py)
+- Test file: [/tests/unit/test_clientdb.py](/tests/unit/test_clientdb.py)
+- Test functions:
+  - `test_clientdb_get_recent_candles_returns_empty_list_when_empty()`
+  - `test_clientdb_upsert_candles_accepts_candle_objects()`
+  - `test_clientdb_upsert_candles_accepts_dict_records()`
+  - `test_clientdb_get_recent_candles_filters_limits_and_returns_oldest_first()`
+  - `test_clientdb_upsert_candles_updates_existing_row()`
+  - `test_clientdb_upsert_instruments_accepts_instrument_objects()`
+  - `test_clientdb_upsert_instruments_accepts_dict_records()`
+
+---
+
 ## Instrument Tests
 
 - Module: [/aifx/forex/Instrument](/aifx/forex/Instrument.py)
