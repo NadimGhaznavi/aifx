@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [Release 0.15.23] - 2026-05-16 23:07
+
+
 ### Fixed
 - Fixed broken *Publish to PyPI* link
 
