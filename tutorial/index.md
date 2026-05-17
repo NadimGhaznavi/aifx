@@ -29,6 +29,7 @@ Num | Notes                                                                     
 12  | [OANDA API class](/tutorial/12-oanda-api.html)                                             | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=14) | [v14.0.0](https://github.com/NadimGhaznavi/aifx/releases/tag/v0.14.0) 
 13  | [DataFrame Conversions](/tutorial/13-df-conv.html)                                         | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=15) |
 14  | [Plotting Candles with Plotly](/tutorial/14-plotly.html)                                   | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=16) |
+15  | [Styling Plotly](/tutorial/16-styling-plotly.html)                                         | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=17) |
 
 ---
 
