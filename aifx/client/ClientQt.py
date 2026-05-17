@@ -30,6 +30,7 @@ from aifx.utils.AiFxLog import AiFxLog
 from aifx.zmq.MQClient import MQClient
 
 # Number of candles to cache for Plotly
+RECENT_CANDLES_COLUMN_PADDING = 50
 
 
 class ClientQt(QWidget):
@@ -57,6 +58,7 @@ class ClientQt(QWidget):
 
         # Load the UI
         self.load_ui()
+        self.setup_recent_candles_table()
         # Prepare the plotting widget
         self.setup_plot()
         self.log.info(QTL.UI_LOADED)
@@ -125,7 +127,7 @@ class ClientQt(QWidget):
         recent_candles = list(candles)[-DEF.RECENT_CANDLE_MAX :]
         recent = list(reversed(recent_candles))
         self.recent_candles_model.load_data(recent)
-        self.ui.tbl_recent_candles.resizeColumnsToContents()
+        self.resize_recent_candles_columns()
 
         self.log.debug(f"Received: {new_candle}")
 
@@ -282,7 +284,15 @@ class ClientQt(QWidget):
         self.ui.tbl_recent_candles.setModel(self.recent_candles_model)
 
         self.ui.tbl_recent_candles.verticalHeader().setVisible(False)
-        self.ui.tbl_recent_candles.resizeColumnsToContents()
+        self.resize_recent_candles_columns()
+
+    def resize_recent_candles_columns(self) -> None:
+        table = self.ui.tbl_recent_candles
+
+        table.resizeColumnsToContents()
+        for column in range(table.model().columnCount()):
+            width = table.columnWidth(column)
+            table.setColumnWidth(column, width + RECENT_CANDLES_COLUMN_PADDING)
 
     def load_ui(self):
         loader = QUiLoader()
@@ -342,6 +352,8 @@ class ClientQt(QWidget):
     def update_instruments(self, instruments):
         self.log.info("Instruments updated")
 
+        selected = self.ui.cb_instrument.currentData()
+
         self._instruments = {
             instrument[C_INST.NAME]: instrument for instrument in instruments
         }
@@ -356,6 +368,11 @@ class ClientQt(QWidget):
                 f"{display_name} - {name}",
                 name,
             )
+
+        if selected:
+            index = self.ui.cb_instrument.findData(selected)
+            if index >= 0:
+                self.ui.cb_instrument.setCurrentIndex(index)
 
 
 def main():

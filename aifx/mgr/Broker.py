@@ -77,14 +77,34 @@ class Broker:
         self._srv_methods = {
             METHOD.GET_INSTRUMENTS: self.get_instruments,
             METHOD.GET_RECENT_CANDLES: self.get_recent_candles,
+            METHOD.SHUTDOWN: self.shutdown,
             METHOD.START_FEED: self.start_feed,
         }
         self.mq: MQServer | None = None
 
         # Track OANDA and ZeroMQ feeds
         self._feeds: dict[str, Feed] = {}
+        self._mq_task: asyncio.Task | None = None
+        self._mq_events_task: asyncio.Task | None = None
+        self._shutdown_task: asyncio.Task | None = None
+        self._started = False
+        self._stopped = False
 
         self.log.info("Initialized")
+
+    async def _cancel_task(self, task: asyncio.Task | None, name: str) -> None:
+        if task is None or task.done() or task is asyncio.current_task():
+            return
+
+        task.cancel()
+        try:
+            await asyncio.wait_for(task, timeout=MQ.LISTEN_INTERVAL)
+        except asyncio.CancelledError:
+            pass
+        except asyncio.TimeoutError:
+            self.log.warning(f"{name} task did not cancel cleanly")
+        except Exception as e:
+            self.log.warning(f"{name} task exception during shutdown: {e}")
 
     async def bg_feed_instrument(self, feed: Feed) -> None:
         self.log.info(f"OANDA feed started: {feed.name}")
@@ -267,7 +287,34 @@ class Broker:
             case _:
                 self.log.warning(f"Unknown MQ event: {event}")
 
+    async def quit(self) -> None:
+        if self._stopped:
+            return
+
+        self._stopped = True
+        self._started = False
+        self.log.info("Broker shutdown started")
+
+        for feed in self._feeds.values():
+            feed.oanda_running = False
+            feed.pub_running = False
+            await self._cancel_task(feed.oanda_task, f"OANDA feed {feed.name}")
+            await self._cancel_task(feed.pub_task, f"MQ feed {feed.name}")
+
+        await self._cancel_task(self._mq_events_task, "MQ events")
+
+        if self.mq is not None:
+            await self.mq.quit()
+
+        await self._cancel_task(self._mq_task, "MQ server")
+
+        self.db_mgr.close()
+        self.log.info("Broker shutdown complete")
+
     async def start(self) -> None:
+        if self._started:
+            return
+
         self.mq = MQServer(
             log_level=self._log_level,
             hostname=self._hostname,
@@ -278,10 +325,20 @@ class Broker:
             topic_prefix=MQ.TOPIC_PREFIX,
         )
 
-        await asyncio.gather(
-            self.mq.start(),
-            self.bg_mq_events(),
+        self._started = True
+        self._stopped = False
+        self._mq_task = asyncio.create_task(self.mq.start(), name="broker-mq")
+        self._mq_events_task = asyncio.create_task(
+            self.bg_mq_events(), name="broker-mq-events"
         )
+
+        try:
+            await asyncio.gather(self._mq_task, self._mq_events_task)
+        except asyncio.CancelledError:
+            await self.quit()
+            raise
+        finally:
+            self._started = False
 
     async def start_feed(self, msg: MQMsg):
         instrument = msg.payload
@@ -317,13 +374,30 @@ class Broker:
             INS.STARTED: True,
         }
 
+    async def _shutdown_after_reply(self) -> None:
+        await asyncio.sleep(0.05)
+        await self.quit()
+
+    async def shutdown(self, _msg: MQMsg):
+        self.log.info("Shutdown requested")
+
+        if self._shutdown_task is None or self._shutdown_task.done():
+            self._shutdown_task = asyncio.create_task(
+                self._shutdown_after_reply(), name="broker-shutdown"
+            )
+
+        return {METHOD.SHUTDOWN: True}
+
 
 def main():
     broker = Broker(
         log_file=BROKER_LOG,
         log_level=DEF.DEFAULT_LOG_LEVEL,
     )
-    asyncio.run(broker.start())
+    try:
+        asyncio.run(broker.start())
+    except KeyboardInterrupt:
+        pass
 
 
 if __name__ == "__main__":

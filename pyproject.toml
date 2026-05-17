@@ -47,6 +47,9 @@ textual-plot = "^0.10.1"
 module = ["plotly", "plotly.*"]
 ignore_missing_imports = true
 
+[tool.isort]
+extend_skip = ["aifx/client/ui_form.py"]
+
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.4.1"
 pytest-mock = "^3.14.1"

@@ -16,7 +16,7 @@
 	"constants/DMethod.py",
 	"constants/DModule.py",
 	"constants/DMQ.p[y",
-	"constants/DMg.py",
+        "constants/DMsg.py",
 	"constants/DNetwork.py",
         "constants/DOanda.py",
         "constants/DPairs.py",
