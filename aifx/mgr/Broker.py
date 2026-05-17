@@ -266,9 +266,15 @@ class Broker:
                 )
 
         if candles:
-            return {CANDLEF.CANDLES: [candle.to_dict() for candle in candles]}
+            return {
+                INSF.TOPIC: msg.payload.get(INSF.TOPIC),
+                CANDLEF.CANDLES: [candle.to_dict() for candle in candles],
+            }
 
-        return {CANDLEF.CANDLES: []}
+        return {
+            INSF.TOPIC: msg.payload.get(INSF.TOPIC),
+            CANDLEF.CANDLES: [],
+        }
 
     async def handle_mq_event(self, event: MQEvent) -> None:
         if event.routing_id is None:

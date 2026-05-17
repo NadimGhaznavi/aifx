@@ -132,7 +132,7 @@ def test_get_recent_candles_returns_cached_db_candles(sample_candle) -> None:
 
         result = await broker.get_recent_candles(_recent_candles_msg())
 
-        assert result == {CANDLEF.CANDLES: [sample_candle.to_dict()]}
+        assert result[CANDLEF.CANDLES] == [sample_candle.to_dict()]
         broker.get_candles_oanda.assert_not_awaited()
 
     asyncio.run(run())
@@ -149,7 +149,7 @@ def test_get_recent_candles_fetches_oanda_when_cache_is_empty(
 
         result = await broker.get_recent_candles(_recent_candles_msg(limit=5))
 
-        assert result == {CANDLEF.CANDLES: [sample_candle.to_dict()]}
+        assert result[CANDLEF.CANDLES] == [sample_candle.to_dict()]
         broker.get_candles_oanda.assert_awaited_once_with(
             instrument="USD_CAD",
             count=5,
@@ -196,7 +196,7 @@ def test_get_recent_candles_returns_empty_list_when_no_data() -> None:
 
         result = await broker.get_recent_candles(_recent_candles_msg())
 
-        assert result == {CANDLEF.CANDLES: []}
+        assert result[CANDLEF.CANDLES] == []
         broker.db_mgr.upsert.assert_not_called()
 
     asyncio.run(run())

@@ -18,10 +18,12 @@ import zmq
 from PySide6.QtCore import QObject, QTimer, Signal
 
 from aifx.constants.DAiFx import DAiFx as AIFX
+from aifx.constants.DCandle import DCandleF as CANDLEF
 from aifx.constants.DDb import DColCandles as C_CAND
 from aifx.constants.DDb import DColInstrument as C_INST
 from aifx.constants.DDb import DDbF as DBF
 from aifx.constants.DDef import DDef as DEF
+from aifx.constants.DInstrument import DInstrumentF as INSF
 from aifx.constants.DMethod import DMethod as METHOD
 from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DMQ import DMQ as MQ
@@ -152,6 +154,7 @@ class MQClient(QObject):
             payload={
                 C_CAND.INSTRUMENT: instrument[C_INST.NAME],
                 DBF.LIMIT: count,
+                INSF.TOPIC: topic,
             },
         )
         try:
@@ -171,7 +174,10 @@ class MQClient(QObject):
             return
 
         elif reply.method == METHOD.GET_RECENT_CANDLES_REPLY:
-            pass
+            self.recent_candles.emit(
+                reply.payload[INSF.TOPIC],
+                reply.payload[CANDLEF.CANDLES],
+            )
             return
 
         self.log.critical(f"Unhandled control reply: {reply.method}")

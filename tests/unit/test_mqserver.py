@@ -15,9 +15,10 @@ import pytest
 from aifx.constants.DCandle import DCandleF as CANDLEF
 from aifx.constants.DDb import DColCandles as C_CAND
 from aifx.constants.DDb import DDbF as DBF
-from aifx.constants.DMQ import DMQEvent
+from aifx.constants.DInstrument import DInstrumentF as INSF
 from aifx.constants.DMethod import DMethod as METHOD
 from aifx.constants.DModule import DModule as MODULE
+from aifx.constants.DMQ import DMQEvent
 from aifx.constants.DOanda import DOanda as OANDA
 from aifx.zmq.MQMsg import MQMsg
 from aifx.zmq.MQServer import MQServer
@@ -135,7 +136,10 @@ def test_mqserver_wraps_recent_candles_handler_result_in_reply(fake_server) -> N
         candle = {C_CAND.INSTRUMENT: "USD_CAD", C_CAND.MID_C: 1.10015}
 
         async def get_recent_candles(_msg):
-            return {CANDLEF.CANDLES: [candle]}
+            return {
+                INSF.TOPIC: "test.candles.USD_CAD",
+                CANDLEF.CANDLES: [candle],
+            }
 
         server._srv_methods = {METHOD.GET_RECENT_CANDLES: get_recent_candles}
         ctx.sockets[0].on_send_multipart = server._listen_stop_event.set
@@ -166,7 +170,10 @@ def test_mqserver_wraps_recent_candles_handler_result_in_reply(fake_server) -> N
             assert reply.sender == MODULE.SERVER_MQ
             assert reply.target == MODULE.CLIENT_MQ
             assert reply.method == METHOD.GET_RECENT_CANDLES_REPLY
-            assert reply.payload == {CANDLEF.CANDLES: [candle]}
+            assert reply.payload == {
+                INSF.TOPIC: "test.candles.USD_CAD",
+                CANDLEF.CANDLES: [candle],
+            }
         finally:
             await asyncio.wait_for(task, timeout=1)
 

@@ -113,6 +113,7 @@ ignore_missing_imports = true
   - `test_broker_registers_shutdown_method()`
   - `test_get_recent_candles_returns_cached_db_candles()`
   - `test_get_recent_candles_fetches_oanda_when_cache_is_empty()`
+  - `test_get_recent_candles_converts_oanda_payload_to_reply_format()`
   - `test_get_recent_candles_returns_empty_list_when_no_data()`
   - `test_start_feed_creates_feed_and_background_tasks()`
   - `test_start_feed_is_idempotent_for_existing_feed()`
@@ -200,6 +201,7 @@ ignore_missing_imports = true
   - `test_mqclient_get_recent_candles_sends_request()`
   - `test_mqclient_start_feed_sends_start_feed_message()`
   - `test_mqclient_poll_control_reply_emits_instruments()`
+  - `test_mqclient_poll_control_reply_emits_recent_candles()`
   - `test_mqclient_bg_sub_listen_dispatches_registered_handler()`
   - `test_mqclient_quit_closes_sockets_and_context()`
 
@@ -231,6 +233,7 @@ ignore_missing_imports = true
   - `test_mqserver_builds_topic()`
   - `test_mqserver_connected_uses_recent_heartbeat()`
   - `test_mqserver_publish_sends_topic_and_compact_json()`
+  - `test_mqserver_wraps_recent_candles_handler_result_in_reply()`
   - `test_mqserver_send_serializes_message()`
   - `test_mqserver_recv_parses_message()`
   - `test_mqserver_register_client_adds_new_client_and_event()`

@@ -13,10 +13,12 @@ import pytest
 import zmq
 from PySide6.QtCore import QCoreApplication
 
-from aifx.constants.DDb import DDbF as DBF
+from aifx.constants.DCandle import DCandleF as CANDLEF
 from aifx.constants.DDb import DColCandles as C_CAND
 from aifx.constants.DDb import DColInstrument as C_INST
+from aifx.constants.DDb import DDbF as DBF
 from aifx.constants.DInstrument import DInstrument as INS
+from aifx.constants.DInstrument import DInstrumentF as INSF
 from aifx.constants.DMethod import DMethod as METHOD
 from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DMQ import DMQ as MQ
@@ -193,6 +195,7 @@ def test_mqclient_get_recent_candles_sends_request(fake_client) -> None:
     assert msg.payload == {
         C_CAND.INSTRUMENT: "USD_CAD",
         DBF.LIMIT: 5,
+        INSF.TOPIC: "topic",
     }
 
 
@@ -223,6 +226,29 @@ def test_mqclient_poll_control_reply_emits_instruments(fake_client) -> None:
     client._poll_control_reply()
 
     assert received == [[{"name": "USD_CAD"}]]
+
+
+def test_mqclient_poll_control_reply_emits_recent_candles(fake_client) -> None:
+    client, ctx = fake_client
+    received = []
+    client.recent_candles.connect(
+        lambda topic, candles: received.append((topic, candles))
+    )
+    candles = [{C_CAND.INSTRUMENT: "USD_CAD", C_CAND.MID_C: 1.10015}]
+    reply = MQMsg(
+        sender=MODULE.BROKER,
+        target=MODULE.CLIENT_MQ,
+        method=METHOD.GET_RECENT_CANDLES_REPLY,
+        payload={
+            INSF.TOPIC: "test.candles.USD_CAD",
+            CANDLEF.CANDLES: candles,
+        },
+    )
+    ctx.sockets[0].recv_items.append(reply.to_json())
+
+    client._poll_control_reply()
+
+    assert received == [("test.candles.USD_CAD", candles)]
 
 
 def test_mqclient_bg_sub_listen_dispatches_registered_handler(fake_client) -> None:
