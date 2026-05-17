@@ -207,9 +207,10 @@ class Broker:
 
     async def get_candles_oanda(self, instrument, count):
         return await asyncio.to_thread(
-            self.oanda.get_candles(
-                pair_name=instrument, count=count, granularity=FREQ.S5
-            )
+            self.oanda.get_candles,
+            pair_name=instrument,
+            count=count,
+            granularity=FREQ.S5,
         )
 
     async def get_instruments_oanda(self):

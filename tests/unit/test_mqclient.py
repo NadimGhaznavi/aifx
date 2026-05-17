@@ -166,7 +166,9 @@ def test_mqclient_send_returns_false_when_socket_would_block(fake_client) -> Non
     client, ctx = fake_client
     ctx.sockets[0].send_error = zmq.Again()
 
-    assert client.send(MQMsg(sender="client", target="broker", method=METHOD.PING)) is False
+    msg = MQMsg(sender="client", target="broker", method=METHOD.PING)
+
+    assert client.send(msg) is False
 
 
 def test_mqclient_get_instruments_sends_request(fake_client) -> None:

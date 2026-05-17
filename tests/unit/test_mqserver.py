@@ -8,12 +8,13 @@
 #    License: GPL 3.0
 
 import asyncio
-import json
 import time
 
 import pytest
-import zmq
 
+from aifx.constants.DCandle import DCandleF as CANDLEF
+from aifx.constants.DDb import DColCandles as C_CAND
+from aifx.constants.DDb import DDbF as DBF
 from aifx.constants.DMQ import DMQEvent
 from aifx.constants.DMethod import DMethod as METHOD
 from aifx.constants.DModule import DModule as MODULE
@@ -27,9 +28,11 @@ class FakeAsyncSocket:
         self.bound: list[str] = []
         self.closed: list[int] = []
         self.linger = None
+        self.on_send_multipart = None
         self.recv_items: list[bytes] = []
+        self.recv_multipart_items: list[list[bytes]] = []
         self.sent: list[bytes] = []
-        self.sent_multipart: list[list[bytes]] = []
+        self.sent_multipart_frames: list[list[bytes]] = []
         self.unbound: list[str] = []
 
     def bind(self, address: str) -> None:
@@ -43,11 +46,18 @@ class FakeAsyncSocket:
             await asyncio.sleep(OANDA.TIMEOUT + 0.01)
         return self.recv_items.pop(0)
 
+    async def recv_multipart(self):
+        if not self.recv_multipart_items:
+            await asyncio.sleep(OANDA.TIMEOUT + 0.01)
+        return self.recv_multipart_items.pop(0)
+
     async def send(self, data: bytes) -> None:
         self.sent.append(data)
 
     async def send_multipart(self, frames: list[bytes]) -> None:
-        self.sent_multipart.append(frames)
+        self.sent_multipart_frames.append(frames)
+        if self.on_send_multipart is not None:
+            self.on_send_multipart()
 
     def unbind(self, address: str) -> None:
         self.unbound.append(address)
@@ -112,9 +122,53 @@ def test_mqserver_publish_sends_topic_and_compact_json(fake_server) -> None:
 
         await server.publish("test.candles.USD_CAD", {"price": 1.23})
 
-        assert ctx.sockets[2].sent_multipart == [
+        assert ctx.sockets[2].sent_multipart_frames == [
             [b"test.candles.USD_CAD", b'{"price":1.23}']
         ]
+
+    asyncio.run(run())
+
+
+def test_mqserver_wraps_recent_candles_handler_result_in_reply(fake_server) -> None:
+    async def run() -> None:
+        server, ctx = fake_server
+        candle = {C_CAND.INSTRUMENT: "USD_CAD", C_CAND.MID_C: 1.10015}
+
+        async def get_recent_candles(_msg):
+            return {CANDLEF.CANDLES: [candle]}
+
+        server._srv_methods = {METHOD.GET_RECENT_CANDLES: get_recent_candles}
+        ctx.sockets[0].on_send_multipart = server._listen_stop_event.set
+        request = MQMsg(
+            sender=MODULE.CLIENT_MQ,
+            target=MODULE.BROKER,
+            method=METHOD.GET_RECENT_CANDLES,
+            payload={
+                C_CAND.INSTRUMENT: "USD_CAD",
+                DBF.LIMIT: 5,
+            },
+        )
+        ctx.sockets[0].recv_multipart_items.append([b"client-1", request.to_json()])
+        task = asyncio.create_task(server.bg_listen())
+
+        try:
+            for _ in range(100):
+                if ctx.sockets[0].sent_multipart_frames:
+                    break
+                await asyncio.sleep(0)
+
+            assert ctx.sockets[0].sent_multipart_frames
+            route = ctx.sockets[0].sent_multipart_frames[0][:-1]
+            reply_data = ctx.sockets[0].sent_multipart_frames[0][-1]
+            reply = MQMsg.from_json(reply_data)
+
+            assert route == [b"client-1"]
+            assert reply.sender == MODULE.SERVER_MQ
+            assert reply.target == MODULE.CLIENT_MQ
+            assert reply.method == METHOD.GET_RECENT_CANDLES_REPLY
+            assert reply.payload == {CANDLEF.CANDLES: [candle]}
+        finally:
+            await asyncio.wait_for(task, timeout=1)
 
     asyncio.run(run())
 
