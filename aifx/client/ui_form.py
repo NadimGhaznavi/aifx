@@ -17,18 +17,18 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QComboBox, QHBoxLayout, QHeaderView,
     QLabel, QPushButton, QSizePolicy, QSpacerItem,
-    QSplitter, QTableView, QVBoxLayout, QWidget)
+    QTableView, QVBoxLayout, QWidget)
 
 class Ui_Widget(object):
     def setupUi(self, Widget):
         if not Widget.objectName():
             Widget.setObjectName(u"Widget")
-        Widget.resize(1452, 774)
+        Widget.resize(1452, 916)
         Widget.setWindowOpacity(1.000000000000000)
         Widget.setAutoFillBackground(True)
         self.widget = QWidget(Widget)
         self.widget.setObjectName(u"widget")
-        self.widget.setGeometry(QRect(10, 17, 1421, 701))
+        self.widget.setGeometry(QRect(11, 18, 1421, 821))
         self.verticalLayout = QVBoxLayout(self.widget)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
@@ -79,12 +79,9 @@ class Ui_Widget(object):
 
         self.vl_current_pair.addWidget(self.wgt_plot)
 
-        self.vl_current_pair.setStretch(1, 1)
 
         self.verticalLayout.addLayout(self.vl_current_pair)
 
-        self.horizontalLayout = QHBoxLayout()
-        self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.hl_recent_candles = QHBoxLayout()
         self.hl_recent_candles.setObjectName(u"hl_recent_candles")
         self.tbl_recent_candles = QTableView(self.widget)
@@ -102,25 +99,7 @@ class Ui_Widget(object):
         self.hl_recent_candles.addWidget(self.tbl_recent_candles)
 
 
-        self.horizontalLayout.addLayout(self.hl_recent_candles)
-
-        self.splitter = QSplitter(self.widget)
-        self.splitter.setObjectName(u"splitter")
-        self.splitter.setOrientation(Qt.Horizontal)
-        self.lbl_latency_to_oanda = QLabel(self.splitter)
-        self.lbl_latency_to_oanda.setObjectName(u"lbl_latency_to_oanda")
-        self.lbl_latency_to_oanda.setAlignment(Qt.AlignBottom|Qt.AlignLeading|Qt.AlignLeft)
-        self.splitter.addWidget(self.lbl_latency_to_oanda)
-        self.lbl_latency_to_oanda_value = QLabel(self.splitter)
-        self.lbl_latency_to_oanda_value.setObjectName(u"lbl_latency_to_oanda_value")
-        self.lbl_latency_to_oanda_value.setAlignment(Qt.AlignBottom|Qt.AlignLeading|Qt.AlignLeft)
-        self.splitter.addWidget(self.lbl_latency_to_oanda_value)
-
-        self.horizontalLayout.addWidget(self.splitter)
-
-        self.horizontalLayout.setStretch(0, 1)
-
-        self.verticalLayout.addLayout(self.horizontalLayout)
+        self.verticalLayout.addLayout(self.hl_recent_candles)
 
         self.hl_instrument = QHBoxLayout()
         self.hl_instrument.setObjectName(u"hl_instrument")
@@ -158,33 +137,72 @@ class Ui_Widget(object):
 
         self.verticalLayout.addLayout(self.hl_instrument)
 
-        self.hl_footer = QHBoxLayout()
-        self.hl_footer.setObjectName(u"hl_footer")
-        self.lbl_connection = QLabel(self.widget)
-        self.lbl_connection.setObjectName(u"lbl_connection")
+        self.hl_broker = QHBoxLayout()
+        self.hl_broker.setObjectName(u"hl_broker")
+        self.lbl_broker = QLabel(self.widget)
+        self.lbl_broker.setObjectName(u"lbl_broker")
+        self.lbl_broker.setAlignment(Qt.AlignBottom|Qt.AlignRight|Qt.AlignTrailing)
+
+        self.hl_broker.addWidget(self.lbl_broker)
+
+        self.lbl_broker_status = QLabel(self.widget)
+        self.lbl_broker_status.setObjectName(u"lbl_broker_status")
         sizePolicy4 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         sizePolicy4.setHorizontalStretch(0)
         sizePolicy4.setVerticalStretch(0)
-        sizePolicy4.setHeightForWidth(self.lbl_connection.sizePolicy().hasHeightForWidth())
-        self.lbl_connection.setSizePolicy(sizePolicy4)
+        sizePolicy4.setHeightForWidth(self.lbl_broker_status.sizePolicy().hasHeightForWidth())
+        self.lbl_broker_status.setSizePolicy(sizePolicy4)
 
-        self.hl_footer.addWidget(self.lbl_connection)
+        self.hl_broker.addWidget(self.lbl_broker_status)
 
-        self.hs_footer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.hs_broker = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
-        self.hl_footer.addItem(self.hs_footer)
+        self.hl_broker.addItem(self.hs_broker)
+
+        self.hl_broker.setStretch(2, 1)
+
+        self.verticalLayout.addLayout(self.hl_broker)
+
+        self.hl_oanda = QHBoxLayout()
+        self.hl_oanda.setObjectName(u"hl_oanda")
+        self.lbl_oanda = QLabel(self.widget)
+        self.lbl_oanda.setObjectName(u"lbl_oanda")
+        self.lbl_oanda.setAlignment(Qt.AlignBottom|Qt.AlignRight|Qt.AlignTrailing)
+
+        self.hl_oanda.addWidget(self.lbl_oanda)
+
+        self.lbl_oanda_status = QLabel(self.widget)
+        self.lbl_oanda_status.setObjectName(u"lbl_oanda_status")
+        self.lbl_oanda_status.setAlignment(Qt.AlignBottom|Qt.AlignLeading|Qt.AlignLeft)
+
+        self.hl_oanda.addWidget(self.lbl_oanda_status)
+
+        self.hs_oanda = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.hl_oanda.addItem(self.hs_oanda)
+
+        self.hl_oanda.setStretch(2, 1)
+
+        self.verticalLayout.addLayout(self.hl_oanda)
+
+        self.hl_exit = QHBoxLayout()
+        self.hl_exit.setObjectName(u"hl_exit")
+        self.hs_exit = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.hl_exit.addItem(self.hs_exit)
 
         self.btn_exit = QPushButton(self.widget)
         self.btn_exit.setObjectName(u"btn_exit")
         sizePolicy.setHeightForWidth(self.btn_exit.sizePolicy().hasHeightForWidth())
         self.btn_exit.setSizePolicy(sizePolicy)
 
-        self.hl_footer.addWidget(self.btn_exit)
+        self.hl_exit.addWidget(self.btn_exit)
 
-        self.hl_footer.setStretch(1, 1)
+        self.hl_exit.setStretch(0, 1)
 
-        self.verticalLayout.addLayout(self.hl_footer)
+        self.verticalLayout.addLayout(self.hl_exit)
 
+        self.verticalLayout.setStretch(1, 1)
 
         self.retranslateUi(Widget)
 
@@ -196,11 +214,12 @@ class Ui_Widget(object):
         self.lbl_aifx.setText(QCoreApplication.translate("Widget", u"<html><head/><body><p><span style=\" font-size:24pt; font-weight:700; color:#669f1e;\">AI FX</span></p></body></html>", None))
         self.lbl_version.setText(QCoreApplication.translate("Widget", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700; color:#669f1e;\">&lt;version&gt;</span></p></body></html>", None))
         self.lbl_current_pair.setText(QCoreApplication.translate("Widget", u"N/A", None))
-        self.lbl_latency_to_oanda.setText(QCoreApplication.translate("Widget", u"Latency to Oanda:", None))
-        self.lbl_latency_to_oanda_value.setText(QCoreApplication.translate("Widget", u"<latency>", None))
         self.lbl_instrument.setText(QCoreApplication.translate("Widget", u"Instrument:", None))
         self.btn_load.setText(QCoreApplication.translate("Widget", u"Load", None))
-        self.lbl_connection.setText(QCoreApplication.translate("Widget", u"<html><head/><body><p><span style=\" font-weight:700; color:#ff7800;\">Uninitialized</span></p></body></html>", None))
+        self.lbl_broker.setText(QCoreApplication.translate("Widget", u"Broker:", None))
+        self.lbl_broker_status.setText(QCoreApplication.translate("Widget", u"<html><head/><body><p><span style=\" font-weight:700; color:#ff7800;\">Uninitialized</span></p></body></html>", None))
+        self.lbl_oanda.setText(QCoreApplication.translate("Widget", u"OANDA:", None))
+        self.lbl_oanda_status.setText(QCoreApplication.translate("Widget", u"<html><head/><body><p><span style=\" font-weight:700; color:#ff7800;\">Uninitialized</span></p></body></html>", None))
         self.btn_exit.setText(QCoreApplication.translate("Widget", u"Exit", None))
     # retranslateUi
 

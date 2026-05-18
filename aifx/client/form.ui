@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1452</width>
-    <height>774</height>
+    <width>1467</width>
+    <height>1050</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -23,14 +23,14 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>17</y>
-     <width>1421</width>
-     <height>701</height>
+     <y>10</y>
+     <width>1431</width>
+     <height>981</height>
     </rect>
    </property>
-   <layout class="QVBoxLayout" name="verticalLayout">
+   <layout class="QVBoxLayout" name="vl_top" stretch="0,1,0,0,0">
     <item>
-     <layout class="QHBoxLayout" name="hl_title" stretch="0,1,0">
+     <layout class="QHBoxLayout" name="hl_title">
       <item>
        <widget class="QLabel" name="lbl_aifx">
         <property name="sizePolicy">
@@ -88,7 +88,7 @@
      </layout>
     </item>
     <item>
-     <layout class="QVBoxLayout" name="vl_current_pair" stretch="0,1">
+     <layout class="QVBoxLayout" name="vl_plot" stretch="0,0,1">
       <item>
        <widget class="QLabel" name="lbl_current_pair">
         <property name="font">
@@ -105,61 +105,30 @@
        </widget>
       </item>
       <item>
+       <widget class="QTableView" name="tbl_recent_candles">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <horstretch>1</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="font">
+         <font>
+          <family>DejaVu Sans Mono</family>
+         </font>
+        </property>
+        <property name="alternatingRowColors">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QWidget" name="wgt_plot" native="true"/>
       </item>
      </layout>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="hl_recents_data" stretch="1,0">
-      <item>
-       <layout class="QHBoxLayout" name="hl_recent_candles">
-        <item>
-         <widget class="QTableView" name="tbl_recent_candles">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-            <horstretch>1</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="font">
-           <font>
-            <family>DejaVu Sans Mono</family>
-           </font>
-          </property>
-          <property name="alternatingRowColors">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <widget class="QSplitter" name="spl_latency">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <widget class="QLabel" name="lbl_latency_to_oanda">
-         <property name="text">
-          <string>Latency to Oanda:</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
-         </property>
-        </widget>
-        <widget class="QLabel" name="lbl_latency_to_oanda_value">
-         <property name="text">
-          <string>&lt;latency&gt;</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
-         </property>
-        </widget>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item>
-     <layout class="QHBoxLayout" name="hl_instrument" stretch="0,0,1,0">
+     <layout class="QHBoxLayout" name="hl_instrument" stretch="0,0,0,1">
       <item>
        <widget class="QLabel" name="lbl_instrument">
         <property name="sizePolicy">
@@ -190,6 +159,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="btn_load">
+        <property name="text">
+         <string>Load</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <spacer name="hs_instrument">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
@@ -205,32 +181,100 @@
         </property>
        </spacer>
       </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="hl_upstream" stretch="0,0,1">
       <item>
-       <widget class="QPushButton" name="btn_load">
-        <property name="text">
-         <string>Load</string>
-        </property>
-       </widget>
+       <layout class="QVBoxLayout" name="vl_upstream">
+        <item>
+         <widget class="QLabel" name="lbl_broker">
+          <property name="text">
+           <string>Broker:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignBottom|Qt::AlignRight|Qt::AlignTrailing</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="lbl_oanda">
+          <property name="text">
+           <string>OANDA:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignBottom|Qt::AlignRight|Qt::AlignTrailing</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="vl_upstream_status">
+        <item>
+         <widget class="QLabel" name="lbl_broker_status">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:700; color:#ff7800;&quot;&gt;Uninitialized&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="lbl_oanda_status">
+          <property name="text">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:700; color:#ff7800;&quot;&gt;Uninitialized&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignBottom|Qt::AlignRight|Qt::AlignTrailing</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="vl_upstream_spacer">
+        <item>
+         <spacer name="hs_broker">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <spacer name="hs_oanda">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
       </item>
      </layout>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="hl_footer" stretch="0,1,0">
+     <layout class="QHBoxLayout" name="hl_exit">
       <item>
-       <widget class="QLabel" name="lbl_connection">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="text">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:700; color:#ff7800;&quot;&gt;Uninitialized&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <spacer name="hs_footer">
+       <spacer name="hs_exit">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>

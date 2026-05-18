@@ -255,15 +255,19 @@ class ClientQt(QWidget):
     def set_connection_status(self, connected: bool):
 
         if connected:
-            self.ui.lbl_connection.setStyleSheet("color: #009900; font-weight: bold;")
-            self.ui.lbl_connection.setText(QTL.CONNECTED)
+            self.ui.lbl_broker_status.setStyleSheet(
+                "color: #009900; font-weight: bold;"
+            )
+            self.ui.lbl_broker_status.setText(QTL.CONNECTED)
 
             if not self._was_connected:
                 self.mq.get_instruments()
 
         else:
-            self.ui.lbl_connection.setStyleSheet("color: #ff5500; font-weight: bold;")
-            self.ui.lbl_connection.setText(QTL.DISCONNECTED)
+            self.ui.lbl_broker_status.setStyleSheet(
+                "color: #ff5500; font-weight: bold;"
+            )
+            self.ui.lbl_broker_status.setText(QTL.DISCONNECTED)
 
         self._was_connected = connected
 
