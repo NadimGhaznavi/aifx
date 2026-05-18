@@ -21,7 +21,7 @@ class DMQ:
     LISTEN_INTERVAL: Final[float] = 1.0
     MAX_BATCH_SIZE: Final[int] = 50
     MAX_BATCH_TIME: Final[float] = 0.25
-    OANDA_STATUS_TOPIC: Final[str] = "status.oanda"
+    OANDA_LATENCY_TOPIC: Final[str] = "oanda_latency"
     PROTOCOL_VERSION: Final[str] = "1.0"
     PRUNE_INTERVAL: Final[int] = 5
     TOPIC_PREFIX: Final[str] = "aifx"
@@ -33,6 +33,7 @@ class DMQF:
     CONTROL: Final[str] = "control"
     HEARTBEAT: Final[str] = "heartbeat"
     INSTRUMENTS = INSF.INSTRUMENTS
+    OANDA_LATENCY: Final[str] = "oanda_latency"
     PRUNING: Final[str] = "pruning"
     START_FEED_REPLY: Final[str] = "start_feed_reply"
 
@@ -41,4 +42,5 @@ class DMQEvent:
     CLIENT_ADDED = DMQF.CLIENT_ADDED
     CLIENT_REMOVED = DMQF.CLIENT_REMOVED
     GET_INSTRUMENTS = METHOD.GET_INSTRUMENTS
+    OANDA_LATENCY = DMQF.OANDA_LATENCY
     START_FEED = METHOD.START_FEED

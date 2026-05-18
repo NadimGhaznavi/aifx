@@ -16,6 +16,6 @@ def format_latency_ms(latency_ms: float | None) -> str:
         return f"{latency_ms:.3f} ms"
 
     if latency_ms < 1000:
-        return f"{latency_ms:.2f} ms"
+        return f"{latency_ms:.0f} ms"
 
     return f"{latency_ms / 1000:.4f} s"

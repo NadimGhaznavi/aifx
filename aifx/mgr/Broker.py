@@ -215,7 +215,7 @@ class Broker:
             return
 
         mq = self.mq
-        topic = mq.topic(MQ.OANDA_STATUS_TOPIC)
+        topic = mq.topic(MQ.OANDA_LATENCY_TOPIC)
         self._loop.call_soon_threadsafe(
             lambda: asyncio.create_task(mq.publish(topic=topic, payload=payload))
         )

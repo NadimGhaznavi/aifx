@@ -208,17 +208,17 @@ def test_publish_oanda_status_schedules_mq_publish() -> None:
         broker = _broker()
         broker._loop = asyncio.get_running_loop()
         broker.mq = MagicMock()
-        broker.mq.topic.return_value = "aifx.status.oanda"
+        broker.mq.topic.return_value = "aifx.oanda_latency"
         broker.mq.publish = AsyncMock()
-        payload = {"latency_ms": 12.3}
+        payload = {"oanda_latency": 12.3}
 
         broker.publish_oanda_status(payload)
         await asyncio.sleep(0)
         await asyncio.sleep(0)
 
-        broker.mq.topic.assert_called_once_with(MQ.OANDA_STATUS_TOPIC)
+        broker.mq.topic.assert_called_once_with(MQ.OANDA_LATENCY_TOPIC)
         broker.mq.publish.assert_awaited_once_with(
-            topic="aifx.status.oanda",
+            topic="aifx.oanda_latency",
             payload=payload,
         )
 

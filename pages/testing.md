@@ -184,6 +184,8 @@ ignore_missing_imports = true
   - `test_on_instrument_changed_requests_broker_when_client_cache_is_empty()`
   - `test_on_recent_candles_upserts_and_renders_from_client_cache()`
   - `test_on_candle_received_upserts_and_renders_from_client_cache()`
+  - `test_start_mq_subscribes_to_oanda_latency_topic()`
+  - `test_on_oanda_latency_received_updates_label()`
 
 ---
 

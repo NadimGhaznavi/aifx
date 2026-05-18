@@ -12,6 +12,8 @@ from unittest.mock import MagicMock
 
 from aifx.client.ClientQt import ClientQt
 from aifx.constants.DDef import DDef as DEF
+from aifx.constants.DMQ import DMQ as MQ
+from aifx.constants.DMQ import DMQF as MQF
 
 
 class FakeComboBox:
@@ -27,8 +29,10 @@ def _client_shell(client_db, sample_instrument):
         candle_topic=MagicMock(return_value="aifx.candles.USD_CAD"),
         get_recent_candles=MagicMock(return_value=True),
         register_sub_handler=MagicMock(),
+        start=MagicMock(),
         subscribe=MagicMock(),
         start_feed=MagicMock(),
+        topic=MagicMock(return_value="aifx.oanda_latency"),
     )
     return SimpleNamespace(
         _active_instrument=None,
@@ -46,7 +50,10 @@ def _client_shell(client_db, sample_instrument):
         render_candles=MagicMock(),
         ui=SimpleNamespace(
             cb_instrument=FakeComboBox(sample_instrument.name),
-            lbl_current_pair=SimpleNamespace(setText=MagicMock()),
+            lbl_current_pair=SimpleNamespace(
+                setStyleSheet=MagicMock(),
+                setText=MagicMock(),
+            ),
         ),
     )
 
@@ -138,3 +145,41 @@ def test_on_candle_received_upserts_and_renders_from_client_cache(
         topic="aifx.candles.USD_CAD",
         instrument="USD_CAD",
     )
+
+
+def test_start_mq_subscribes_to_oanda_latency_topic() -> None:
+    mq = SimpleNamespace(
+        register_sub_handler=MagicMock(),
+        start=MagicMock(),
+        subscribe=MagicMock(),
+        topic=MagicMock(return_value="aifx.oanda_latency"),
+    )
+    client = SimpleNamespace(
+        log=SimpleNamespace(info=MagicMock()),
+        mq=mq,
+        on_oanda_latency_received=MagicMock(),
+    )
+
+    ClientQt.start_mq(client)
+
+    mq.start.assert_called_once_with()
+    mq.topic.assert_called_once_with(MQ.OANDA_LATENCY_TOPIC)
+    mq.register_sub_handler.assert_called_once_with(
+        "aifx.oanda_latency",
+        client.on_oanda_latency_received,
+    )
+    mq.subscribe.assert_called_once_with("aifx.oanda_latency")
+
+
+def test_on_oanda_latency_received_updates_label() -> None:
+    client = SimpleNamespace(
+        ui=SimpleNamespace(lbl_oanda_status=SimpleNamespace(setText=MagicMock()))
+    )
+
+    ClientQt.on_oanda_latency_received(
+        client,
+        topic="aifx.oanda_latency",
+        data={MQF.OANDA_LATENCY: 12.3456},
+    )
+
+    client.ui.lbl_oanda_status.setText.assert_called_once_with("12.35 ms")

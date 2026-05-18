@@ -16,6 +16,7 @@ from aifx.constants.DCandle import DCandle as CANDLE
 from aifx.constants.DCandle import DCandleF as CANDLEF
 from aifx.constants.DInstrument import DInstrument as INS
 from aifx.constants.DInstrument import DInstrumentF as INSF
+from aifx.constants.DMQ import DMQF as MQF
 from aifx.constants.DOanda import DOanda as OANDA
 from aifx.constants.DPrice import DPrice as PRICE
 from aifx.forex.Candle import Candle
@@ -87,7 +88,7 @@ def test_fetch_instruments_returns_status_and_data_on_http_200() -> None:
         timeout=OANDA.TIMEOUT,
     )
     assert published
-    assert published[-1]["latency_ms"] >= 0.0
+    assert published[-1][MQF.OANDA_LATENCY] >= 0.0
 
 
 def test_fetch_instruments_returns_none_tuple_on_non_200() -> None:
@@ -170,7 +171,7 @@ def test_fetch_candles_passes_request_details_and_returns_response() -> None:
         timeout=OANDA.TIMEOUT,
     )
     assert published
-    assert published[-1]["latency_ms"] >= 0.0
+    assert published[-1][MQF.OANDA_LATENCY] >= 0.0
 
 
 def test_get_candles_returns_none_on_non_200() -> None:

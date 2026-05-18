@@ -22,6 +22,7 @@ from aifx.constants.DDb import DDbF as DBF
 from aifx.constants.DDef import DDef as DEF
 from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DMQ import DMQ as MQ
+from aifx.constants.DMQ import DMQF as MQF
 from aifx.constants.DNetwork import DNetwork as NET
 from aifx.constants.DQt import DQtL as QTL
 from aifx.db.ClientDb import ClientDb
@@ -185,8 +186,7 @@ class ClientQt(QWidget):
         if self.ui is None:
             raise RuntimeError(f"Could not load UI file: {path}")
 
-        self.ui.setWindowTitle(QTL.AIFX)
-        self.ui.lbl_version.setText(f"AI FX v{DEF.VERSION}")
+        self.ui.setWindowTitle(f"{QTL.AIFX}        v{DEF.VERSION}")
 
     def on_candle_received(self, topic: str, candle: dict) -> None:
         if topic != self._active_topic:
@@ -238,6 +238,11 @@ class ClientQt(QWidget):
         self.mq.register_sub_handler(topic, self.on_candle_received)
         self.mq.subscribe(topic=topic)
         self.mq.start_feed(instrument=instrument)
+
+    def on_oanda_latency_received(self, topic: str, data: dict[str, float]) -> None:
+        self.ui.lbl_oanda_status.setStyleSheet("color: #009900; font-weight: bold;")
+        latency = format_latency_ms(data[MQF.OANDA_LATENCY])
+        self.ui.lbl_oanda_status.setText(latency)
 
     def on_recent_candles(self, topic: str, candles: list[dict]) -> None:
         if topic != self._active_topic:
@@ -406,6 +411,9 @@ class ClientQt(QWidget):
 
     def start_mq(self):
         self.mq.start()
+        topic = self.mq.topic(MQ.OANDA_LATENCY_TOPIC)
+        self.mq.register_sub_handler(topic, self.on_oanda_latency_received)
+        self.mq.subscribe(topic)
         self.log.info(QTL.MQ_CLIENT_STARTED)
 
     def update_plot(self, topic: str) -> None:

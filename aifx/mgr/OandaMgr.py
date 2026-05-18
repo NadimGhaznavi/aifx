@@ -19,6 +19,7 @@ from aifx.constants.DCandle import DCandleF as CANDLEF
 from aifx.constants.DDef import DDef as DEF
 from aifx.constants.DInstrument import DInstrumentF as INSF
 from aifx.constants.DModule import DModule as MODULE
+from aifx.constants.DMQ import DMQF as MQF
 from aifx.constants.DOanda import DOanda as OANDA
 from aifx.constants.DPrice import DPrice as PRICE
 from aifx.forex.Candle import Candle
@@ -41,7 +42,7 @@ class OandaMgr:
         self.session = requests.Session()
 
     def _publish_latency(self, latency_ms: float) -> None:
-        self.publish({"latency_ms": latency_ms})
+        self.publish({MQF.OANDA_LATENCY: latency_ms})
 
     def _fetch_candles(self, pair_name, count, granularity):
         url = f"{OANDA.OANDA_URL}/{INSF.INSTRUMENTS}/{pair_name}/{CANDLEF.CANDLES}"
