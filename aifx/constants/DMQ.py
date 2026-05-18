@@ -21,6 +21,7 @@ class DMQ:
     LISTEN_INTERVAL: Final[float] = 1.0
     MAX_BATCH_SIZE: Final[int] = 50
     MAX_BATCH_TIME: Final[float] = 0.25
+    OANDA_STATUS_TOPIC: Final[str] = "status.oanda"
     PROTOCOL_VERSION: Final[str] = "1.0"
     PRUNE_INTERVAL: Final[int] = 5
     TOPIC_PREFIX: Final[str] = "aifx"

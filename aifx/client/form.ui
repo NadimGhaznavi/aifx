@@ -26,11 +26,11 @@
       <widget class="QLabel" name="lbl_current_pair">
        <property name="font">
         <font>
-         <pointsize>16</pointsize>
+         <pointsize>22</pointsize>
         </font>
        </property>
        <property name="text">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:18pt; color:#669f1e;&quot;&gt;Currency Pair&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:22pt; color:#00aa00;&quot;&gt;Currency Pair&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>

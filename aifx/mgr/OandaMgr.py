@@ -9,6 +9,7 @@
 
 import json
 import time
+from collections.abc import Callable
 
 import requests
 
@@ -27,22 +28,34 @@ from aifx.utils.AiFxLog import AiFxLog
 
 class OandaMgr:
 
-    def __init__(self, log_level=DEF.DEFAULT_LOG_LEVEL, log_file=None):
+    def __init__(
+        self,
+        publish: Callable[[dict], None],
+        log_level=DEF.DEFAULT_LOG_LEVEL,
+        log_file=None,
+    ):
+        self.publish = publish
         self.log = AiFxLog(
             client_id=MODULE.OANDA_MGR, log_file=log_file, log_level=log_level
         )
         self.session = requests.Session()
 
+    def _publish_latency(self, latency_ms: float) -> None:
+        self.publish({"latency_ms": latency_ms})
+
     def _fetch_candles(self, pair_name, count, granularity):
         url = f"{OANDA.OANDA_URL}/{INSF.INSTRUMENTS}/{pair_name}/{CANDLEF.CANDLES}"
         params = dict(count=count, granularity=granularity, price=PRICE.MBA)
 
+        start = time.monotonic()
         response = self.session.get(
             url=url,
             params=params,
             headers=OANDA.SECURE_HEADER,
             timeout=OANDA.TIMEOUT,
         )
+        latency = (time.monotonic() - start) * 1000.0
+        self._publish_latency(latency)
 
         return response.status_code, response.json()
 
@@ -52,12 +65,15 @@ class OandaMgr:
         )
 
         try:
+            start = time.monotonic()
             response = self.session.get(
                 url,
                 params=None,
                 headers=OANDA.SECURE_HEADER,
                 timeout=OANDA.TIMEOUT,
             )
+            latency = (time.monotonic() - start) * 1000.0
+            self._publish_latency(latency)
 
             if response.status_code != 200:
                 return None, None
@@ -109,8 +125,8 @@ class OandaMgr:
 
     def _try_stream_prices(self, instruments: list[str]):
         url = (
-            f"{OANDA.OANDA_STREAMING_URL}/v3/{ACCTF.ACCOUNTS}/",
-            f"{OANDA.ACCOUNT_ID}/pricing/stream",
+            f"{OANDA.OANDA_STREAMING_URL}/v3/{ACCTF.ACCOUNTS}/"
+            f"{OANDA.ACCOUNT_ID}/pricing/stream"
         )
         response = self.session.get(
             url,
@@ -132,13 +148,13 @@ class OandaMgr:
 
 
 if __name__ == "__main__":
-    mgr = OandaMgr()
+    mgr = OandaMgr(publish=lambda _payload: None)
     # 4 hour interval: H4
     # print(api.fetch_candles("EUR_NOK", 50, "H4"))
     # Print fetched instruments
     # instruments = mgr.get_instruments()
     # print(instruments)
-    mgr = OandaMgr()
+    mgr = OandaMgr(publish=lambda _payload: None)
 
     candles = mgr.get_candles(pair_name="EUR_USD", count=5, granularity="S5")
 

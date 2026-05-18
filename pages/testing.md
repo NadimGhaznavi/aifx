@@ -17,6 +17,7 @@ For the local project virtual environment, use:
 
 ```
 aifx_venv/bin/python -m pytest -q tests/unit/test_mqclient.py tests/unit/test_clientqt_cache.py
+aifx_venv/bin/python -m pytest -q tests/unit/test_oandamgr.py tests/unit/test_broker.py
 ```
 
 3rd party testing tools have also been integrated into this project:
@@ -121,6 +122,7 @@ ignore_missing_imports = true
   - `test_get_recent_candles_fetches_oanda_when_cache_is_empty()`
   - `test_get_recent_candles_converts_oanda_payload_to_reply_format()`
   - `test_get_recent_candles_returns_empty_list_when_no_data()`
+  - `test_publish_oanda_status_schedules_mq_publish()`
   - `test_start_feed_creates_feed_and_background_tasks()`
   - `test_start_feed_is_idempotent_for_existing_feed()`
   - `test_shutdown_returns_ack_and_schedules_quit()`

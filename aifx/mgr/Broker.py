@@ -71,7 +71,12 @@ class Broker:
         )
 
         # Oanda connections and data exchange
-        self.oanda = OandaMgr(log_level=log_level, log_file=log_file)
+        self._loop: asyncio.AbstractEventLoop | None = None
+        self.oanda = OandaMgr(
+            publish=self.publish_oanda_status,
+            log_level=log_level,
+            log_file=log_file,
+        )
 
         # Server methods that are exposed via MQ
         self._srv_methods = {
@@ -205,6 +210,16 @@ class Broker:
             )
             raise
 
+    def publish_oanda_status(self, payload: dict) -> None:
+        if self.mq is None or self._loop is None:
+            return
+
+        mq = self.mq
+        topic = mq.topic(MQ.OANDA_STATUS_TOPIC)
+        self._loop.call_soon_threadsafe(
+            lambda: asyncio.create_task(mq.publish(topic=topic, payload=payload))
+        )
+
     async def get_candles_oanda(self, instrument, count):
         return await asyncio.to_thread(
             self.oanda.get_candles,
@@ -321,6 +336,8 @@ class Broker:
     async def start(self) -> None:
         if self._started:
             return
+
+        self._loop = asyncio.get_running_loop()
 
         self.mq = MQServer(
             log_level=self._log_level,

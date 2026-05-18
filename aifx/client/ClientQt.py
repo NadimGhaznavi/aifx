@@ -15,7 +15,7 @@ from PySide6.QtCore import QFile, Qt, QTimer
 from PySide6.QtGui import QColor, QPalette
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWebEngineWidgets import QWebEngineView
-from PySide6.QtWidgets import QApplication, QVBoxLayout, QWidget, QHeaderView
+from PySide6.QtWidgets import QApplication, QVBoxLayout, QWidget
 
 from aifx.constants.DDb import DColInstrument as C_INST
 from aifx.constants.DDb import DDbF as DBF
@@ -24,7 +24,6 @@ from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DMQ import DMQ as MQ
 from aifx.constants.DNetwork import DNetwork as NET
 from aifx.constants.DQt import DQtL as QTL
-
 from aifx.db.ClientDb import ClientDb
 from aifx.db.DbMgr import DbMgr
 from aifx.forex.Candle import Candle
@@ -51,7 +50,7 @@ def apply_dark_theme(app: QApplication) -> None:
     palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.white)
     palette.setColor(QPalette.ColorRole.Button, QColor(45, 45, 45))
     palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.white)
-    palette.setColor(QPalette.ColorRole.BrightText, Qt.GlobalColor.red)
+    palette.setColor(QPalette.ColorRole.BrightText, Qt.GlobalColor.green)
     palette.setColor(QPalette.ColorRole.Highlight, QColor(96, 127, 58))
     palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.white)
     app.setPalette(palette)
@@ -168,8 +167,8 @@ class ClientQt(QWidget):
 
     def feed_started(self, feed_data):
         name = feed_data[C_INST.NAME]
-        self.ui.lbl_current_pair.setStyleSheet("color: #bbaa66; font-weight bold;")
-        self.ui.lbl_current_pair.setText(name)
+        display_name = feed_data[C_INST.DISPLAY_NAME]
+        self.ui.lbl_current_pair.setText(f"{display_name} - {name}")
         self.log.debug(f"Feed Started: {name}")
 
     def load_ui(self):
@@ -187,7 +186,7 @@ class ClientQt(QWidget):
             raise RuntimeError(f"Could not load UI file: {path}")
 
         self.ui.setWindowTitle(QTL.AIFX)
-        self.ui.lbl_version.setText(f"v{DEF.VERSION}")
+        self.ui.lbl_version.setText(f"AI FX v{DEF.VERSION}")
 
     def on_candle_received(self, topic: str, candle: dict) -> None:
         if topic != self._active_topic:
@@ -211,6 +210,10 @@ class ClientQt(QWidget):
 
         instrument = self._instruments[ins_name]
         display_name = instrument.get(C_INST.DISPLAY_NAME, ins_name)
+
+        self.ui.lbl_current_pair.setStyleSheet(
+            "color: #00aa00; font-weight: bold; font-size: 22pt"
+        )
 
         self.ui.lbl_current_pair.setText(f"{display_name} - {ins_name}")
         self.log.info(f"Selected instrument: {ins_name}")
