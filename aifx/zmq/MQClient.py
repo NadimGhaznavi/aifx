@@ -40,7 +40,7 @@ SubHandler = Callable[[str, dict], Any]
 class MQClient(QObject):
 
     candle_received = Signal(str, object)
-    connection_changed = Signal(bool)
+    broker_status_changed = Signal(bool, object)
     instruments_received = Signal(object)
     feed_started = Signal(object)
     recent_candles = Signal(str, object)
@@ -89,6 +89,8 @@ class MQClient(QObject):
 
         self._hb_socket.connect(self._hb_address)
         self._last_heartbeat = 0.0
+        self._pending_heartbeat_at: float | None = None
+        self._broker_latency_ms: float | None = None
         self._last_connected: bool | None = None
         self._hb_timer = QTimer(self)
         self._hb_timer.timeout.connect(self._heartbeat_tick)
@@ -131,7 +133,9 @@ class MQClient(QObject):
         return self.topic(f"candles.{instrument}")
 
     def connected(self) -> bool:
-        return (time.time() - self._last_heartbeat) < (2 * int(MQ.HEARTBEAT_INTERVAL))
+        return (time.monotonic() - self._last_heartbeat) < (
+            2 * int(MQ.HEARTBEAT_INTERVAL)
+        )
 
     def get_instruments(self) -> bool:
         msg = MQMsg(
@@ -191,6 +195,7 @@ class MQClient(QObject):
         # self.log.debug(QTL.SENDING_HEARTBEAT)
         try:
             self._hb_socket.send(msg.to_json(), flags=zmq.NOBLOCK)
+            self._pending_heartbeat_at = time.monotonic()
         except zmq.Again:
             pass
 
@@ -219,7 +224,13 @@ class MQClient(QObject):
 
             if reply.method == METHOD.HEARTBEAT_REPLY:
                 # self.log.debug(QTL.HEARTBEAT_REPLY_RECEIVED)
-                self._last_heartbeat = time.time()
+                now = time.monotonic()
+                self._last_heartbeat = now
+                if self._pending_heartbeat_at is not None:
+                    self._broker_latency_ms = (
+                        now - self._pending_heartbeat_at
+                    ) * 1000.0
+                    self._pending_heartbeat_at = None
 
         self._update_connection_state()
 
@@ -306,7 +317,13 @@ class MQClient(QObject):
 
         if now_connected != self._last_connected:
             self._last_connected = now_connected
-            self.connection_changed.emit(now_connected)
+
+        if now_connected:
+            latency_ms = self._broker_latency_ms
+        else:
+            self._broker_latency_ms = None
+            latency_ms = None
+        self.broker_status_changed.emit(now_connected, latency_ms)
 
     def unsubscribe(self, topic: str) -> None:
         self.log.info(f"Unsubscribing: {topic}")

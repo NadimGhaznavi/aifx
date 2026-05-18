@@ -16,6 +16,7 @@ from aifx.constants.DCandle import DCandle as CANDLE
 from aifx.constants.DCandle import DCandleF as CANDLEF
 from aifx.constants.DInstrument import DInstrument as INS
 from aifx.constants.DInstrument import DInstrumentF as INSF
+from aifx.constants.DMQ import DMQF as MQF
 from aifx.constants.DOanda import DOanda as OANDA
 from aifx.constants.DPrice import DPrice as PRICE
 from aifx.forex.Candle import Candle
@@ -24,7 +25,7 @@ from aifx.mgr.OandaMgr import OandaMgr
 
 
 def _mgr() -> OandaMgr:
-    return OandaMgr(log_file=None)
+    return OandaMgr(publish=lambda _payload: None, log_file=None)
 
 
 def _response(status_code: int, data: dict) -> MagicMock:
@@ -71,7 +72,8 @@ def _candle_payload(time: str, complete: bool = True) -> dict:
 
 
 def test_fetch_instruments_returns_status_and_data_on_http_200() -> None:
-    mgr = _mgr()
+    published = []
+    mgr = OandaMgr(publish=published.append, log_file=None)
     data = {INSF.INSTRUMENTS: [_instrument_payload()]}
     mgr.session.get = MagicMock(return_value=_response(200, data))
 
@@ -85,6 +87,8 @@ def test_fetch_instruments_returns_status_and_data_on_http_200() -> None:
         headers=OANDA.SECURE_HEADER,
         timeout=OANDA.TIMEOUT,
     )
+    assert published
+    assert published[-1][MQF.OANDA_LATENCY] >= 0.0
 
 
 def test_fetch_instruments_returns_none_tuple_on_non_200() -> None:
@@ -143,7 +147,8 @@ def test_get_instruments_converts_oanda_payloads_to_instruments() -> None:
 
 
 def test_fetch_candles_passes_request_details_and_returns_response() -> None:
-    mgr = _mgr()
+    published = []
+    mgr = OandaMgr(publish=published.append, log_file=None)
     data = {CANDLEF.CANDLES: [_candle_payload("2026-05-14T19:30:05.000000000Z")]}
     mgr.session.get = MagicMock(return_value=_response(200, data))
 
@@ -165,6 +170,8 @@ def test_fetch_candles_passes_request_details_and_returns_response() -> None:
         headers=OANDA.SECURE_HEADER,
         timeout=OANDA.TIMEOUT,
     )
+    assert published
+    assert published[-1][MQF.OANDA_LATENCY] >= 0.0
 
 
 def test_get_candles_returns_none_on_non_200() -> None:

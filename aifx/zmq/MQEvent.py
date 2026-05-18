@@ -1,4 +1,4 @@
-# aifx/utilsEventMQ.py
+# aifx/zmq/EventMQ.py
 #
 #    AI FX
 #    Author: Nadim-Daniel Ghaznavi

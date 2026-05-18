@@ -30,6 +30,8 @@ Num | Notes                                                                     
 13  | [DataFrame Conversions](/tutorial/13-df-conv.html)                                         | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=15) |
 14  | [Plotting Candles with Plotly](/tutorial/14-plotly.html)                                   | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=16) |
 15  | [Styling Plotly](/tutorial/16-styling-plotly.html)                                         | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=17) |
+16  | [Plotting a Moving Average](/tutorial/16-plot_moving-avg.html)                             | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=18) |
+17  | [Multiple Moving Averages](/tutorial/17-multiple-avgs.html)                                | [Video link](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=19) |
 
 ---
 

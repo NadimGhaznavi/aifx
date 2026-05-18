@@ -9,10 +9,8 @@
 
 import json
 import sys
-from collections import deque
 from pathlib import Path
 
-import plotly.graph_objects as go
 from PySide6.QtCore import QFile, Qt, QTimer
 from PySide6.QtGui import QColor, QPalette
 from PySide6.QtUiTools import QUiLoader
@@ -20,18 +18,24 @@ from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWidgets import QApplication, QVBoxLayout, QWidget
 
 from aifx.constants.DDb import DColInstrument as C_INST
+from aifx.constants.DDb import DDbF as DBF
 from aifx.constants.DDef import DDef as DEF
 from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DMQ import DMQ as MQ
+from aifx.constants.DMQ import DMQF as MQF
 from aifx.constants.DNetwork import DNetwork as NET
 from aifx.constants.DQt import DQtL as QTL
+from aifx.db.ClientDb import ClientDb
+from aifx.db.DbMgr import DbMgr
 from aifx.forex.Candle import Candle
 from aifx.forex.RecentCandlesModel import RecentCandlesModel
 from aifx.utils.AiFxLog import AiFxLog
+from aifx.utils.Utils import format_latency_ms
 from aifx.zmq.MQClient import MQClient
 
 # Number of candles to cache for Plotly
 RECENT_CANDLES_COLUMN_PADDING = 50
+RECENT_CANDLES_ROWS = 12
 
 
 def apply_dark_theme(app: QApplication) -> None:
@@ -47,7 +51,7 @@ def apply_dark_theme(app: QApplication) -> None:
     palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.white)
     palette.setColor(QPalette.ColorRole.Button, QColor(45, 45, 45))
     palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.white)
-    palette.setColor(QPalette.ColorRole.BrightText, Qt.GlobalColor.red)
+    palette.setColor(QPalette.ColorRole.BrightText, Qt.GlobalColor.green)
     palette.setColor(QPalette.ColorRole.Highlight, QColor(96, 127, 58))
     palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.white)
     app.setPalette(palette)
@@ -121,6 +125,10 @@ class ClientQt(QWidget):
         # In memory dictionary of instruments
         self._instruments: dict[str, dict] = {}
 
+        # In memory client data cache
+        self.db_mgr = DbMgr(db_type=DBF.CACHE, log_level=log_level)
+        self.client_db = ClientDb(db_mgr=self.db_mgr, log_level=log_level)
+
         # Load the UI
         self.load_ui()
         self.setup_recent_candles_table()
@@ -138,7 +146,7 @@ class ClientQt(QWidget):
             topic_prefix=MQ.TOPIC_PREFIX,
             sub_methods={},
         )
-        self.mq.connection_changed.connect(self.set_connection_status)
+        self.mq.broker_status_changed.connect(self.set_connection_status)
         self.mq.instruments_received.connect(self.update_instruments)
         self.mq.feed_started.connect(self.feed_started)
         self.mq.recent_candles.connect(self.on_recent_candles)
@@ -150,54 +158,46 @@ class ClientQt(QWidget):
         QTimer.singleShot(0, self.start_mq)
         self.log.info(QTL.ENABLING_HEARTBEAT)
 
-        # Store candlestick data here
-        self._candles: dict[str, deque[Candle]] = {}
-
         # Track the active topic
         self._active_topic: str | None = None
+        self._active_instrument: str | None = None
 
     def clear_data(self) -> None:
-        self._candles.clear()
-
         js = "updateCandles([]);"
         self.web_view.page().runJavaScript(js)
 
     def feed_started(self, feed_data):
         name = feed_data[C_INST.NAME]
-        self.ui.lbl_current_pair.setStyleSheet("color: #bbaa66; font-weight bold;")
-        self.ui.lbl_current_pair.setText(name)
+        display_name = feed_data[C_INST.DISPLAY_NAME]
+        self.ui.lbl_current_pair.setText(f"{display_name} - {name}")
         self.log.debug(f"Feed Started: {name}")
+
+    def load_ui(self):
+        loader = QUiLoader()
+        path = Path(__file__).resolve().parent / "form.ui"
+
+        ui_file = QFile(path)
+        if not ui_file.open(QFile.ReadOnly):
+            raise RuntimeError(f"Could not open UI file: {path}")
+
+        self.ui = loader.load(ui_file)
+        ui_file.close()
+
+        if self.ui is None:
+            raise RuntimeError(f"Could not load UI file: {path}")
+
+        self.ui.setWindowTitle(f"{QTL.AIFX}        v{DEF.VERSION}")
 
     def on_candle_received(self, topic: str, candle: dict) -> None:
         if topic != self._active_topic:
             self.log.warning(f"Received off-topic candle: {topic}")
             return
 
-        if topic not in self._candles:
-            self._candles[topic] = deque(maxlen=DEF.MAX_PLOTLY_CANDLES)
-
-        candles = self._candles[topic]
-
         new_candle = Candle.from_db(candle)
-        if not candles:
-            candles.append(new_candle)
-            self.log.debug(f"First candle received: {topic}: {new_candle}")
-            return
-
-        if candles[-1].candle_key == new_candle.candle_key:
-            candles[-1] = new_candle
-            self.log.warning(f"Duplicate candle: {new_candle}")
-        else:
-            candles.append(new_candle)
-
-        recent_candles = list(candles)[-DEF.RECENT_CANDLE_MAX :]
-        recent = list(reversed(recent_candles))
-        self.recent_candles_model.load_data(recent)
-        self.resize_recent_candles_columns()
+        self.client_db.upsert_candles([new_candle])
 
         self.log.debug(f"Received: {new_candle}")
-
-        self.update_plot(topic=topic)
+        self.render_cached_candles(topic=topic, instrument=new_candle.instrument)
 
     def on_instrument_changed(self):
         ins_name = self.ui.cb_instrument.currentData()
@@ -211,88 +211,94 @@ class ClientQt(QWidget):
         instrument = self._instruments[ins_name]
         display_name = instrument.get(C_INST.DISPLAY_NAME, ins_name)
 
+        self.ui.lbl_current_pair.setStyleSheet(
+            "color: #00aa00; font-weight: bold; font-size: 22pt"
+        )
+
         self.ui.lbl_current_pair.setText(f"{display_name} - {ins_name}")
         self.log.info(f"Selected instrument: {ins_name}")
 
         topic = self.mq.candle_topic(ins_name)
         self._active_topic = topic
+        self._active_instrument = ins_name
 
-        self.mq.get_recent_candles(
-            topic=topic,
-            instrument=instrument,
-            count=DEF.MAX_PLOTLY_CANDLES,
+        candles = self.client_db.get_recent_candles(
+            name=ins_name,
+            limit=DEF.MAX_PLOTLY_CANDLES,
         )
+        if candles:
+            self.render_candles(topic=topic, candles=candles)
+        else:
+            self.mq.get_recent_candles(
+                topic=topic,
+                instrument=instrument,
+                count=DEF.MAX_PLOTLY_CANDLES,
+            )
 
         self.mq.register_sub_handler(topic, self.on_candle_received)
         self.mq.subscribe(topic=topic)
         self.mq.start_feed(instrument=instrument)
+
+    def on_oanda_latency_received(self, topic: str, data: dict[str, float]) -> None:
+        self.ui.lbl_oanda_status.setStyleSheet("color: #009900; font-weight: bold;")
+        latency = format_latency_ms(data[MQF.OANDA_LATENCY])
+        self.ui.lbl_oanda_status.setText(latency)
 
     def on_recent_candles(self, topic: str, candles: list[dict]) -> None:
         if topic != self._active_topic:
             self.log.warning(f"Received off-topic recent candles: {topic}")
             return
 
-        recent_candles = [Candle.from_db(candle) for candle in candles]
-        self._candles[topic] = deque(
-            recent_candles,
-            maxlen=DEF.MAX_PLOTLY_CANDLES,
-        )
+        self.client_db.upsert_candles(candles)
 
-        recent = list(reversed(recent_candles[-DEF.RECENT_CANDLE_MAX :]))
-        self.recent_candles_model.load_data(recent)
-        self.resize_recent_candles_columns()
+        instrument = self._active_instrument
+        if instrument is None:
+            return
+
+        recent_candles = self.client_db.get_recent_candles(
+            name=instrument,
+            limit=DEF.MAX_PLOTLY_CANDLES,
+        )
+        self.render_candles(topic=topic, candles=recent_candles)
 
         self.log.debug(f"Recent candles received: {topic}: {len(recent_candles)}")
-        self.update_plot(topic=topic)
 
-    def render_candles(self, topic: str) -> None:
-        candles = list(self._candles.get(topic, []))
-
+    def render_candles(self, topic: str, candles: list[Candle]) -> None:
         if not candles:
             return
 
-        x = [
-            f"{c.y:04d}-{c.mo:02d}-{c.d:02d} " f"{c.h:02d}:{c.mi:02d}:{c.s:02d}"
-            for c in candles
-        ]
+        recent = list(reversed(candles[-RECENT_CANDLES_ROWS:]))
+        self.recent_candles_model.load_data(recent)
+        self.resize_recent_candles_columns()
 
-        fig = go.Figure(
-            data=[
-                go.Candlestick(
-                    x=x,
-                    open=[c.mid_o for c in candles],
-                    high=[c.mid_h for c in candles],
-                    low=[c.mid_l for c in candles],
-                    close=[c.mid_c for c in candles],
-                    name="MID",
-                )
-            ],
+        self.update_plot(topic=topic)
+
+    def render_cached_candles(self, topic: str, instrument: str) -> None:
+        candles = self.client_db.get_recent_candles(
+            name=instrument,
+            limit=DEF.MAX_PLOTLY_CANDLES,
         )
+        self.render_candles(topic=topic, candles=candles)
 
-        fig.update_layout(
-            title=topic,
-            xaxis_title="Time",
-            yaxis_title="Price",
-            xaxis_rangeslider_visible=False,
-            margin=dict(l=30, r=30, t=40, b=30),
-            template="plotly_dark",
-        )
-
-        html = fig.to_html(include_plotlyjs="cdn", full_html=False)
-        self.web_view.setHtml(html)
-
-    def set_connection_status(self, connected: bool):
+    def set_connection_status(self, connected: bool, latency_ms: float | None = None):
 
         if connected:
-            self.ui.lbl_connection.setStyleSheet("color: #009900; font-weight: bold;")
-            self.ui.lbl_connection.setText(QTL.CONNECTED)
+            self.ui.lbl_broker_status.setStyleSheet(
+                "color: #009900; font-weight: bold;"
+            )
+            latency = format_latency_ms(latency_ms)
+            if latency:
+                status = f"{latency}"
+            self.ui.lbl_broker_status.setText(status)
 
             if not self._was_connected:
                 self.mq.get_instruments()
 
         else:
-            self.ui.lbl_connection.setStyleSheet("color: #ff5500; font-weight: bold;")
-            self.ui.lbl_connection.setText(QTL.DISCONNECTED)
+            self.ui.lbl_broker_status.setStyleSheet(
+                "color: #ff5500; font-weight: bold;"
+            )
+            self.ui.lbl_broker_status.setText(QTL.DISCONNECTED)
 
         self._was_connected = connected
 
@@ -368,7 +374,12 @@ class ClientQt(QWidget):
         self.ui.tbl_recent_candles.setModel(self.recent_candles_model)
 
         self.ui.tbl_recent_candles.verticalHeader().setVisible(False)
+
+        # header = self.ui.tbl_recent_candles.horizontalHeader()
+        # header.setStretchLastSection(True)
+
         self.resize_recent_candles_columns()
+        self.set_recent_candles_visible_rows(RECENT_CANDLES_ROWS)
 
     def resize_recent_candles_columns(self) -> None:
         table = self.ui.tbl_recent_candles
@@ -378,22 +389,14 @@ class ClientQt(QWidget):
             width = table.columnWidth(column)
             table.setColumnWidth(column, width + RECENT_CANDLES_COLUMN_PADDING)
 
-    def load_ui(self):
-        loader = QUiLoader()
-        path = Path(__file__).resolve().parent / "form.ui"
+    def set_recent_candles_visible_rows(self, rows: int) -> None:
+        table = self.ui.tbl_recent_candles
 
-        ui_file = QFile(path)
-        if not ui_file.open(QFile.ReadOnly):
-            raise RuntimeError(f"Could not open UI file: {path}")
+        header_height = table.horizontalHeader().height()
+        row_height = table.verticalHeader().defaultSectionSize()
+        frame = table.frameWidth() * 2
 
-        self.ui = loader.load(ui_file)
-        ui_file.close()
-
-        if self.ui is None:
-            raise RuntimeError(f"Could not load UI file: {path}")
-
-        self.ui.setWindowTitle(QTL.AIFX)
-        self.ui.lbl_version.setText(f"v{DEF.VERSION}")
+        table.setFixedHeight(header_height + rows * row_height + frame)
 
     def shutdown(self):
         if getattr(self, "_shutting_down", False):
@@ -402,15 +405,25 @@ class ClientQt(QWidget):
         self._shutting_down = True
 
         self.mq.quit()
+        self.db_mgr.close()
         self.ui.close()
         self.log.info("Clean shutdown")
 
     def start_mq(self):
         self.mq.start()
+        topic = self.mq.topic(MQ.OANDA_LATENCY_TOPIC)
+        self.mq.register_sub_handler(topic, self.on_oanda_latency_received)
+        self.mq.subscribe(topic)
         self.log.info(QTL.MQ_CLIENT_STARTED)
 
     def update_plot(self, topic: str) -> None:
-        candles = list(self._candles.get(topic, []))
+        if self._active_instrument is None:
+            candles = []
+        else:
+            candles = self.client_db.get_recent_candles(
+                name=self._active_instrument,
+                limit=DEF.MAX_PLOTLY_CANDLES,
+            )
 
         payload = [
             {
