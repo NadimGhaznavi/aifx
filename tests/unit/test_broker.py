@@ -18,6 +18,7 @@ from aifx.constants.DDb import DDbF as DBF
 from aifx.constants.DInstrument import DInstrument as INS
 from aifx.constants.DInstrument import DInstrumentF as INSF
 from aifx.constants.DMethod import DMethod as METHOD
+from aifx.constants.DMQ import DMQ as MQ
 from aifx.mgr.Broker import Broker
 from aifx.utils.Feed import Feed
 from aifx.zmq.MQMsg import MQMsg
@@ -198,6 +199,28 @@ def test_get_recent_candles_returns_empty_list_when_no_data() -> None:
 
         assert result[CANDLEF.CANDLES] == []
         broker.db_mgr.upsert.assert_not_called()
+
+    asyncio.run(run())
+
+
+def test_publish_oanda_status_schedules_mq_publish() -> None:
+    async def run() -> None:
+        broker = _broker()
+        broker._loop = asyncio.get_running_loop()
+        broker.mq = MagicMock()
+        broker.mq.topic.return_value = "aifx.oanda_latency"
+        broker.mq.publish = AsyncMock()
+        payload = {"oanda_latency": 12.3}
+
+        broker.publish_oanda_status(payload)
+        await asyncio.sleep(0)
+        await asyncio.sleep(0)
+
+        broker.mq.topic.assert_called_once_with(MQ.OANDA_LATENCY_TOPIC)
+        broker.mq.publish.assert_awaited_once_with(
+            topic="aifx.oanda_latency",
+            payload=payload,
+        )
 
     asyncio.run(run())
 

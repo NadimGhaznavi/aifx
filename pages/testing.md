@@ -13,6 +13,13 @@ Even at an early stage in the project, the complexity has risen to the point tha
 
 Most tests here are `pytest` tests. They can be executed directly by providing the path to test file or with `poetry run pytest -v` to run all tests. Execute this command from the base project directory.
 
+For the local project virtual environment, use:
+
+```
+aifx_venv/bin/python -m pytest -q tests/unit/test_mqclient.py tests/unit/test_clientqt_cache.py
+aifx_venv/bin/python -m pytest -q tests/unit/test_oandamgr.py tests/unit/test_broker.py
+```
+
 3rd party testing tools have also been integrated into this project:
 
 ## flake8
@@ -115,6 +122,7 @@ ignore_missing_imports = true
   - `test_get_recent_candles_fetches_oanda_when_cache_is_empty()`
   - `test_get_recent_candles_converts_oanda_payload_to_reply_format()`
   - `test_get_recent_candles_returns_empty_list_when_no_data()`
+  - `test_publish_oanda_status_schedules_mq_publish()`
   - `test_start_feed_creates_feed_and_background_tasks()`
   - `test_start_feed_is_idempotent_for_existing_feed()`
   - `test_shutdown_returns_ack_and_schedules_quit()`
@@ -149,6 +157,35 @@ ignore_missing_imports = true
   - `test_to_dict_does_not_include_candle_key()`
   - `test_from_db_round_trips_from_to_dict()`
   - `test_from_oanda_builds_candle()`
+
+---
+
+## ClientDb Tests
+
+- Module: [/aifx/db/ClientDb](/aifx/db/ClientDb.py)
+- Test file: [/tests/unit/test_clientdb.py](/tests/unit/test_clientdb.py)
+- Test functions:
+  - `test_clientdb_get_recent_candles_returns_empty_list_when_empty()`
+  - `test_clientdb_upsert_candles_accepts_candle_objects()`
+  - `test_clientdb_upsert_candles_accepts_dict_records()`
+  - `test_clientdb_get_recent_candles_filters_limits_and_returns_oldest_first()`
+  - `test_clientdb_upsert_candles_updates_existing_row()`
+  - `test_clientdb_upsert_instruments_accepts_instrument_objects()`
+  - `test_clientdb_upsert_instruments_accepts_dict_records()`
+
+---
+
+## ClientQt Cache Tests
+
+- Module: [/aifx/client/ClientQt](/aifx/client/ClientQt.py)
+- Test file: [/tests/unit/test_clientqt_cache.py](/tests/unit/test_clientqt_cache.py)
+- Test functions:
+  - `test_on_instrument_changed_renders_from_client_cache()`
+  - `test_on_instrument_changed_requests_broker_when_client_cache_is_empty()`
+  - `test_on_recent_candles_upserts_and_renders_from_client_cache()`
+  - `test_on_candle_received_upserts_and_renders_from_client_cache()`
+  - `test_start_mq_subscribes_to_oanda_latency_topic()`
+  - `test_on_oanda_latency_received_updates_label()`
 
 ---
 
@@ -194,6 +231,7 @@ ignore_missing_imports = true
   - `test_mqclient_initializes_sockets_and_addresses()`
   - `test_mqclient_builds_topics()`
   - `test_mqclient_connected_uses_recent_heartbeat()`
+  - `test_mqclient_heartbeat_reply_emits_broker_status_with_latency()`
   - `test_mqclient_register_subscribe_and_unsubscribe()`
   - `test_mqclient_send_serializes_message()`
   - `test_mqclient_send_returns_false_when_socket_would_block()`

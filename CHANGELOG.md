@@ -9,12 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [Release 0.15.25] - 2026-05-17 11:10
+## [Release 0.15.26] - 2026-05-18 15:00
 
 
+### Added
+
+- **In Memory Sqllite Cliend Database**
+  - `ClientQt.py` now creates an in-memory `ClientDb`.
+  - Instrument selection now checks `ClientDb` first, then asks the broker only on cache miss.
+  - Recent-candle replies are upserted into `ClientDb`, then rendered from the cache.
+  - Live candles are upserted into `ClientDb`, then the table/Plotly view renders from the cache.
+- Added test_clientqt_cache.py (line 1).
+- Updated testing.md (line 170).
+
+### Removed
+- Removed the old ad hoc _candles deque state and the stale full Plotly HTML rebuild path.
+
+### Fixed
+- Shutdown now closes the client DB manager.
 ---
 
-## [Release 0.15.24] - 2026-05-17 09:49
+## [Release 0.15.25] - 2026-05-17 11:10
+
+### Fixed
+- Dark theme
 
 ---
 
