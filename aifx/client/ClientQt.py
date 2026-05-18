@@ -15,7 +15,7 @@ from PySide6.QtCore import QFile, Qt, QTimer
 from PySide6.QtGui import QColor, QPalette
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWebEngineWidgets import QWebEngineView
-from PySide6.QtWidgets import QApplication, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QApplication, QVBoxLayout, QWidget, QHeaderView
 
 from aifx.constants.DDb import DColInstrument as C_INST
 from aifx.constants.DDb import DDbF as DBF
@@ -35,6 +35,7 @@ from aifx.zmq.MQClient import MQClient
 
 # Number of candles to cache for Plotly
 RECENT_CANDLES_COLUMN_PADDING = 50
+RECENT_CANDLES_ROWS = 12
 
 
 def apply_dark_theme(app: QApplication) -> None:
@@ -171,6 +172,23 @@ class ClientQt(QWidget):
         self.ui.lbl_current_pair.setText(name)
         self.log.debug(f"Feed Started: {name}")
 
+    def load_ui(self):
+        loader = QUiLoader()
+        path = Path(__file__).resolve().parent / "form.ui"
+
+        ui_file = QFile(path)
+        if not ui_file.open(QFile.ReadOnly):
+            raise RuntimeError(f"Could not open UI file: {path}")
+
+        self.ui = loader.load(ui_file)
+        ui_file.close()
+
+        if self.ui is None:
+            raise RuntimeError(f"Could not load UI file: {path}")
+
+        self.ui.setWindowTitle(QTL.AIFX)
+        self.ui.lbl_version.setText(f"v{DEF.VERSION}")
+
     def on_candle_received(self, topic: str, candle: dict) -> None:
         if topic != self._active_topic:
             self.log.warning(f"Received off-topic candle: {topic}")
@@ -241,7 +259,7 @@ class ClientQt(QWidget):
         if not candles:
             return
 
-        recent = list(reversed(candles[-DEF.RECENT_CANDLE_MAX :]))
+        recent = list(reversed(candles[-RECENT_CANDLES_ROWS:]))
         self.recent_candles_model.load_data(recent)
         self.resize_recent_candles_columns()
 
@@ -348,7 +366,12 @@ class ClientQt(QWidget):
         self.ui.tbl_recent_candles.setModel(self.recent_candles_model)
 
         self.ui.tbl_recent_candles.verticalHeader().setVisible(False)
+
+        # header = self.ui.tbl_recent_candles.horizontalHeader()
+        # header.setStretchLastSection(True)
+
         self.resize_recent_candles_columns()
+        self.set_recent_candles_visible_rows(RECENT_CANDLES_ROWS)
 
     def resize_recent_candles_columns(self) -> None:
         table = self.ui.tbl_recent_candles
@@ -358,22 +381,14 @@ class ClientQt(QWidget):
             width = table.columnWidth(column)
             table.setColumnWidth(column, width + RECENT_CANDLES_COLUMN_PADDING)
 
-    def load_ui(self):
-        loader = QUiLoader()
-        path = Path(__file__).resolve().parent / "form.ui"
+    def set_recent_candles_visible_rows(self, rows: int) -> None:
+        table = self.ui.tbl_recent_candles
 
-        ui_file = QFile(path)
-        if not ui_file.open(QFile.ReadOnly):
-            raise RuntimeError(f"Could not open UI file: {path}")
+        header_height = table.horizontalHeader().height()
+        row_height = table.verticalHeader().defaultSectionSize()
+        frame = table.frameWidth() * 2
 
-        self.ui = loader.load(ui_file)
-        ui_file.close()
-
-        if self.ui is None:
-            raise RuntimeError(f"Could not load UI file: {path}")
-
-        self.ui.setWindowTitle(QTL.AIFX)
-        self.ui.lbl_version.setText(f"v{DEF.VERSION}")
+        table.setFixedHeight(header_height + rows * row_height + frame)
 
     def shutdown(self):
         if getattr(self, "_shutting_down", False):
