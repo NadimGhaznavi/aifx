@@ -127,10 +127,10 @@
         </font>
        </property>
        <property name="text">
-        <string>Broker:</string>
+        <string>Broker</string>
        </property>
        <property name="alignment">
-        <set>Qt::AlignBottom|Qt::AlignRight|Qt::AlignTrailing</set>
+        <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
        </property>
       </widget>
      </item>
@@ -165,10 +165,10 @@
         </font>
        </property>
        <property name="text">
-        <string>OANDA:</string>
+        <string>Oanda</string>
        </property>
        <property name="alignment">
-        <set>Qt::AlignBottom|Qt::AlignRight|Qt::AlignTrailing</set>
+        <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
        </property>
       </widget>
      </item>
