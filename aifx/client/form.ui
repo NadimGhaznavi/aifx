@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1452</width>
-    <height>737</height>
+    <height>774</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,13 +19,13 @@
   <property name="autoFillBackground">
    <bool>true</bool>
   </property>
-  <widget class="QWidget" name="layoutWidget">
+  <widget class="QWidget" name="">
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>16</y>
+     <y>17</y>
      <width>1421</width>
-     <height>661</height>
+     <height>701</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -110,23 +110,50 @@
      </layout>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="hl_recent_candles">
+     <layout class="QHBoxLayout" name="hl_recents_data" stretch="1,0">
       <item>
-       <widget class="QTableView" name="tbl_recent_candles">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-          <horstretch>1</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
+       <layout class="QHBoxLayout" name="hl_recent_candles">
+        <item>
+         <widget class="QTableView" name="tbl_recent_candles">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>1</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="font">
+           <font>
+            <family>DejaVu Sans Mono</family>
+           </font>
+          </property>
+          <property name="alternatingRowColors">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QSplitter" name="spl_latency">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
         </property>
-        <property name="font">
-         <font>
-          <family>DejaVu Sans Mono</family>
-         </font>
-        </property>
-        <property name="alternatingRowColors">
-         <bool>true</bool>
-        </property>
+        <widget class="QLabel" name="lbl_latency_to_oanda">
+         <property name="text">
+          <string>Latency to Oanda:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+         </property>
+        </widget>
+        <widget class="QLabel" name="lbl_latency_to_oanda_value">
+         <property name="text">
+          <string>&lt;latency&gt;</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+         </property>
+        </widget>
        </widget>
       </item>
      </layout>

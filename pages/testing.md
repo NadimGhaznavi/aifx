@@ -167,6 +167,18 @@ ignore_missing_imports = true
 
 ---
 
+## ClientQt Cache Tests
+
+- Module: [/aifx/client/ClientQt](/aifx/client/ClientQt.py)
+- Test file: [/tests/unit/test_clientqt_cache.py](/tests/unit/test_clientqt_cache.py)
+- Test functions:
+  - `test_on_instrument_changed_renders_from_client_cache()`
+  - `test_on_instrument_changed_requests_broker_when_client_cache_is_empty()`
+  - `test_on_recent_candles_upserts_and_renders_from_client_cache()`
+  - `test_on_candle_received_upserts_and_renders_from_client_cache()`
+
+---
+
 ## Instrument Tests
 
 - Module: [/aifx/forex/Instrument](/aifx/forex/Instrument.py)

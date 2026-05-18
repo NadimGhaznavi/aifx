@@ -17,24 +17,24 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QComboBox, QHBoxLayout, QHeaderView,
     QLabel, QPushButton, QSizePolicy, QSpacerItem,
-    QTableView, QVBoxLayout, QWidget)
+    QSplitter, QTableView, QVBoxLayout, QWidget)
 
 class Ui_Widget(object):
     def setupUi(self, Widget):
         if not Widget.objectName():
             Widget.setObjectName(u"Widget")
-        Widget.resize(1452, 737)
+        Widget.resize(1452, 774)
         Widget.setWindowOpacity(1.000000000000000)
         Widget.setAutoFillBackground(True)
-        self.layoutWidget = QWidget(Widget)
-        self.layoutWidget.setObjectName(u"layoutWidget")
-        self.layoutWidget.setGeometry(QRect(10, 16, 1421, 661))
-        self.verticalLayout = QVBoxLayout(self.layoutWidget)
+        self.widget = QWidget(Widget)
+        self.widget.setObjectName(u"widget")
+        self.widget.setGeometry(QRect(10, 17, 1421, 701))
+        self.verticalLayout = QVBoxLayout(self.widget)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.hl_title = QHBoxLayout()
         self.hl_title.setObjectName(u"hl_title")
-        self.lbl_aifx = QLabel(self.layoutWidget)
+        self.lbl_aifx = QLabel(self.widget)
         self.lbl_aifx.setObjectName(u"lbl_aifx")
         sizePolicy = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
         sizePolicy.setHorizontalStretch(0)
@@ -49,7 +49,7 @@ class Ui_Widget(object):
 
         self.hl_title.addItem(self.hs_title)
 
-        self.lbl_version = QLabel(self.layoutWidget)
+        self.lbl_version = QLabel(self.widget)
         self.lbl_version.setObjectName(u"lbl_version")
         sizePolicy.setHeightForWidth(self.lbl_version.sizePolicy().hasHeightForWidth())
         self.lbl_version.setSizePolicy(sizePolicy)
@@ -65,7 +65,7 @@ class Ui_Widget(object):
 
         self.vl_current_pair = QVBoxLayout()
         self.vl_current_pair.setObjectName(u"vl_current_pair")
-        self.lbl_current_pair = QLabel(self.layoutWidget)
+        self.lbl_current_pair = QLabel(self.widget)
         self.lbl_current_pair.setObjectName(u"lbl_current_pair")
         font = QFont()
         font.setPointSize(16)
@@ -74,7 +74,7 @@ class Ui_Widget(object):
 
         self.vl_current_pair.addWidget(self.lbl_current_pair)
 
-        self.wgt_plot = QWidget(self.layoutWidget)
+        self.wgt_plot = QWidget(self.widget)
         self.wgt_plot.setObjectName(u"wgt_plot")
 
         self.vl_current_pair.addWidget(self.wgt_plot)
@@ -83,9 +83,11 @@ class Ui_Widget(object):
 
         self.verticalLayout.addLayout(self.vl_current_pair)
 
+        self.horizontalLayout = QHBoxLayout()
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.hl_recent_candles = QHBoxLayout()
         self.hl_recent_candles.setObjectName(u"hl_recent_candles")
-        self.tbl_recent_candles = QTableView(self.layoutWidget)
+        self.tbl_recent_candles = QTableView(self.widget)
         self.tbl_recent_candles.setObjectName(u"tbl_recent_candles")
         sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         sizePolicy1.setHorizontalStretch(1)
@@ -100,11 +102,29 @@ class Ui_Widget(object):
         self.hl_recent_candles.addWidget(self.tbl_recent_candles)
 
 
-        self.verticalLayout.addLayout(self.hl_recent_candles)
+        self.horizontalLayout.addLayout(self.hl_recent_candles)
+
+        self.splitter = QSplitter(self.widget)
+        self.splitter.setObjectName(u"splitter")
+        self.splitter.setOrientation(Qt.Horizontal)
+        self.lbl_latency_to_oanda = QLabel(self.splitter)
+        self.lbl_latency_to_oanda.setObjectName(u"lbl_latency_to_oanda")
+        self.lbl_latency_to_oanda.setAlignment(Qt.AlignBottom|Qt.AlignLeading|Qt.AlignLeft)
+        self.splitter.addWidget(self.lbl_latency_to_oanda)
+        self.lbl_latency_to_oanda_value = QLabel(self.splitter)
+        self.lbl_latency_to_oanda_value.setObjectName(u"lbl_latency_to_oanda_value")
+        self.lbl_latency_to_oanda_value.setAlignment(Qt.AlignBottom|Qt.AlignLeading|Qt.AlignLeft)
+        self.splitter.addWidget(self.lbl_latency_to_oanda_value)
+
+        self.horizontalLayout.addWidget(self.splitter)
+
+        self.horizontalLayout.setStretch(0, 1)
+
+        self.verticalLayout.addLayout(self.horizontalLayout)
 
         self.hl_instrument = QHBoxLayout()
         self.hl_instrument.setObjectName(u"hl_instrument")
-        self.lbl_instrument = QLabel(self.layoutWidget)
+        self.lbl_instrument = QLabel(self.widget)
         self.lbl_instrument.setObjectName(u"lbl_instrument")
         sizePolicy2 = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         sizePolicy2.setHorizontalStretch(0)
@@ -114,7 +134,7 @@ class Ui_Widget(object):
 
         self.hl_instrument.addWidget(self.lbl_instrument)
 
-        self.cb_instrument = QComboBox(self.layoutWidget)
+        self.cb_instrument = QComboBox(self.widget)
         self.cb_instrument.setObjectName(u"cb_instrument")
         sizePolicy3 = QSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
         sizePolicy3.setHorizontalStretch(0)
@@ -129,7 +149,7 @@ class Ui_Widget(object):
 
         self.hl_instrument.addItem(self.hs_instrument)
 
-        self.btn_load = QPushButton(self.layoutWidget)
+        self.btn_load = QPushButton(self.widget)
         self.btn_load.setObjectName(u"btn_load")
 
         self.hl_instrument.addWidget(self.btn_load)
@@ -140,7 +160,7 @@ class Ui_Widget(object):
 
         self.hl_footer = QHBoxLayout()
         self.hl_footer.setObjectName(u"hl_footer")
-        self.lbl_connection = QLabel(self.layoutWidget)
+        self.lbl_connection = QLabel(self.widget)
         self.lbl_connection.setObjectName(u"lbl_connection")
         sizePolicy4 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         sizePolicy4.setHorizontalStretch(0)
@@ -154,7 +174,7 @@ class Ui_Widget(object):
 
         self.hl_footer.addItem(self.hs_footer)
 
-        self.btn_exit = QPushButton(self.layoutWidget)
+        self.btn_exit = QPushButton(self.widget)
         self.btn_exit.setObjectName(u"btn_exit")
         sizePolicy.setHeightForWidth(self.btn_exit.sizePolicy().hasHeightForWidth())
         self.btn_exit.setSizePolicy(sizePolicy)
@@ -176,6 +196,8 @@ class Ui_Widget(object):
         self.lbl_aifx.setText(QCoreApplication.translate("Widget", u"<html><head/><body><p><span style=\" font-size:24pt; font-weight:700; color:#669f1e;\">AI FX</span></p></body></html>", None))
         self.lbl_version.setText(QCoreApplication.translate("Widget", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700; color:#669f1e;\">&lt;version&gt;</span></p></body></html>", None))
         self.lbl_current_pair.setText(QCoreApplication.translate("Widget", u"N/A", None))
+        self.lbl_latency_to_oanda.setText(QCoreApplication.translate("Widget", u"Latency to Oanda:", None))
+        self.lbl_latency_to_oanda_value.setText(QCoreApplication.translate("Widget", u"<latency>", None))
         self.lbl_instrument.setText(QCoreApplication.translate("Widget", u"Instrument:", None))
         self.btn_load.setText(QCoreApplication.translate("Widget", u"Load", None))
         self.lbl_connection.setText(QCoreApplication.translate("Widget", u"<html><head/><body><p><span style=\" font-weight:700; color:#ff7800;\">Uninitialized</span></p></body></html>", None))
