@@ -24,11 +24,13 @@ from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DMQ import DMQ as MQ
 from aifx.constants.DNetwork import DNetwork as NET
 from aifx.constants.DQt import DQtL as QTL
+
 from aifx.db.ClientDb import ClientDb
 from aifx.db.DbMgr import DbMgr
 from aifx.forex.Candle import Candle
 from aifx.forex.RecentCandlesModel import RecentCandlesModel
 from aifx.utils.AiFxLog import AiFxLog
+from aifx.utils.Utils import format_latency_ms
 from aifx.zmq.MQClient import MQClient
 
 # Number of candles to cache for Plotly
@@ -143,7 +145,7 @@ class ClientQt(QWidget):
             topic_prefix=MQ.TOPIC_PREFIX,
             sub_methods={},
         )
-        self.mq.connection_changed.connect(self.set_connection_status)
+        self.mq.broker_status_changed.connect(self.set_connection_status)
         self.mq.instruments_received.connect(self.update_instruments)
         self.mq.feed_started.connect(self.feed_started)
         self.mq.recent_candles.connect(self.on_recent_candles)
@@ -252,13 +254,16 @@ class ClientQt(QWidget):
         )
         self.render_candles(topic=topic, candles=candles)
 
-    def set_connection_status(self, connected: bool):
+    def set_connection_status(self, connected: bool, latency_ms: float | None = None):
 
         if connected:
             self.ui.lbl_broker_status.setStyleSheet(
                 "color: #009900; font-weight: bold;"
             )
-            self.ui.lbl_broker_status.setText(QTL.CONNECTED)
+            latency = format_latency_ms(latency_ms)
+            if latency:
+                status = f"{latency}"
+            self.ui.lbl_broker_status.setText(status)
 
             if not self._was_connected:
                 self.mq.get_instruments()

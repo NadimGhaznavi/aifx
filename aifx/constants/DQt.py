@@ -17,10 +17,10 @@ class DQtF:
 class DQtL:
     AIFX: Final[str] = "AI FX"
     AIFX_STARTUP: Final[str] = "AiFx starting up..."
-    CONNECTED: Final[str] = "Connected"
     DISCONNECTED: Final[str] = "Disonnected"
     ENABLING_HEARTBEAT: Final[str] = "Enabling heartbeat..."
     HEARTBEAT_REPLY_RECEIVED: Final[str] = "Heartbeat reply received"
+    LATENCY: Final[str] = "Latency"
     MQ_CLIENT_STARTED: Final[str] = "MQ Client started..."
     POLLING_HEARTBEAT_REPLY: Final[str] = "Polling heartbeat reply..."
     SENDING_HEARTBEAT: Final[str] = "Sending heartbeat..."

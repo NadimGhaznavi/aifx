@@ -131,11 +131,35 @@ def test_mqclient_builds_topics(fake_client) -> None:
 def test_mqclient_connected_uses_recent_heartbeat(fake_client) -> None:
     client, _ctx = fake_client
 
-    client._last_heartbeat = time.time()
+    client._last_heartbeat = time.monotonic()
     assert client.connected() is True
 
-    client._last_heartbeat = time.time() - (3 * int(MQ.HEARTBEAT_INTERVAL))
+    client._last_heartbeat = time.monotonic() - (3 * int(MQ.HEARTBEAT_INTERVAL))
     assert client.connected() is False
+
+
+def test_mqclient_heartbeat_reply_emits_broker_status_with_latency(
+    fake_client,
+) -> None:
+    client, ctx = fake_client
+    received = []
+    client.broker_status_changed.connect(
+        lambda connected, latency_ms: received.append((connected, latency_ms))
+    )
+
+    client._heartbeat_tick()
+
+    reply = MQMsg(
+        sender=MODULE.BROKER,
+        target=MODULE.CLIENT_MQ,
+        method=METHOD.HEARTBEAT_REPLY,
+    )
+    ctx.sockets[1].recv_items.append(reply.to_json())
+    client._poll_heartbeat_reply()
+
+    assert received[-1][0] is True
+    assert received[-1][1] is not None
+    assert received[-1][1] >= 0.0
 
 
 def test_mqclient_register_subscribe_and_unsubscribe(fake_client) -> None:

@@ -13,6 +13,12 @@ Even at an early stage in the project, the complexity has risen to the point tha
 
 Most tests here are `pytest` tests. They can be executed directly by providing the path to test file or with `poetry run pytest -v` to run all tests. Execute this command from the base project directory.
 
+For the local project virtual environment, use:
+
+```
+aifx_venv/bin/python -m pytest -q tests/unit/test_mqclient.py tests/unit/test_clientqt_cache.py
+```
+
 3rd party testing tools have also been integrated into this project:
 
 ## flake8
@@ -221,6 +227,7 @@ ignore_missing_imports = true
   - `test_mqclient_initializes_sockets_and_addresses()`
   - `test_mqclient_builds_topics()`
   - `test_mqclient_connected_uses_recent_heartbeat()`
+  - `test_mqclient_heartbeat_reply_emits_broker_status_with_latency()`
   - `test_mqclient_register_subscribe_and_unsubscribe()`
   - `test_mqclient_send_serializes_message()`
   - `test_mqclient_send_returns_false_when_socket_would_block()`
