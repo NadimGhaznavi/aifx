@@ -53,28 +53,33 @@ class DbMgr:
 
     def add_latency(self, elem: str, latency: float) -> int:
         now = datetime.now(timezone.utc)
+        epoch_ms = int(now.timestamp() * 1000)
+        tick_epoch_ms = epoch_ms - (epoch_ms % DEF.TICK_LENGTH_MS)
+        tick = datetime.fromtimestamp(tick_epoch_ms / 1000, timezone.utc)
+
         return self.upsert(
             table=TABLE.LATENCY,
             records=[
                 {
                     "elem": elem,
                     "latency_ms": latency,
-                    "y": now.year,
-                    "mo": now.month,
-                    "d": now.day,
-                    "h": now.hour,
-                    "mi": now.minute,
-                    "s": now.second,
+                    "y": tick.year,
+                    "mo": tick.month,
+                    "d": tick.day,
+                    "h": tick.hour,
+                    "mi": tick.minute,
+                    "s": tick.second,
+                    "ms": tick.microsecond // 1000,
                 }
             ],
-            key_fields=["elem"],
+            key_fields=["elem", "y", "mo", "d", "h", "mi", "s", "ms"],
         )
 
     def _add_ts_column(self, table_name):
         """
         Add a computed (generated) ``ts`` column to a table, if missing.
 
-        ``ts`` is stored as a Unix timestamp computed from the existing
+        ``ts`` is stored as a Unix timestamp in milliseconds computed from the existing
         timestamp fields. An index is also created on ``ts``.
 
         This method silently ignores ``ALTER TABLE`` errors if the column
@@ -89,12 +94,12 @@ class DbMgr:
                 ALTER TABLE {table_name}
                 ADD COLUMN ts INTEGER
                     GENERATED ALWAYS AS (
-                        strftime('%s',
+                        CAST(strftime('%s',
                             printf('%04d-%02d-%02d %02d:%02d:%02d',
                                 y, mo, d,
                                 h, mi, s
                             )
-                        )
+                        ) AS INTEGER) * 1000 + ms
                     ) VIRTUAL;
 
                 CREATE INDEX IF NOT EXISTS idx_{table_name}_ts
@@ -145,17 +150,19 @@ class DbMgr:
         """Create the in memory schema"""
         self._cursor.executescript("""                                   
             CREATE TABLE IF NOT EXISTS latency (
-                elem TEXT PRIMARY KEY,
+                elem TEXT NOT NULL,
                 latency_ms REAL NOT NULL,
                 y INTEGER NOT NULL,
                 mo INTEGER NOT NULL,
                 d INTEGER NOT NULL,
                 h INTEGER NOT NULL,
                 mi INTEGER NOT NULL,
-                s INTEGER NOT NULL
+                s INTEGER NOT NULL,
+                ms INTEGER NOT NULL,
+                PRIMARY KEY (elem, y, mo, d, h, mi, s, ms)
             );
             CREATE INDEX IF NOT EXISTS idx_latency_time ON latency(
-                elem, y, mo, d, h, mi, s
+                elem, y, mo, d, h, mi, s, ms
             );
             CREATE TABLE IF NOT EXISTS instruments (
                 name TEXT PRIMARY KEY,

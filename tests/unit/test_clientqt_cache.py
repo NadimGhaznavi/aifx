@@ -173,7 +173,13 @@ def test_start_mq_subscribes_to_oanda_latency_topic() -> None:
 
 def test_on_oanda_latency_received_updates_label() -> None:
     client = SimpleNamespace(
-        ui=SimpleNamespace(lbl_oanda_status=SimpleNamespace(setText=MagicMock()))
+        db_mgr=SimpleNamespace(add_latency=MagicMock()),
+        ui=SimpleNamespace(
+            lbl_oanda_status=SimpleNamespace(
+                setStyleSheet=MagicMock(),
+                setText=MagicMock(),
+            )
+        ),
     )
 
     ClientQt.on_oanda_latency_received(
@@ -182,4 +188,5 @@ def test_on_oanda_latency_received_updates_label() -> None:
         data={MQF.OANDA_LATENCY: 12.3456},
     )
 
-    client.ui.lbl_oanda_status.setText.assert_called_once_with("12.35 ms")
+    client.db_mgr.add_latency.assert_called_once_with(elem="oanda", latency=12.3456)
+    client.ui.lbl_oanda_status.setText.assert_called_once_with("12 ms")

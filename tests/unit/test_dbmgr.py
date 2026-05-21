@@ -8,6 +8,7 @@
 #    License: GPL 3.0
 
 import pytest
+from datetime import datetime, timezone
 
 from aifx.db.DbMgr import DbMgr
 from aifx.constants.DDb import DTable as TABLE
@@ -95,7 +96,14 @@ def test_is_stale_rejects_table_without_stale_config(db_mgr) -> None:
         db_mgr.is_stale(TABLE.CANDLES)
 
 
-def test_add_latency_upserts_row(db_mgr) -> None:
+def test_add_latency_upserts_row(db_mgr, monkeypatch) -> None:
+    class FixedDateTime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return cls(2026, 5, 21, 12, 0, 1, 499000, tzinfo=timezone.utc)
+
+    monkeypatch.setattr("aifx.db.DbMgr.datetime", FixedDateTime)
+
     rows = db_mgr.add_latency("oanda", 12.3)
     updated_rows = db_mgr.add_latency("oanda", 45.6)
 
@@ -106,4 +114,6 @@ def test_add_latency_upserts_row(db_mgr) -> None:
     assert db_mgr.num_rows(TABLE.LATENCY) == 1
     assert row is not None
     assert row["latency_ms"] == 45.6
-    assert row["ts"] is not None
+    assert row["s"] == 1
+    assert row["ms"] == 250
+    assert row["ts"] == 1779364801250

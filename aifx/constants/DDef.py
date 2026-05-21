@@ -18,3 +18,4 @@ class DDef:
     VERSION: Final[str] = "0.15.26"
     MAX_PLOTLY_CANDLES: Final[int] = 40
     RECENT_CANDLE_MAX: Final[int] = 6
+    TICK_LENGTH_MS: Final[int] = 250
