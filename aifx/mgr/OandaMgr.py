@@ -14,6 +14,7 @@ from collections.abc import Callable
 import requests
 
 from aifx.constants.DAccount import DAccountF as ACCTF
+from aifx.constants.DDb import DDbF as DBF
 from aifx.constants.DCandle import DCandle as CANDLE
 from aifx.constants.DCandle import DCandleF as CANDLEF
 from aifx.constants.DDef import DDef as DEF
@@ -22,6 +23,8 @@ from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DMQ import DMQF as MQF
 from aifx.constants.DOanda import DOanda as OANDA
 from aifx.constants.DPrice import DPrice as PRICE
+
+from aifx.db.DbMgr import DbMgr
 from aifx.forex.Candle import Candle
 from aifx.forex.Instrument import Instrument
 from aifx.utils.AiFxLog import AiFxLog
@@ -55,8 +58,8 @@ class OandaMgr:
             headers=OANDA.SECURE_HEADER,
             timeout=OANDA.TIMEOUT,
         )
-        latency = (time.monotonic() - start) * 1000.0
-        self._publish_latency(latency)
+        latency_ms = (time.monotonic() - start) * 1000.0
+        self._publish_latency(latency_ms)
 
         return response.status_code, response.json()
 
@@ -73,8 +76,8 @@ class OandaMgr:
                 headers=OANDA.SECURE_HEADER,
                 timeout=OANDA.TIMEOUT,
             )
-            latency = (time.monotonic() - start) * 1000.0
-            self._publish_latency(latency)
+            latency_ms = (time.monotonic() - start) * 1000.0
+            self._publish_latency(latency_ms)
 
             if response.status_code != 200:
                 return None, None

@@ -21,3 +21,4 @@ class DOanda:
     RETRY: Final[int] = 2  # seconds
     SECURE_HEADER: Final[dict] = {"Authorization": f"Bearer {API_KEY}"}
     TIMEOUT: Final[int] = 5  # seconds
+

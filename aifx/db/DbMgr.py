@@ -51,6 +51,59 @@ class DbMgr:
     def conn(self):
         return self._conn
 
+    def add_latency(self, elem: str, latency: float) -> int:
+        now = datetime.now(timezone.utc)
+        return self.upsert(
+            table=TABLE.LATENCY,
+            records=[
+                {
+                    "elem": elem,
+                    "latency_ms": latency,
+                    "y": now.year,
+                    "mo": now.month,
+                    "d": now.day,
+                    "h": now.hour,
+                    "mi": now.minute,
+                    "s": now.second,
+                }
+            ],
+            key_fields=["elem"],
+        )
+
+    def _add_ts_column(self, table_name):
+        """
+        Add a computed (generated) ``ts`` column to a table, if missing.
+
+        ``ts`` is stored as a Unix timestamp computed from the existing
+        timestamp fields. An index is also created on ``ts``.
+
+        This method silently ignores ``ALTER TABLE`` errors if the column
+        already exists.
+
+        :param table_name: Name of the table to modify.
+        :type table_name: str
+        """
+        # Avoid raising an exception because the index already exists
+        try:
+            self._conn.executescript(f"""
+                ALTER TABLE {table_name}
+                ADD COLUMN ts INTEGER
+                    GENERATED ALWAYS AS (
+                        strftime('%s',
+                            printf('%04d-%02d-%02d %02d:%02d:%02d',
+                                y, mo, d,
+                                h, mi, s
+                            )
+                        )
+                    ) VIRTUAL;
+
+                CREATE INDEX IF NOT EXISTS idx_{table_name}_ts
+                    ON {table_name}(ts);
+                """)
+        except sqlite3.OperationalError as exc:
+            if "duplicate column name" not in str(exc).lower():
+                raise
+
     def _add_updated_ts_column(self, table_name):
         """
         Add a computed (generated) ``updated_ts`` column to a table, if missing.
@@ -83,14 +136,27 @@ class DbMgr:
                 """)
         except sqlite3.OperationalError as exc:
             if "duplicate column name" not in str(exc).lower():
-                raise
+                raise            
 
     def close(self):
         self._conn.close()
 
     def _init_cache(self):
         """Create the in memory schema"""
-        self._cursor.executescript("""
+        self._cursor.executescript("""                                   
+            CREATE TABLE IF NOT EXISTS latency (
+                elem TEXT PRIMARY KEY,
+                latency_ms REAL NOT NULL,
+                y INTEGER NOT NULL,
+                mo INTEGER NOT NULL,
+                d INTEGER NOT NULL,
+                h INTEGER NOT NULL,
+                mi INTEGER NOT NULL,
+                s INTEGER NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_latency_time ON latency(
+                elem, y, mo, d, h, mi, s
+            );
             CREATE TABLE IF NOT EXISTS instruments (
                 name TEXT PRIMARY KEY,
                 type TEXT NOT NULL,
@@ -133,6 +199,7 @@ class DbMgr:
             );
             """)
         self._add_updated_ts_column(TABLE.INSTRUMENTS)
+        self._add_ts_column(TABLE.LATENCY)
         self._conn.commit()
 
     def _init_db(self):

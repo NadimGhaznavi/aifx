@@ -242,6 +242,7 @@ class ClientQt(QWidget):
     def on_oanda_latency_received(self, topic: str, data: dict[str, float]) -> None:
         self.ui.lbl_oanda_status.setStyleSheet("color: #009900; font-weight: bold;")
         latency = format_latency_ms(data[MQF.OANDA_LATENCY])
+        self.db_mgr.add_latency(elem=DBF.OANDA, latency=latency)
         self.ui.lbl_oanda_status.setText(latency)
 
     def on_recent_candles(self, topic: str, candles: list[dict]) -> None:

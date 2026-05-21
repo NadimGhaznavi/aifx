@@ -53,8 +53,10 @@ class DDbF:
     CACHE: Final[str] = "cache"
     LIMIT: Final[str] = "limit"
     MEMORY: Final[str] = ":memory:"
+    OANDA: Final[str] = "oanda"
 
 
 class DTable:
     CANDLES: Final[str] = "candles"
     INSTRUMENTS: Final[str] = "instruments"
+    LATENCY: Final[str] = "latency"
