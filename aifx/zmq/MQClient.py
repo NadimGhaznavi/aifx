@@ -187,6 +187,14 @@ class MQClient(QObject):
         self.log.critical(f"Unhandled control reply: {reply.method}")
 
     def _heartbeat_tick(self) -> None:
+        now = time.monotonic()
+        if self._pending_heartbeat_at is not None:
+            pending_age = now - self._pending_heartbeat_at
+            if pending_age < (2 * int(MQ.HEARTBEAT_INTERVAL)):
+                self._update_connection_state()
+                return
+            self._pending_heartbeat_at = None
+
         msg = MQMsg(
             sender=self._identity,
             target=self._broker_hostname,
@@ -195,7 +203,7 @@ class MQClient(QObject):
         # self.log.debug(QTL.SENDING_HEARTBEAT)
         try:
             self._hb_socket.send(msg.to_json(), flags=zmq.NOBLOCK)
-            self._pending_heartbeat_at = time.monotonic()
+            self._pending_heartbeat_at = now
         except zmq.Again:
             pass
 

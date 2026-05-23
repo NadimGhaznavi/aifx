@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1125</width>
-    <height>1487</height>
+    <height>1128</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -56,19 +56,94 @@
       </widget>
      </item>
      <item>
-      <widget class="QWidget" name="wgt_plot" native="true"/>
+      <widget class="QWidget" name="wgt_candle_plot" native="true"/>
      </item>
     </layout>
    </item>
    <item>
-    <layout class="QGridLayout" name="gridLayout" columnstretch="0,0,0,1,0,0">
-     <item row="0" column="3">
-      <spacer name="hs_instrument">
+    <layout class="QHBoxLayout" name="hl_latency_plots">
+     <item>
+      <widget class="QWidget" name="wgt_plot_broker_latency" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>150</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QWidget" name="wgt_plot_oanda_latency" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>150</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="0,1,0">
+     <item>
+      <layout class="QHBoxLayout" name="hl_broker_status">
+       <item>
+        <widget class="QLabel" name="lbl_broker">
+         <property name="font">
+          <font>
+           <family>DejaVu Sans Mono</family>
+           <pointsize>16</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>Broker</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="lbl_broker_status">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="font">
+          <font>
+           <family>DejaVu Sans Mono</family>
+           <pointsize>16</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:700; color:#ff7800;&quot;&gt;Uninitialized&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignBottom|Qt::AlignRight|Qt::AlignTrailing</set>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_2">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Preferred</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>
@@ -78,30 +153,60 @@
        </property>
       </spacer>
      </item>
-     <item row="1" column="5">
-      <widget class="QLabel" name="lbl_oanda_status">
-       <property name="font">
-        <font>
-         <family>DejaVu Sans Mono</family>
-         <pointsize>16</pointsize>
-        </font>
+     <item>
+      <layout class="QHBoxLayout" name="hl_oanda_status">
+       <item>
+        <widget class="QLabel" name="lbl_oanda">
+         <property name="font">
+          <font>
+           <family>DejaVu Sans Mono</family>
+           <pointsize>16</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>Oanda</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="lbl_oanda_status">
+         <property name="font">
+          <font>
+           <family>DejaVu Sans Mono</family>
+           <pointsize>16</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:700; color:#ff7800;&quot;&gt;Uninitialized&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignBottom|Qt::AlignRight|Qt::AlignTrailing</set>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="hl_instrument" stretch="0,0,0,1">
+     <item>
+      <widget class="QLabel" name="lbl_instrument">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
        </property>
        <property name="text">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:700; color:#ff7800;&quot;&gt;Uninitialized&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignBottom|Qt::AlignRight|Qt::AlignTrailing</set>
+        <string>Instrument:</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="2">
-      <widget class="QPushButton" name="btn_load">
-       <property name="text">
-        <string>Load</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
+     <item>
       <widget class="QComboBox" name="cb_instrument">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
@@ -117,74 +222,34 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="4">
-      <widget class="QLabel" name="lbl_broker">
-       <property name="font">
-        <font>
-         <family>DejaVu Sans Mono</family>
-         <pointsize>16</pointsize>
-        </font>
-       </property>
+     <item>
+      <widget class="QPushButton" name="btn_load">
        <property name="text">
-        <string>Broker</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+        <string>Load</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="4">
-      <widget class="QLabel" name="lbl_oanda">
-       <property name="font">
-        <font>
-         <family>DejaVu Sans Mono</family>
-         <pointsize>16</pointsize>
-        </font>
+     <item>
+      <spacer name="hs_instrument">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
        </property>
-       <property name="text">
-        <string>Oanda</string>
+       <property name="sizeType">
+        <enum>QSizePolicy::Preferred</enum>
        </property>
-       <property name="alignment">
-        <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
        </property>
-      </widget>
+      </spacer>
      </item>
-     <item row="0" column="0">
-      <widget class="QLabel" name="lbl_instrument">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Instrument:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="5">
-      <widget class="QLabel" name="lbl_broker_status">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="font">
-        <font>
-         <family>DejaVu Sans Mono</family>
-         <pointsize>16</pointsize>
-        </font>
-       </property>
-       <property name="text">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:700; color:#ff7800;&quot;&gt;Uninitialized&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignBottom|Qt::AlignRight|Qt::AlignTrailing</set>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,1">
+     <item>
       <widget class="QPushButton" name="btn_exit">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
@@ -196,6 +261,19 @@
         <string>Exit</string>
        </property>
       </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
      </item>
     </layout>
    </item>
