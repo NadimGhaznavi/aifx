@@ -11,14 +11,15 @@ Even at an early stage in the project, the complexity has risen to the point tha
 
 # Test Execution
 
-Most tests here are `pytest` tests. They can be executed directly by providing the path to test file or with `poetry run pytest -v` to run all tests. Execute this command from the base project directory.
+Most tests here are `pytest` tests. They can be executed directly by providing the path to a test file or with `poetry run pytest -v` to run all tests. Execute this command from the base project directory.
 
 For the local project virtual environment, use:
 
 ```
-aifx_venv/bin/python -m pytest -q tests/unit/test_mqclient.py tests/unit/test_clientqt_cache.py
-aifx_venv/bin/python -m pytest -q tests/unit/test_oandamgr.py tests/unit/test_broker.py
+aifx_venv/bin/python -m pytest tests/unit
 ```
+
+Current unit coverage is 144 tests across `tests/unit`.
 
 3rd party testing tools have also been integrated into this project:
 
@@ -145,6 +146,7 @@ ignore_missing_imports = true
   - `test_upsert_instrument_updates_existing_row()`
   - `test_is_stale_returns_true_for_empty_instruments_table()`
   - `test_is_stale_rejects_table_without_stale_config()`
+  - `test_add_latency_upserts_row()`
 
 ---
 
@@ -185,7 +187,12 @@ ignore_missing_imports = true
   - `test_on_recent_candles_upserts_and_renders_from_client_cache()`
   - `test_on_candle_received_upserts_and_renders_from_client_cache()`
   - `test_start_mq_subscribes_to_oanda_latency_topic()`
-  - `test_on_oanda_latency_received_updates_label()`
+  - `test_on_oanda_latency_received_records_latency_and_updates_plot()`
+  - `test_set_connection_status_records_broker_latency()`
+  - `test_set_connection_status_requests_instruments_on_first_connect()`
+  - `test_set_connection_status_marks_disconnected_without_ui_labels()`
+  - `test_latency_plot_html_configures_title_legend_and_current_latency()`
+  - `test_update_latency_plot_uses_latest_points_in_time_order()`
 
 ---
 
@@ -232,6 +239,7 @@ ignore_missing_imports = true
   - `test_mqclient_builds_topics()`
   - `test_mqclient_connected_uses_recent_heartbeat()`
   - `test_mqclient_heartbeat_reply_emits_broker_status_with_latency()`
+  - `test_mqclient_does_not_send_overlapping_heartbeats()`
   - `test_mqclient_register_subscribe_and_unsubscribe()`
   - `test_mqclient_send_serializes_message()`
   - `test_mqclient_send_returns_false_when_socket_would_block()`
@@ -338,9 +346,13 @@ ignore_missing_imports = true
   - `test_recent_candles_model_loads_candles()`
   - `test_recent_candles_model_horizontal_headers()`
   - `test_recent_candles_model_vertical_headers_are_one_based()`
-  - `test_recent_candles_model_ignores_non_display_header_roles()`
+  - `test_recent_candles_model_aligns_headers_right()`
+  - `test_recent_candles_model_ignores_unhandled_header_roles()`
   - `test_recent_candles_model_formats_display_values()`
   - `test_recent_candles_model_aligns_display_values_right()`
+  - `test_recent_candles_model_colors_bullish_candles_green()`
+  - `test_recent_candles_model_colors_bearish_candles_red()`
+  - `test_recent_candles_model_leaves_neutral_candles_uncolored()`
   - `test_recent_candles_model_returns_none_for_invalid_index()`
   - `test_recent_candles_model_returns_none_for_unhandled_data_role()`
   - `test_recent_candles_model_clear_removes_rows()`

@@ -14,7 +14,6 @@ from collections.abc import Callable
 import requests
 
 from aifx.constants.DAccount import DAccountF as ACCTF
-from aifx.constants.DDb import DDbF as DBF
 from aifx.constants.DCandle import DCandle as CANDLE
 from aifx.constants.DCandle import DCandleF as CANDLEF
 from aifx.constants.DDef import DDef as DEF
@@ -23,8 +22,6 @@ from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DMQ import DMQF as MQF
 from aifx.constants.DOanda import DOanda as OANDA
 from aifx.constants.DPrice import DPrice as PRICE
-
-from aifx.db.DbMgr import DbMgr
 from aifx.forex.Candle import Candle
 from aifx.forex.Instrument import Instrument
 from aifx.utils.AiFxLog import AiFxLog
@@ -110,7 +107,6 @@ class OandaMgr:
             for ob in data[CANDLEF.CANDLES]
             if ob[CANDLE.COMPLETE]
         ]
-
 
     def _publish_latency(self, latency_ms: float) -> None:
         self.publish({MQF.OANDA_LATENCY: latency_ms})
