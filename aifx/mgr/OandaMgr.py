@@ -44,9 +44,6 @@ class OandaMgr:
         )
         self.session = requests.Session()
 
-    def _publish_latency(self, latency_ms: float) -> None:
-        self.publish({MQF.OANDA_LATENCY: latency_ms})
-
     def _fetch_candles(self, pair_name, count, granularity):
         url = f"{OANDA.OANDA_URL}/{INSF.INSTRUMENTS}/{pair_name}/{CANDLEF.CANDLES}"
         params = dict(count=count, granularity=granularity, price=PRICE.MBA)
@@ -113,6 +110,10 @@ class OandaMgr:
             for ob in data[CANDLEF.CANDLES]
             if ob[CANDLE.COMPLETE]
         ]
+
+
+    def _publish_latency(self, latency_ms: float) -> None:
+        self.publish({MQF.OANDA_LATENCY: latency_ms})
 
     def stream_prices(self, instruments: list[str]):
         while True:

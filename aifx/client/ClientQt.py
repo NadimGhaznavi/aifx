@@ -19,6 +19,7 @@ from PySide6.QtWidgets import QApplication, QVBoxLayout, QWidget
 
 from aifx.constants.DDb import DColInstrument as C_INST
 from aifx.constants.DDb import DDbF as DBF
+from aifx.constants.DDb import DTable as TABLE
 from aifx.constants.DDef import DDef as DEF
 from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DMQ import DMQ as MQ
@@ -36,6 +37,7 @@ from aifx.zmq.MQClient import MQClient
 # Number of candles to cache for Plotly
 RECENT_CANDLES_COLUMN_PADDING = 50
 RECENT_CANDLES_ROWS = 12
+LATENCY_PLOT_POINTS = 200
 
 
 def apply_dark_theme(app: QApplication) -> None:
@@ -133,7 +135,8 @@ class ClientQt(QWidget):
         self.load_ui()
         self.setup_recent_candles_table()
         # Prepare the plotting widget
-        self.setup_plot()
+        self.setup_candle_plot()
+        self.setup_latency_plots()
         self.log.info(QTL.UI_LOADED)
 
         # Prepare the MQ client
@@ -144,7 +147,7 @@ class ClientQt(QWidget):
             broker_pub_port=broker_pub_port,
             identity=identity,
             topic_prefix=MQ.TOPIC_PREFIX,
-            sub_methods={},
+            sub_methods={MQF.OANDA_LATENCY: self.on_oanda_latency_received},
         )
         self.mq.broker_status_changed.connect(self.set_connection_status)
         self.mq.instruments_received.connect(self.update_instruments)
@@ -164,7 +167,7 @@ class ClientQt(QWidget):
 
     def clear_data(self) -> None:
         js = "updateCandles([]);"
-        self.web_view.page().runJavaScript(js)
+        self.candle_web_view.page().runJavaScript(js)
 
     def feed_started(self, feed_data):
         name = feed_data[C_INST.NAME]
@@ -244,6 +247,7 @@ class ClientQt(QWidget):
         latency_ms = data[MQF.OANDA_LATENCY]
         self.db_mgr.add_latency(elem=DBF.OANDA, latency=latency_ms)
         self.ui.lbl_oanda_status.setText(format_latency_ms(latency_ms))
+        self.update_latency_plot(elem=DBF.OANDA, web_view=self.oanda_latency_web_view)
 
     def on_recent_candles(self, topic: str, candles: list[dict]) -> None:
         if topic != self._active_topic:
@@ -272,7 +276,7 @@ class ClientQt(QWidget):
         self.recent_candles_model.load_data(recent)
         self.resize_recent_candles_columns()
 
-        self.update_plot(topic=topic)
+        self.update_candle_plot(topic=topic)
 
     def render_cached_candles(self, topic: str, instrument: str) -> None:
         candles = self.client_db.get_recent_candles(
@@ -287,9 +291,15 @@ class ClientQt(QWidget):
             self.ui.lbl_broker_status.setStyleSheet(
                 "color: #009900; font-weight: bold;"
             )
+            status = ""
             latency = format_latency_ms(latency_ms)
             if latency:
                 status = f"{latency}"
+                self.db_mgr.add_latency(elem=DBF.BROKER, latency=latency_ms)
+                self.update_latency_plot(
+                    elem=DBF.BROKER,
+                    web_view=self.broker_latency_web_view,
+                )
             self.ui.lbl_broker_status.setText(status)
 
             if not self._was_connected:
@@ -303,13 +313,8 @@ class ClientQt(QWidget):
 
         self._was_connected = connected
 
-    def setup_plot(self):
-        plot_layout = QVBoxLayout(self.ui.wgt_plot)
-        plot_layout.setContentsMargins(0, 0, 0, 0)
-
-        self.web_view = QWebEngineView(self.ui.wgt_plot)
-
-        plot_layout.addWidget(self.web_view)
+    def setup_candle_plot(self):
+        self.candle_web_view = self.setup_web_view(self.ui.wgt_candle_plot)
 
         html = """
         <html>
@@ -368,7 +373,80 @@ class ClientQt(QWidget):
         </html>
         """
 
-        self.web_view.setHtml(html)
+        self.candle_web_view.setHtml(html)
+
+    def setup_latency_plots(self):
+        self.broker_latency_web_view = self.setup_web_view(
+            self.ui.wgt_plot_broker_latency
+        )
+        self.oanda_latency_web_view = self.setup_web_view(
+            self.ui.wgt_plot_oanda_latency
+        )
+
+        self.broker_latency_web_view.setHtml(self.latency_plot_html("Broker Latency"))
+        self.oanda_latency_web_view.setHtml(self.latency_plot_html("OANDA Latency"))
+
+    def setup_web_view(self, container: QWidget) -> QWebEngineView:
+        plot_layout = QVBoxLayout(container)
+        plot_layout.setContentsMargins(0, 0, 0, 0)
+
+        web_view = QWebEngineView(container)
+        plot_layout.addWidget(web_view)
+        return web_view
+
+    def latency_plot_html(self, title: str) -> str:
+        return f"""
+        <html>
+        <head>
+        <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+        </head>
+        <body style="margin:0; background-color:#111;">
+        <div id="chart" style="width:100%; height:100vh;"></div>
+
+        <script>
+            const layout = {{
+                title: {{
+                    text: {json.dumps(title)},
+                    font: {{color: "#eeeeee", size: 13}}
+                }},
+                template: "plotly_dark",
+                paper_bgcolor: "#111111",
+                plot_bgcolor: "#111111",
+                margin: {{l: 45, r: 15, t: 30, b: 35}},
+                xaxis: {{
+                    gridcolor: "#333333",
+                    type: "date"
+                }},
+                yaxis: {{
+                    gridcolor: "#333333",
+                    title: "ms"
+                }}
+            }};
+
+            Plotly.newPlot("chart", [{{
+                type: "scatter",
+                mode: "lines",
+                x: [],
+                y: [],
+                name: "Latency"
+            }}], layout, {{responsive: true}});
+
+            function updateLatency(points) {{
+                const x = points.map(p => new Date(p.ts));
+                const y = points.map(p => p.latency_ms);
+
+                Plotly.react("chart", [{{
+                    type: "scatter",
+                    mode: "lines",
+                    x: x,
+                    y: y,
+                    name: "Latency"
+                }}], layout, {{responsive: true}});
+            }}
+        </script>
+        </body>
+        </html>
+        """
 
     def setup_recent_candles_table(self) -> None:
         self.recent_candles_model = RecentCandlesModel()
@@ -417,7 +495,7 @@ class ClientQt(QWidget):
         self.mq.subscribe(topic)
         self.log.info(QTL.MQ_CLIENT_STARTED)
 
-    def update_plot(self, topic: str) -> None:
+    def update_candle_plot(self, topic: str) -> None:
         if self._active_instrument is None:
             candles = []
         else:
@@ -440,7 +518,27 @@ class ClientQt(QWidget):
         ]
 
         js = f"updateCandles({json.dumps(payload)});"
-        self.web_view.page().runJavaScript(js)
+        self.candle_web_view.page().runJavaScript(js)
+
+    def update_latency_plot(self, elem: str, web_view: QWebEngineView) -> None:
+        rows = self.db_mgr.select_all(
+            table=TABLE.LATENCY,
+            where="elem = ?",
+            params=(elem,),
+            order_by="ts DESC",
+            limit=LATENCY_PLOT_POINTS,
+        )
+
+        payload = [
+            {
+                "ts": row["ts"],
+                "latency_ms": row["latency_ms"],
+            }
+            for row in reversed(rows)
+        ]
+
+        js = f"updateLatency({json.dumps(payload)});"
+        web_view.page().runJavaScript(js)
 
     def wire_signals(self):
         # Wire up an exit button

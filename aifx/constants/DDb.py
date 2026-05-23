@@ -50,6 +50,7 @@ class DColCandles:
 
 
 class DDbF:
+    BROKER: Final[str] = "broker"
     CACHE: Final[str] = "cache"
     LIMIT: Final[str] = "limit"
     MEMORY: Final[str] = ":memory:"
