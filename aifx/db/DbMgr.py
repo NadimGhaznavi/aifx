@@ -141,14 +141,14 @@ class DbMgr:
                 """)
         except sqlite3.OperationalError as exc:
             if "duplicate column name" not in str(exc).lower():
-                raise            
+                raise
 
     def close(self):
         self._conn.close()
 
     def _init_cache(self):
         """Create the in memory schema"""
-        self._cursor.executescript("""                                   
+        self._cursor.executescript("""
             CREATE TABLE IF NOT EXISTS latency (
                 elem TEXT NOT NULL,
                 latency_ms REAL NOT NULL,

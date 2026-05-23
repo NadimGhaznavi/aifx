@@ -175,17 +175,11 @@ def test_start_mq_subscribes_to_oanda_latency_topic() -> None:
     mq.subscribe.assert_called_once_with("aifx.oanda_latency")
 
 
-def test_on_oanda_latency_received_updates_label() -> None:
+def test_on_oanda_latency_received_records_latency_and_updates_plot() -> None:
     client = SimpleNamespace(
         db_mgr=SimpleNamespace(add_latency=MagicMock()),
         oanda_latency_web_view=MagicMock(),
         update_latency_plot=MagicMock(),
-        ui=SimpleNamespace(
-            lbl_oanda_status=SimpleNamespace(
-                setStyleSheet=MagicMock(),
-                setText=MagicMock(),
-            )
-        ),
     )
 
     ClientQt.on_oanda_latency_received(
@@ -199,7 +193,6 @@ def test_on_oanda_latency_received_updates_label() -> None:
         elem="oanda",
         web_view=client.oanda_latency_web_view,
     )
-    client.ui.lbl_oanda_status.setText.assert_called_once_with("12 ms")
 
 
 def test_set_connection_status_records_broker_latency() -> None:
@@ -210,12 +203,6 @@ def test_set_connection_status_records_broker_latency() -> None:
         db_mgr=SimpleNamespace(add_latency=MagicMock()),
         mq=mq,
         update_latency_plot=MagicMock(),
-        ui=SimpleNamespace(
-            lbl_broker_status=SimpleNamespace(
-                setStyleSheet=MagicMock(),
-                setText=MagicMock(),
-            )
-        ),
     )
 
     ClientQt.set_connection_status(client, connected=True, latency_ms=1.25)
@@ -225,8 +212,55 @@ def test_set_connection_status_records_broker_latency() -> None:
         elem=DBF.BROKER,
         web_view=client.broker_latency_web_view,
     )
-    client.ui.lbl_broker_status.setText.assert_called_once_with("1.250 ms")
     mq.get_instruments.assert_not_called()
+
+
+def test_set_connection_status_requests_instruments_on_first_connect() -> None:
+    mq = SimpleNamespace(get_instruments=MagicMock())
+    client = SimpleNamespace(
+        _was_connected=False,
+        broker_latency_web_view=MagicMock(),
+        db_mgr=SimpleNamespace(add_latency=MagicMock()),
+        mq=mq,
+        update_latency_plot=MagicMock(),
+    )
+
+    ClientQt.set_connection_status(client, connected=True, latency_ms=None)
+
+    client.db_mgr.add_latency.assert_not_called()
+    client.update_latency_plot.assert_not_called()
+    mq.get_instruments.assert_called_once_with()
+    assert client._was_connected is True
+
+
+def test_set_connection_status_marks_disconnected_without_ui_labels() -> None:
+    mq = SimpleNamespace(get_instruments=MagicMock())
+    client = SimpleNamespace(
+        _was_connected=True,
+        db_mgr=SimpleNamespace(add_latency=MagicMock()),
+        mq=mq,
+        update_latency_plot=MagicMock(),
+    )
+
+    ClientQt.set_connection_status(client, connected=False)
+
+    client.db_mgr.add_latency.assert_not_called()
+    client.update_latency_plot.assert_not_called()
+    mq.get_instruments.assert_not_called()
+    assert client._was_connected is False
+
+
+def test_latency_plot_html_configures_title_legend_and_current_latency() -> None:
+    html = ClientQt.latency_plot_html(SimpleNamespace(), "Broker")
+
+    assert 'text: "Broker"' in html
+    assert "showlegend: true" in html
+    assert 'x: 0' in html
+    assert 'xanchor: "left"' in html
+    assert 'y: 1' in html
+    assert 'yanchor: "top"' in html
+    assert "const currentLatency = y.length ? y[y.length - 1] : null;" in html
+    assert "name: formatLatency(currentLatency)" in html
 
 
 def test_update_latency_plot_uses_latest_points_in_time_order() -> None:
