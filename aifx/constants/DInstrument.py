@@ -9,16 +9,18 @@
 
 from typing import Final
 
+from aifx.constants.DField import DField as FIELD
+
 
 class DInstrument:
 
     DISPLAY_NAME: Final[str] = "displayName"
-    NAME: Final[str] = "name"
+    NAME = FIELD.NAME
     INSTRUMENT: Final[str] = "Instrument"
     MARGIN_RATE: Final[str] = "marginRate"
-    TYPE: Final[str] = "type"
+    TYPE = FIELD.TYPE
     PIP_LOC: Final[str] = "pipLocation"
-    STARTED: Final[str] = "started"
+    STARTED = FIELD.STARTED
 
 
 class DInstrumentF:

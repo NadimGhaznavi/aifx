@@ -9,15 +9,22 @@
 
 from typing import Final
 
+from aifx.constants.DField import DField as FIELD
+from aifx.constants.DInstrument import DInstrumentF as INSF
+
+
 class DBrainF:
-    BRAIN: Final[str] ="brain"
-    BRAIN_MQ: Final[str] ="brain-mq"
-    BRAIN_MQ_EVENTS: Final[str] ="brain-mq-events"
+    BRAIN: Final[str] = "brain"
+    BRAIN_MQ: Final[str] = "brain-mq"
+    BRAIN_MQ_EVENTS: Final[str] = "brain-mq-events"
     BROKER_MQ: Final[str] = "broker-mq"
     BROKER_MQ_EVENTS: Final[str] = "broker-mq-events"
-    INITIALIZED: Final[str] = "initialized"
-    LOADING: Final[str] = "loading"
-    PAUSED: Final[str] = "paused"
-    RUNNING: Final[str] = "running"
-    STOPPED: Final[str] = "stoppped"
-    UNINITIALIZED: Final[str] = "uninitialized"
+    INITIALIZED = FIELD.INITIALIZED
+    INSTRUMENT = INSF.INSTRUMENT
+    LOADING = FIELD.LOADING
+    PAUSED = FIELD.PAUSED
+    RUNNING = FIELD.RUNNING
+    START_TS = FIELD.START_TS
+    STOP_TS = FIELD.STOP_TS
+    STOPPED = FIELD.STOPPED
+    UNINITIALIZED = FIELD.UNINITIALIZED

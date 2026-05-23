@@ -9,6 +9,9 @@
 
 from typing import Final
 
+from aifx.constants.DInstrument import DInstrumentF as INSF
+from aifx.constants.DField import DField as FIELD
+
 
 class DColInstrument:
     NAME: Final[str] = "name"
@@ -25,7 +28,7 @@ class DColInstrument:
 
 
 class DColCandles:
-    INSTRUMENT: Final[str] = "instrument"
+    INSTRUMENT = INSF.INSTRUMENT
     GRANULARITY: Final[str] = "granularity"
     Y: Final[str] = "y"
     MO: Final[str] = "mo"

@@ -95,7 +95,8 @@ class TheBrain:
         except Exception as e:
             self.log.warning(f"{name} task exception during shutdown: {e}")
 
-    def fetch_data(self, event: MQEvent):
+    def ensure_data(self, event: MQEvent):
+        
         self.log.info("Fetching data")
 
     async def handle_mq_event(self, event: MQEvent) -> None:
@@ -156,7 +157,7 @@ class TheBrain:
 
     def start_sim(self, event: MQEvent):
         self.log.info("Start simulation run...")
-        self.fetch_data(event)
+        self.ensure_data(event)
         self.start_nn_run(event)
         self.log.info("End simulation run...")
 

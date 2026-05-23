@@ -10,13 +10,14 @@
 from typing import Final
 
 from aifx.constants.DDb import DColCandles as COL
+from aifx.constants.DField import DField as FIELD
 from aifx.constants.DInstrument import DInstrument as INS
 
 
 class DCandle:
-    COMPLETE: Final[str] = "complete"
+    COMPLETE = FIELD.COMPLETE
     INSTRUMENT = INS.INSTRUMENT
-    TIME: Final[str] = "time"
+    TIME = FIELD.TIME
     MID: Final[str] = "mid"
     BID: Final[str] = "bid"
     ASK: Final[str] = "ask"
