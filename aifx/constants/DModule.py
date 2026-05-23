@@ -12,6 +12,8 @@ from typing import Final
 
 class DModule:
 
+    BRAIN: Final[str] = "TheBrain"
+    BRAIN_DB: Final[str] = "BrainDb"
     BROKER: Final[str] = "Broker"
     BROKER_DB: Final[str] = "BrokerDb"
     BASE_MQ: Final[str] = "BaseMQ"

@@ -12,4 +12,5 @@ from typing import Final
 
 class DFile:
 
+    BRAIN_LOG: Final[str] = "aifx_brain.log"
     BROKER_LOG: Final[str] = "aifx_broker.log"

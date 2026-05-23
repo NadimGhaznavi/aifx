@@ -253,7 +253,7 @@ def test_set_connection_status_marks_disconnected_without_ui_labels() -> None:
 def test_latency_plot_html_configures_title_legend_and_current_latency() -> None:
     html = ClientQt.latency_plot_html(SimpleNamespace(), "Broker")
 
-    assert 'text: "Broker"' in html
+    assert 'text: "<b>Broker</b>"' in html
     assert "showlegend: true" in html
     assert 'x: 0' in html
     assert 'xanchor: "left"' in html

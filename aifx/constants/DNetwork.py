@@ -15,6 +15,10 @@ class DNetwork:
     BROKER_PORT: Final[int] = 20101
     BROKER_HB_PORT: Final[int] = 20102
     BROKER_PUB_PORT: Final[int] = 20103
+    BRAIN_HOSTNAME: Final[str] = "localhost"
+    BRAIN_PORT: Final[int] = 20104
+    BRAIN_HB_PORT: Final[int] = 20105
+    BRAIN_PUB_PORT: Final[int] = 20106
 
 
 class DNetworkF:

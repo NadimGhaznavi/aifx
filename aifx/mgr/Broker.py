@@ -12,6 +12,7 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 
 from aifx.constants.DAiFx import DAiFx as AIFX
+from aifx.constants.DBrain import DBrainF as BRAINF
 from aifx.constants.DCandle import DCandle as CANDLE
 from aifx.constants.DCandle import DCandleF as CANDLEF
 from aifx.constants.DDb import DColCandles as C_CAND
@@ -28,6 +29,7 @@ from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DMQ import DMQ as MQ
 from aifx.constants.DMQ import DMQEvent
 from aifx.constants.DNetwork import DNetwork as NET
+
 from aifx.db.BrokerDb import BrokerDb
 from aifx.db.DbMgr import DbMgr
 from aifx.mgr.OandaMgr import OandaMgr
@@ -351,9 +353,11 @@ class Broker:
 
         self._started = True
         self._stopped = False
-        self._mq_task = asyncio.create_task(self.mq.start(), name="broker-mq")
+        self._mq_task = asyncio.create_task(
+            self.mq.start(), name=BRAINF.BROKER_MQ
+        )
         self._mq_events_task = asyncio.create_task(
-            self.bg_mq_events(), name="broker-mq-events"
+            self.bg_mq_events(), name=BRAINF.BROKER_MQ_EVENTS
         )
 
         try:

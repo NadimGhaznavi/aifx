@@ -26,3 +26,5 @@ class DMethod:
     SHUTDOWN_REPLY: Final[str] = f"{SHUTDOWN}_reply"
     START_FEED: Final[str] = "start_feed"
     START_FEED_REPLY: Final[str] = f"{START_FEED}_reply"
+    START_SIM: Final[str] = "start_sim"
+    START_SIM_REPLY: Final[str] = "start_sim_reply"

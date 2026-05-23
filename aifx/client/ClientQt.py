@@ -396,7 +396,7 @@ class ClientQt(QWidget):
         <script>
             const layout = {{
                 title: {{
-                    text: {json.dumps(title)},
+                    text: {json.dumps(f"<b>{title}</b>")},
                     font: {{color: "{PLOT_TEXT_COLOR}", size: 13}}
                 }},
                 template: "plotly_dark",

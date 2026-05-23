@@ -23,7 +23,7 @@ class BrokerDb:
 
     def __init__(self, db_mgr: DbMgr, log_level=DEF.DEFAULT_LOG_LEVEL, log_file=None):
         self.db_mgr = db_mgr
-        self.log = AiFxLog(client_id=MODULE.BROKER_DB)
+        self.log = AiFxLog(client_id=MODULE.BROKER_DB, log_file=log_file, log_level=log_level)
 
     def get_latest_candle(self, name: str) -> Candle | None:
         row = self.db_mgr.select_one(
