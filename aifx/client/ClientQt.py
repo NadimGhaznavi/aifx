@@ -38,6 +38,7 @@ from aifx.zmq.MQClient import MQClient
 RECENT_CANDLES_COLUMN_PADDING = 50
 RECENT_CANDLES_ROWS = 12
 LATENCY_PLOT_POINTS = 200
+PLOT_TEXT_COLOR = "#55dd55"
 
 
 def apply_dark_theme(app: QApplication) -> None:
@@ -329,13 +330,18 @@ class ClientQt(QWidget):
                 template: "plotly_dark",
                 paper_bgcolor: "#111111",
                 plot_bgcolor: "#111111",
+                font: {color: "__PLOT_TEXT_COLOR__"},
                 margin: {l: 40, r: 20, t: 20, b: 40},
                 xaxis: {
                     rangeslider: {visible: false},
-                    gridcolor: "#333333"
+                    gridcolor: "#333333",
+                    tickfont: {color: "__PLOT_TEXT_COLOR__"},
+                    titlefont: {color: "__PLOT_TEXT_COLOR__"}
                 },
                 yaxis: {
-                    gridcolor: "#333333"
+                    gridcolor: "#333333",
+                    tickfont: {color: "__PLOT_TEXT_COLOR__"},
+                    titlefont: {color: "__PLOT_TEXT_COLOR__"}
                 }
             };
 
@@ -371,7 +377,7 @@ class ClientQt(QWidget):
         </script>
         </body>
         </html>
-        """
+        """.replace("__PLOT_TEXT_COLOR__", PLOT_TEXT_COLOR)
 
         self.candle_web_view.setHtml(html)
 
@@ -407,19 +413,24 @@ class ClientQt(QWidget):
             const layout = {{
                 title: {{
                     text: {json.dumps(title)},
-                    font: {{color: "#eeeeee", size: 13}}
+                    font: {{color: "{PLOT_TEXT_COLOR}", size: 13}}
                 }},
                 template: "plotly_dark",
                 paper_bgcolor: "#111111",
                 plot_bgcolor: "#111111",
+                font: {{color: "{PLOT_TEXT_COLOR}"}},
                 margin: {{l: 45, r: 15, t: 30, b: 35}},
                 xaxis: {{
                     gridcolor: "#333333",
-                    type: "date"
+                    type: "date",
+                    tickfont: {{color: "{PLOT_TEXT_COLOR}"}},
+                    titlefont: {{color: "{PLOT_TEXT_COLOR}"}}
                 }},
                 yaxis: {{
                     gridcolor: "#333333",
-                    title: "ms"
+                    title: "ms",
+                    tickfont: {{color: "{PLOT_TEXT_COLOR}"}},
+                    titlefont: {{color: "{PLOT_TEXT_COLOR}"}}
                 }}
             }};
 
