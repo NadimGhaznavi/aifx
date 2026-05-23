@@ -389,8 +389,8 @@ class ClientQt(QWidget):
             self.ui.wgt_plot_oanda_latency
         )
 
-        self.broker_latency_web_view.setHtml(self.latency_plot_html("Broker Latency"))
-        self.oanda_latency_web_view.setHtml(self.latency_plot_html("OANDA Latency"))
+        self.broker_latency_web_view.setHtml(self.latency_plot_html("Broker"))
+        self.oanda_latency_web_view.setHtml(self.latency_plot_html("OANDA"))
 
     def setup_web_view(self, container: QWidget) -> QWebEngineView:
         plot_layout = QVBoxLayout(container)
@@ -419,6 +419,17 @@ class ClientQt(QWidget):
                 paper_bgcolor: "#111111",
                 plot_bgcolor: "#111111",
                 font: {{color: "{PLOT_TEXT_COLOR}"}},
+                showlegend: true,
+                legend: {{
+                    x: 0,
+                    xanchor: "left",
+                    y: 1,
+                    yanchor: "top",
+                    bgcolor: "rgba(17,17,17,0.75)",
+                    bordercolor: "#333333",
+                    borderwidth: 1,
+                    font: {{color: "{PLOT_TEXT_COLOR}", size: 11}}
+                }},
                 margin: {{l: 45, r: 15, t: 30, b: 35}},
                 xaxis: {{
                     gridcolor: "#333333",
@@ -442,16 +453,33 @@ class ClientQt(QWidget):
                 name: "Latency"
             }}], layout, {{responsive: true}});
 
+            function formatLatency(value) {{
+                if (value === undefined || value === null || Number.isNaN(value)) {{
+                    return "Latency: --";
+                }}
+
+                if (value < 10) {{
+                    return `Latency: ${{value.toFixed(3)}} ms`;
+                }}
+
+                if (value < 100) {{
+                    return `Latency: ${{value.toFixed(1)}} ms`;
+                }}
+
+                return `Latency: ${{Math.round(value)}} ms`;
+            }}
+
             function updateLatency(points) {{
                 const x = points.map(p => new Date(p.ts));
                 const y = points.map(p => p.latency_ms);
+                const currentLatency = y.length ? y[y.length - 1] : null;
 
                 Plotly.react("chart", [{{
                     type: "scatter",
                     mode: "lines",
                     x: x,
                     y: y,
-                    name: "Latency"
+                    name: formatLatency(currentLatency)
                 }}], layout, {{responsive: true}});
             }}
         </script>
