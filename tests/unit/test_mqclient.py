@@ -162,6 +162,15 @@ def test_mqclient_heartbeat_reply_emits_broker_status_with_latency(
     assert received[-1][1] >= 0.0
 
 
+def test_mqclient_does_not_send_overlapping_heartbeats(fake_client) -> None:
+    client, ctx = fake_client
+
+    client._heartbeat_tick()
+    client._heartbeat_tick()
+
+    assert len(ctx.sockets[1].sent) == 1
+
+
 def test_mqclient_register_subscribe_and_unsubscribe(fake_client) -> None:
     client, ctx = fake_client
 

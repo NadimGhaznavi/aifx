@@ -7,10 +7,14 @@
 #    Website: https://aifx.osoyalce.com
 #    License: GPL 3.0
 
+import json
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 from aifx.client.ClientQt import ClientQt
+from aifx.client.ClientQt import LATENCY_PLOT_POINTS
+from aifx.constants.DDb import DDbF as DBF
+from aifx.constants.DDb import DTable as TABLE
 from aifx.constants.DDef import DDef as DEF
 from aifx.constants.DMQ import DMQ as MQ
 from aifx.constants.DMQ import DMQF as MQF
@@ -173,7 +177,15 @@ def test_start_mq_subscribes_to_oanda_latency_topic() -> None:
 
 def test_on_oanda_latency_received_updates_label() -> None:
     client = SimpleNamespace(
-        ui=SimpleNamespace(lbl_oanda_status=SimpleNamespace(setText=MagicMock()))
+        db_mgr=SimpleNamespace(add_latency=MagicMock()),
+        oanda_latency_web_view=MagicMock(),
+        update_latency_plot=MagicMock(),
+        ui=SimpleNamespace(
+            lbl_oanda_status=SimpleNamespace(
+                setStyleSheet=MagicMock(),
+                setText=MagicMock(),
+            )
+        ),
     )
 
     ClientQt.on_oanda_latency_received(
@@ -182,4 +194,63 @@ def test_on_oanda_latency_received_updates_label() -> None:
         data={MQF.OANDA_LATENCY: 12.3456},
     )
 
-    client.ui.lbl_oanda_status.setText.assert_called_once_with("12.35 ms")
+    client.db_mgr.add_latency.assert_called_once_with(elem="oanda", latency=12.3456)
+    client.update_latency_plot.assert_called_once_with(
+        elem="oanda",
+        web_view=client.oanda_latency_web_view,
+    )
+    client.ui.lbl_oanda_status.setText.assert_called_once_with("12 ms")
+
+
+def test_set_connection_status_records_broker_latency() -> None:
+    mq = SimpleNamespace(get_instruments=MagicMock())
+    client = SimpleNamespace(
+        _was_connected=True,
+        broker_latency_web_view=MagicMock(),
+        db_mgr=SimpleNamespace(add_latency=MagicMock()),
+        mq=mq,
+        update_latency_plot=MagicMock(),
+        ui=SimpleNamespace(
+            lbl_broker_status=SimpleNamespace(
+                setStyleSheet=MagicMock(),
+                setText=MagicMock(),
+            )
+        ),
+    )
+
+    ClientQt.set_connection_status(client, connected=True, latency_ms=1.25)
+
+    client.db_mgr.add_latency.assert_called_once_with(elem=DBF.BROKER, latency=1.25)
+    client.update_latency_plot.assert_called_once_with(
+        elem=DBF.BROKER,
+        web_view=client.broker_latency_web_view,
+    )
+    client.ui.lbl_broker_status.setText.assert_called_once_with("1.250 ms")
+    mq.get_instruments.assert_not_called()
+
+
+def test_update_latency_plot_uses_latest_points_in_time_order() -> None:
+    rows = [
+        {"ts": ts, "latency_ms": float(ts)}
+        for ts in range(LATENCY_PLOT_POINTS + 5)
+    ]
+    selected_rows = list(reversed(rows[-LATENCY_PLOT_POINTS:]))
+    page = SimpleNamespace(runJavaScript=MagicMock())
+    web_view = SimpleNamespace(page=MagicMock(return_value=page))
+    db_mgr = SimpleNamespace(select_all=MagicMock(return_value=selected_rows))
+    client = SimpleNamespace(db_mgr=db_mgr)
+
+    ClientQt.update_latency_plot(client, elem=DBF.OANDA, web_view=web_view)
+
+    db_mgr.select_all.assert_called_once_with(
+        table=TABLE.LATENCY,
+        where="elem = ?",
+        params=(DBF.OANDA,),
+        order_by="ts DESC",
+        limit=LATENCY_PLOT_POINTS,
+    )
+    js = page.runJavaScript.call_args.args[0]
+    payload = json.loads(js.removeprefix("updateLatency(").removesuffix(");"))
+    assert payload[0]["ts"] == 5
+    assert payload[-1]["ts"] == LATENCY_PLOT_POINTS + 4
+    assert all(point["ts"] != 4 for point in payload)
