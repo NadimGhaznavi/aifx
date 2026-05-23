@@ -57,6 +57,7 @@ types-requests = "^2.33.0.20260513"
 
 [tool.poetry.scripts]
 aifxqt = "aifx.client.ClientQt:main"
+aifxbrain = "aifx.nn.TheBrain:main"
 aifxbroker = "aifx.mgr.Broker:main"
 
 [tool.pytest.ini_options]

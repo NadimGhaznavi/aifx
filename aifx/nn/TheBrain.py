@@ -30,20 +30,22 @@ class TheBrain:
 
     def __init__(
         self,
-        log_level=DEF.DEFAULT_LOG_LEVEL, 
+        log_level=DEF.DEFAULT_LOG_LEVEL,
         log_file=FILE.BRAIN_LOG,
         hostname=NET.BRAIN_HOSTNAME,
         port=NET.BRAIN_PORT,
         hb_port=NET.BRAIN_HB_PORT,
         identity=MODULE.BRAIN,
+        pub_port=NET.BRAIN_PUB_PORT,
     ) -> None:
-        
+
         self._log_level = log_level
         self._log_file = log_file
         self._hostname = hostname
         self._port = port
         self._hb_port = hb_port
         self._identity = identity
+        self._pub_port = pub_port
 
         # Log
         self.log = AiFxLog(client_id=identity, log_file=log_file, log_level=log_level)
@@ -55,14 +57,12 @@ class TheBrain:
         )
 
         # Server methods that are exposed via MQ
-        self._srv_methods = {
-            METHOD.START_SIM: self.start_sim
-        }
+        self._srv_methods = {METHOD.START_SIM: self.start_sim}
         self.mq: MQServer | None = None
 
         # Background MQ control channel listener
         self._mq_bg_task: asyncio.Task | None = None
-        
+
         # Track current state
         self._state = BRAINF.UNINITIALIZED
 
@@ -105,7 +105,6 @@ class TheBrain:
         client_id = event.routing_id.decode(AIFX.UTF_8)
         match event.event_type:
             case DMQEvent.START_SIM:
-                self.log.debug("Start simulation run...")
                 self.start_sim(event)
 
             case _:
@@ -114,7 +113,7 @@ class TheBrain:
     async def quit(self) -> None:
         if self._state == BRAINF.STOPPED:
             return
-    
+
         if self.mq is not None:
             await self.mq.quit()
 
@@ -124,24 +123,22 @@ class TheBrain:
         self.db_mgr.close()
         self.log.info("AI FX Brain shutdown complete")
 
-
     async def start(self) -> None:
         if self._state == BRAINF.RUNNING:
             return
-        
+
         self.mq = MQServer(
             log_level=self._log_level,
             hostname=self._hostname,
             port=self._port,
             hb_port=self._hb_port,
             identity=self._identity,
+            pub_port=self._pub_port,
             srv_methods=self._srv_methods,
             topic_prefix=MQ.TOPIC_PREFIX,
         )
 
-        self._mq_bg_task = asyncio.create_task(
-            self.mq.start(), name=BRAINF.BRAIN_MQ
-        )
+        self._mq_bg_task = asyncio.create_task(self.mq.start(), name=BRAINF.BRAIN_MQ)
         self._mq_events_task = asyncio.create_task(
             self.bg_mq_events(), name=BRAINF.BRAIN_MQ_EVENTS
         )
@@ -153,15 +150,15 @@ class TheBrain:
             raise
         finally:
             self._state = BRAINF.STOPPED
-        
-
 
     def start_nn_run(self, event: MQEvent):
         self.info("Start NN run")
-    
+
     def start_sim(self, event: MQEvent):
+        self.log.info("Start simulation run...")
         self.fetch_data(event)
         self.start_nn_run(event)
+        self.log.info("End simulation run...")
 
 
 def main():
