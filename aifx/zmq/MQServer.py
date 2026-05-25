@@ -43,7 +43,7 @@ class MQServer:
         hostname: str = NET.BROKER_HOSTNAME,
         port: int = NET.BROKER_PORT,
         hb_port: int = NET.BROKER_HB_PORT,
-        pub_port: int = NET.BROKER_PUB_PORT,
+        pub_port: int | None = None,
         identity: str = MODULE.SERVER_MQ,
         topic_prefix: str = MQ.TOPIC_PREFIX,
         srv_methods: Mapping[str, MsgHandler] | None = None,
@@ -79,14 +79,18 @@ class MQServer:
         # Addresses
         self._address = f"{NETF.TCP}{self._hostname}:{self._port}"
         self._hb_address = f"{NETF.TCP}{self._hostname}:{self._hb_port}"
-        self._pub_address = f"{NETF.TCP}{self._hostname}:{self._pub_port}"
+        if self._pub_port is None:
+            self._pub_address = None
+        else:
+            self._pub_address = f"{NETF.TCP}{self._hostname}:{self._pub_port}"
 
         # Sockets
         self._ctx = zmq.asyncio.Context()
         self._socket = self._ctx.socket(zmq.ROUTER)
         self._hb_socket = self._ctx.socket(zmq.ROUTER)
-        self._pub_socket = self._ctx.socket(zmq.PUB)
-        self._pub_socket.linger = 0
+        if self._pub_address is not None:
+            self._pub_socket = self._ctx.socket(zmq.PUB)
+            self._pub_socket.linger = 0
 
         # ----- Tasks and Stop Events -----
         # Monitor the ROUTER/DEALER control port
@@ -236,6 +240,8 @@ class MQServer:
         return (time.monotonic() - self._last_heartbeat) < int(OANDA.TIMEOUT)
 
     async def publish(self, topic: str, payload: dict) -> None:
+        if self._pub_socket is None:
+            raise ValueError("PUB socket has not been setup")
         topic_b = topic.encode(AIFX.UTF_8)
         data_b = json.dumps(payload, separators=(",", ":")).encode(AIFX.UTF_8)
         await self._pub_socket.send_multipart([topic_b, data_b])
@@ -297,15 +303,16 @@ class MQServer:
             "socket.close(linger=0)",
         )
 
-        MQUtils.ignore_zmq_teardown(
-            lambda: self._pub_socket.unbind(self._pub_address),
-            f"pub_socket.unbind({self._pub_address})",
-        )
+        if self._pub_address is not None:
+            MQUtils.ignore_zmq_teardown(
+                lambda: self._pub_socket.unbind(self._pub_address),
+                f"pub_socket.unbind({self._pub_address})",
+            )
 
-        MQUtils.ignore_zmq_teardown(
-            lambda: self._pub_socket.close(linger=0),
-            "pub_socket.close(linger=0)",
-        )
+            MQUtils.ignore_zmq_teardown(
+                lambda: self._pub_socket.close(linger=0),
+                "pub_socket.close(linger=0)",
+            )
 
     async def recv(self) -> MQMsg:
         message_data = None
@@ -344,7 +351,10 @@ class MQServer:
 
         self._socket.bind(self._address)
         self._hb_socket.bind(self._hb_address)
-        self._pub_socket.bind(self._pub_address)
+        if self._pub_address is None:
+            self._pub_socket = None
+        else:
+            self._pub_socket.bind(self._pub_address)
 
         self._started = True
         self._hb_task = asyncio.create_task(self.bg_hb_listen(), name=MQF.HEARTBEAT)
