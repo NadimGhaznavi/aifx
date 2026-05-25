@@ -10,6 +10,7 @@
 import asyncio
 import os
 from pathlib import Path
+from typing import Any
 
 from aifx.constants.DDb import DDbF as DBF
 from aifx.constants.DDef import DDef as DEF
@@ -35,6 +36,7 @@ class DbServer:
         port=NET.DB_PORT,
         hb_port=NET.DB_HB_PORT,
         identity=MODULE.DB_SERVER,
+        db_file: str | None = None,
     ) -> None:
         self._log_level = log_level
         self._log_file = log_file
@@ -46,15 +48,18 @@ class DbServer:
         # Log
         self.log = AiFxLog(client_id=identity, log_file=log_file, log_level=log_level)
 
-        # File based database ...
-        aifx_dir = os.path.join(Path.home(), DIR.AIFX_DIR)
-        if not os.path.exists(aifx_dir):
-            try:
-                os.makedirs(aifx_dir)
-            except Exception as e:
-                raise PermissionError(f"ERROR: {e}")
-        # Database storage file
-        self._db_file = os.path.join(aifx_dir, FILE.DB_SERVER_STORAGE_FILE)
+        if db_file is None:
+            # File based database ...
+            aifx_dir = os.path.join(Path.home(), DIR.AIFX_DIR)
+            if not os.path.exists(aifx_dir):
+                try:
+                    os.makedirs(aifx_dir)
+                except Exception as e:
+                    raise PermissionError(f"ERROR: {e}")
+            # Database storage file
+            self._db_file = os.path.join(aifx_dir, FILE.DB_SERVER_STORAGE_FILE)
+        else:
+            self._db_file = db_file
 
         # Use the DbMgr class to handle the sqlite specifics
         self.db = DbMgr(
@@ -79,17 +84,43 @@ class DbServer:
 
     # ----- Db Ops exposed over MQ -----
 
-    def num_rows(self, event: MQMsg):
+    @staticmethod
+    def _rows_to_dicts(rows) -> list[dict[str, Any]]:
+        return [dict(row) for row in rows]
+
+    def num_rows(self, event: MQMsg) -> dict[str, int]:
         self.log.debug("num_rows()")
+        return {"rows": self.db.num_rows(table=event.payload["table"])}
 
-    def select_all(self, event: MQMsg):
+    def select_all(self, event: MQMsg) -> dict[str, list[dict[str, Any]]]:
         self.log.debug("select_all()")
+        rows = self.db.select_all(
+            table=event.payload["table"],
+            where=event.payload.get("where"),
+            params=tuple(event.payload.get("params") or ()),
+            order_by=event.payload.get("order_by"),
+            limit=event.payload.get("limit"),
+        )
+        return {"records": self._rows_to_dicts(rows)}
 
-    def select_one(self, event: MQMsg):
+    def select_one(self, event: MQMsg) -> dict[str, dict[str, Any] | None]:
         self.log.debug("select_one()")
+        row = self.db.select_one(
+            table=event.payload["table"],
+            where=event.payload.get("where"),
+            params=tuple(event.payload.get("params") or ()),
+            order_by=event.payload.get("order_by"),
+        )
+        return {"record": None if row is None else dict(row)}
 
-    def upsert(self, event: MQMsg):
+    def upsert(self, event: MQMsg) -> dict[str, int]:
         self.log.debug("upsert()")
+        rows = self.db.upsert(
+            table=event.payload["table"],
+            records=event.payload["records"],
+            key_fields=event.payload["key_fields"],
+        )
+        return {"rows": rows}
 
     # ----- End of Db Ops -----
 
