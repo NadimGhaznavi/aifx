@@ -61,7 +61,10 @@
     </layout>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="hl_latency_plots">
+    <layout class="QHBoxLayout" name="hl_latency">
+     <item>
+      <widget class="QWidget" name="wgt_plot_brain_latency" native="true"/>
+     </item>
      <item>
       <widget class="QWidget" name="wgt_plot_broker_latency" native="true">
        <property name="sizePolicy">
