@@ -1,14 +1,12 @@
-# ai_hydra/utils/HydraClientMQ.py
+# ai_hydra/utils/MQClient.py
 #
-#    AI Hydra
+#    AI FX
 #    Author: Nadim-Daniel Ghaznavi
-#    Copyright: (c) 2025-2026 Nadim-Daniel Ghaznavi
-#    GitHub: https://github.com/NadimGhaznavi/ai_hydra
-#    Website: https://ai-hydra.readthedocs.io/en/latest
+#    Copyright: (c) 2026 Nadim-Daniel Ghaznavi
+#    GitHub: https://github.com/NadimGhaznavi/aifx
+#    Website: https://aifx.osoyalce.com/
 #    License: GPL 3.0
 #
-
-# aifx/zmq/ClientMQ.py
 
 import time
 from collections.abc import Callable
@@ -28,7 +26,6 @@ from aifx.constants.DMethod import DMethod as METHOD
 from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DMQ import DMQ as MQ
 from aifx.constants.DMQ import DMQF as MQF
-from aifx.constants.DNetwork import DNetwork as NET
 from aifx.constants.DNetwork import DNetworkF as NETF
 from aifx.utils.AiFxLog import AiFxLog
 from aifx.zmq.MQMsg import MQMsg
@@ -48,10 +45,10 @@ class MQClient(QObject):
     def __init__(
         self,
         log_level: str = DEF.DEFAULT_LOG_LEVEL,
-        broker_hostname: str = NET.BROKER_HOSTNAME,
-        broker_port: int = NET.BROKER_PORT,
-        broker_hb_port: int = NET.BROKER_HB_PORT,
-        broker_pub_port: int = NET.BROKER_PUB_PORT,
+        server_hostname: str | None = None,
+        server_port: int | None = None,
+        server_hb_port: int | None = None,
+        server_pub_port: int | None = None,
         identity: str = MODULE.CLIENT_MQ,
         topic_prefix: str = MQ.TOPIC_PREFIX,
         sub_methods: dict[str, SubHandler] | None = None,
@@ -61,17 +58,17 @@ class MQClient(QObject):
         # Console log
         self.log = AiFxLog(client_id=MODULE.CLIENT_MQ, log_level=log_level)
 
-        self._broker_hostname = broker_hostname
-        self._broker_port = broker_port
-        self._broker_hb_port = broker_hb_port
-        self._broker_pub_port = broker_pub_port
+        self._server_hostname = server_hostname
+        self._server_port = server_port
+        self._server_hb_port = server_hb_port
+        self._server_pub_port = server_pub_port
         self._identity = identity
         self._topic_prefix = topic_prefix
         self._sub_methods = sub_methods or {}
 
-        self._address = f"{NETF.TCP}{broker_hostname}:{broker_port}"
-        self._hb_address = f"{NETF.TCP}{broker_hostname}:{broker_hb_port}"
-        self._sub_address = f"{NETF.TCP}{broker_hostname}:{broker_pub_port}"
+        self._address = f"{NETF.TCP}{server_hostname}:{server_port}"
+        self._hb_address = f"{NETF.TCP}{server_hostname}:{server_hb_port}"
+        self._sub_address = f"{NETF.TCP}{server_hostname}:{server_pub_port}"
 
         self._ctx = zmq.Context()
 
@@ -140,7 +137,7 @@ class MQClient(QObject):
     def get_instruments(self) -> bool:
         msg = MQMsg(
             sender=self._identity,
-            target=self._broker_hostname,
+            target=self._server_hostname,
             method=METHOD.GET_INSTRUMENTS,
         )
         try:
@@ -153,7 +150,7 @@ class MQClient(QObject):
     def get_recent_candles(self, topic, instrument, count) -> bool:
         msg = MQMsg(
             sender=self._identity,
-            target=self._broker_hostname,
+            target=self._server_hostname,
             method=METHOD.GET_RECENT_CANDLES,
             payload={
                 C_CAND.INSTRUMENT: instrument[C_INST.NAME],
@@ -197,7 +194,7 @@ class MQClient(QObject):
 
         msg = MQMsg(
             sender=self._identity,
-            target=self._broker_hostname,
+            target=self._server_hostname,
             method=METHOD.HEARTBEAT,
         )
         # self.log.debug(QTL.SENDING_HEARTBEAT)

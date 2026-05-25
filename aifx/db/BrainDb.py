@@ -10,9 +10,7 @@
 
 from aifx.constants.DDef import DDef as DEF
 from aifx.constants.DModule import DModule as MODULE
-
 from aifx.db.DbMgr import DbMgr
-
 from aifx.utils.AiFxLog import AiFxLog
 
 

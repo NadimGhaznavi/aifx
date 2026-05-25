@@ -15,6 +15,7 @@ from aifx.constants.DCandle import DCandleF as CANDLEF
 from aifx.constants.DDb import DColCandles as C_CAND
 from aifx.constants.DDb import DColInstrument as C_INST
 from aifx.constants.DDb import DDbF as DBF
+from aifx.constants.DDb import DTable as TABLE
 from aifx.constants.DInstrument import DInstrument as INS
 from aifx.constants.DInstrument import DInstrumentF as INSF
 from aifx.constants.DMethod import DMethod as METHOD
@@ -25,7 +26,14 @@ from aifx.zmq.MQMsg import MQMsg
 
 
 def _broker() -> Broker:
-    return Broker(log_file=None)
+    broker = Broker(log_file=None)
+    broker.mq_db._socket.close(linger=0)
+    broker.mq_db._ctx.destroy(linger=0)
+    broker.mq_db = MagicMock()
+    broker.mq_db.upsert = AsyncMock(return_value={"rows": 1})
+    broker.mq_db.start = AsyncMock()
+    broker.mq_db.quit = AsyncMock()
+    return broker
 
 
 def _recent_candles_msg(instrument: str = "USD_CAD", limit: int = 10) -> MQMsg:
@@ -104,6 +112,13 @@ def test_get_instruments_fetches_oanda_when_cache_is_empty(
         assert result == {INSF.INSTRUMENTS: [sample_instrument.to_dict()]}
         broker.get_instruments_oanda.assert_awaited_once_with()
         broker.db_mgr.upsert.assert_called_once()
+        broker.mq_db.upsert.assert_awaited_once_with(
+            {
+                "table": TABLE.INSTRUMENTS,
+                "records": [sample_instrument.to_dict()],
+                "key_fields": [INS.NAME],
+            }
+        )
 
     asyncio.run(run())
 
@@ -121,6 +136,7 @@ def test_get_instruments_returns_empty_dict_when_no_data() -> None:
 
         assert result == {}
         broker.db_mgr.upsert.assert_not_called()
+        broker.mq_db.upsert.assert_not_awaited()
 
     asyncio.run(run())
 
@@ -156,6 +172,22 @@ def test_get_recent_candles_fetches_oanda_when_cache_is_empty(
             count=5,
         )
         broker.db_mgr.upsert.assert_called_once()
+        broker.mq_db.upsert.assert_awaited_once_with(
+            {
+                "table": TABLE.CANDLES,
+                "records": [sample_candle.to_dict()],
+                "key_fields": [
+                    C_CAND.INSTRUMENT,
+                    C_CAND.GRANULARITY,
+                    C_CAND.Y,
+                    C_CAND.MO,
+                    C_CAND.D,
+                    C_CAND.H,
+                    C_CAND.MI,
+                    C_CAND.S,
+                ],
+            }
+        )
 
     asyncio.run(run())
 
@@ -183,6 +215,7 @@ def test_get_recent_candles_converts_oanda_payload_to_reply_format() -> None:
         assert result[CANDLEF.CANDLES][0][C_CAND.MID_C] == 1.10015
         broker.oanda._fetch_candles.assert_called_once()
         broker.db_mgr.upsert.assert_called_once()
+        broker.mq_db.upsert.assert_awaited_once()
         await broker.quit()
 
     asyncio.run(run())
@@ -199,6 +232,7 @@ def test_get_recent_candles_returns_empty_list_when_no_data() -> None:
 
         assert result[CANDLEF.CANDLES] == []
         broker.db_mgr.upsert.assert_not_called()
+        broker.mq_db.upsert.assert_not_awaited()
 
     asyncio.run(run())
 

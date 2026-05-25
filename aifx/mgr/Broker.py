@@ -9,12 +9,14 @@
 
 import asyncio
 from collections.abc import Awaitable, Callable
+from dataclasses import asdict
 from typing import Any
 
 from aifx.constants.DAiFx import DAiFx as AIFX
 from aifx.constants.DBrain import DBrainF as BRAINF
 from aifx.constants.DCandle import DCandle as CANDLE
 from aifx.constants.DCandle import DCandleF as CANDLEF
+from aifx.constants.DDb import DbUpsertRequest
 from aifx.constants.DDb import DColCandles as C_CAND
 from aifx.constants.DDb import DColInstrument as C_INST
 from aifx.constants.DDb import DDbF as DBF
@@ -29,12 +31,12 @@ from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DMQ import DMQ as MQ
 from aifx.constants.DMQ import DMQEvent
 from aifx.constants.DNetwork import DNetwork as NET
-
 from aifx.db.BrokerDb import BrokerDb
 from aifx.db.DbMgr import DbMgr
 from aifx.mgr.OandaMgr import OandaMgr
 from aifx.utils.AiFxLog import AiFxLog
 from aifx.utils.Feed import Feed
+from aifx.zmq.MQDbClient import MQDbClient
 from aifx.zmq.MQEvent import MQEvent
 from aifx.zmq.MQMsg import MQMsg
 from aifx.zmq.MQServer import MQServer
@@ -80,6 +82,14 @@ class Broker:
             log_file=log_file,
         )
 
+        # MQ client for connecting to the DbServer
+        self.mq_db = MQDbClient(
+            log_level=self._log_level,
+            server_hostname=NET.DB_SERVER_HOSTNAME,
+            server_port=NET.DB_PORT,
+            identity=self._identity,
+        )
+
         # Server methods that are exposed via MQ
         self._srv_methods = {
             METHOD.GET_INSTRUMENTS: self.get_instruments,
@@ -98,6 +108,25 @@ class Broker:
         self._stopped = False
 
         self.log.info("Initialized")
+
+    async def persist_oanda_records(
+        self, table: str, records: list[dict[str, Any]], key_fields: list[str]
+    ) -> None:
+        if not records:
+            return
+
+        try:
+            await self.mq_db.upsert(
+                asdict(
+                    DbUpsertRequest(
+                        table=table,
+                        records=records,
+                        key_fields=key_fields,
+                    )
+                )
+            )
+        except Exception as e:
+            self.log.warning(f"DbServer upsert failed for {table}: {e}")
 
     async def _cancel_task(self, task: asyncio.Task | None, name: str) -> None:
         if task is None or task.done() or task is asyncio.current_task():
@@ -138,19 +167,26 @@ class Broker:
                     candles,
                     key=lambda c: (c.y, c.mo, c.d, c.h, c.mi, c.s),
                 )
+                records = [candle.to_dict() for candle in candles]
+                key_fields = [
+                    C_CAND.INSTRUMENT,
+                    C_CAND.GRANULARITY,
+                    C_CAND.Y,
+                    C_CAND.MO,
+                    C_CAND.D,
+                    C_CAND.H,
+                    C_CAND.MI,
+                    C_CAND.S,
+                ]
                 self.db_mgr.upsert(
                     table=TABLE.CANDLES,
-                    records=[candle.to_dict() for candle in candles],
-                    key_fields=[
-                        C_CAND.INSTRUMENT,
-                        C_CAND.GRANULARITY,
-                        C_CAND.Y,
-                        C_CAND.MO,
-                        C_CAND.D,
-                        C_CAND.H,
-                        C_CAND.MI,
-                        C_CAND.S,
-                    ],
+                    records=records,
+                    key_fields=key_fields,
+                )
+                await self.persist_oanda_records(
+                    table=TABLE.CANDLES,
+                    records=records,
+                    key_fields=key_fields,
                 )
                 num_rows = self.db_mgr.num_rows(table=TABLE.CANDLES)
                 if num_rows != last_row_count:
@@ -244,10 +280,17 @@ class Broker:
 
             if instruments:
                 instruments = sorted(instruments, key=lambda ins: ins.name)
+                records = [ins.to_dict() for ins in instruments]
+                key_fields = [INS.NAME]
                 self.db_mgr.upsert(
                     table=TABLE.INSTRUMENTS,
-                    records=[ins.to_dict() for ins in instruments],
-                    key_fields=[INS.NAME],
+                    records=records,
+                    key_fields=key_fields,
+                )
+                await self.persist_oanda_records(
+                    table=TABLE.INSTRUMENTS,
+                    records=records,
+                    key_fields=key_fields,
                 )
 
         if instruments:
@@ -269,10 +312,25 @@ class Broker:
             candles = await self.get_candles_oanda(instrument=instrument, count=count)
 
             if candles:
+                records = [candle.to_dict() for candle in candles]
                 self.db_mgr.upsert(
                     table=TABLE.CANDLES,
-                    records=[candle.to_dict() for candle in candles],
+                    records=records,
                     key_fields=[
+                        C_CAND.Y,
+                        C_CAND.MO,
+                        C_CAND.D,
+                        C_CAND.H,
+                        C_CAND.MI,
+                        C_CAND.S,
+                    ],
+                )
+                await self.persist_oanda_records(
+                    table=TABLE.CANDLES,
+                    records=records,
+                    key_fields=[
+                        C_CAND.INSTRUMENT,
+                        C_CAND.GRANULARITY,
                         C_CAND.Y,
                         C_CAND.MO,
                         C_CAND.D,
@@ -331,6 +389,7 @@ class Broker:
             await self.mq.quit()
 
         await self._cancel_task(self._mq_task, "MQ server")
+        await self.mq_db.quit()
 
         self.db_mgr.close()
         self.log.info("Broker shutdown complete")
@@ -340,6 +399,7 @@ class Broker:
             return
 
         self._loop = asyncio.get_running_loop()
+        await self.mq_db.start()
 
         self.mq = MQServer(
             log_level=self._log_level,
@@ -353,9 +413,7 @@ class Broker:
 
         self._started = True
         self._stopped = False
-        self._mq_task = asyncio.create_task(
-            self.mq.start(), name=BRAINF.BROKER_MQ
-        )
+        self._mq_task = asyncio.create_task(self.mq.start(), name=BRAINF.BROKER_MQ)
         self._mq_events_task = asyncio.create_task(
             self.bg_mq_events(), name=BRAINF.BROKER_MQ_EVENTS
         )

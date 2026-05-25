@@ -22,15 +22,23 @@ STALE_VALUE = {TABLE.INSTRUMENTS: OANDA.MAX_INSTRUMENT_AGE}
 
 class DbMgr:
 
-    def __init__(self, db_type: str, log_level=DEF.DEFAULT_LOG_LEVEL, log_file=None):
+    def __init__(
+        self, db_type: str, log_level=DEF.DEFAULT_LOG_LEVEL, log_file=None, db_file=None
+    ):
+
         self._db_type = db_type
 
+        # Log
         self.log = AiFxLog(
             client_id=MODULE.DB_MGR, log_file=log_file, log_level=log_level
         )
 
         if db_type == DBF.CACHE:
             self._db_path = DBF.MEMORY
+
+        elif db_type == DBF.FILE:
+            self._db_path = db_file
+
         else:
             raise ValueError(f"Unrecognized database type: {db_type}")
 
@@ -90,7 +98,8 @@ class DbMgr:
         """
         # Avoid raising an exception because the index already exists
         try:
-            self._conn.executescript(f"""
+            self._conn.executescript(
+                f"""
                 ALTER TABLE {table_name}
                 ADD COLUMN ts INTEGER
                     GENERATED ALWAYS AS (
@@ -104,7 +113,8 @@ class DbMgr:
 
                 CREATE INDEX IF NOT EXISTS idx_{table_name}_ts
                     ON {table_name}(ts);
-                """)
+                """
+            )
         except sqlite3.OperationalError as exc:
             if "duplicate column name" not in str(exc).lower():
                 raise
@@ -124,7 +134,8 @@ class DbMgr:
         """
         # Avoid raising an exception because the index already exists
         try:
-            self._conn.executescript(f"""
+            self._conn.executescript(
+                f"""
                 ALTER TABLE {table_name}
                 ADD COLUMN updated_ts INTEGER
                     GENERATED ALWAYS AS (
@@ -138,7 +149,8 @@ class DbMgr:
 
                 CREATE INDEX IF NOT EXISTS idx_{table_name}_updated_ts
                     ON {table_name}(updated_ts);
-                """)
+                """
+            )
         except sqlite3.OperationalError as exc:
             if "duplicate column name" not in str(exc).lower():
                 raise
@@ -146,9 +158,10 @@ class DbMgr:
     def close(self):
         self._conn.close()
 
-    def _init_cache(self):
+    def _init_db(self):
         """Create the in memory schema"""
-        self._cursor.executescript("""
+        self._cursor.executescript(
+            """
             CREATE TABLE IF NOT EXISTS latency (
                 elem TEXT NOT NULL,
                 latency_ms REAL NOT NULL,
@@ -204,14 +217,11 @@ class DbMgr:
             CREATE INDEX IF NOT EXISTS idx_candles_instrument_time ON candles(
                 instrument, granularity, y, mo, d, h, mi, s
             );
-            """)
+            """
+        )
         self._add_updated_ts_column(TABLE.INSTRUMENTS)
         self._add_ts_column(TABLE.LATENCY)
         self._conn.commit()
-
-    def _init_db(self):
-        if self._db_type == DBF.CACHE:
-            self._init_cache()
 
     def is_stale(self, table: str) -> bool:
         if table not in STALE_VALUE:

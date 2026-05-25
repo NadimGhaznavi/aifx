@@ -58,7 +58,8 @@ def apply_dark_theme(app: QApplication) -> None:
     palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.white)
     app.setPalette(palette)
 
-    app.setStyleSheet("""
+    app.setStyleSheet(
+        """
         QWidget {
             background-color: #202020;
             color: #eeeeee;
@@ -101,7 +102,8 @@ def apply_dark_theme(app: QApplication) -> None:
         QScrollBar:vertical, QScrollBar:horizontal {
             background-color: #202020;
         }
-    """)
+    """
+    )
 
 
 class ClientQt(QWidget):
@@ -141,10 +143,10 @@ class ClientQt(QWidget):
 
         # Prepare the MQ client
         self.mq = MQClient(
-            broker_hostname=broker_hostname,
-            broker_port=broker_port,
-            broker_hb_port=broker_hb_port,
-            broker_pub_port=broker_pub_port,
+            server_hostname=broker_hostname,
+            server_port=broker_port,
+            server_hb_port=broker_hb_port,
+            server_pub_port=broker_pub_port,
             identity=identity,
             topic_prefix=MQ.TOPIC_PREFIX,
             sub_methods={MQF.OANDA_LATENCY: self.on_oanda_latency_received},
@@ -361,7 +363,9 @@ class ClientQt(QWidget):
         </script>
         </body>
         </html>
-        """.replace("__PLOT_TEXT_COLOR__", PLOT_TEXT_COLOR)
+        """.replace(
+            "__PLOT_TEXT_COLOR__", PLOT_TEXT_COLOR
+        )
 
         self.candle_web_view.setHtml(html)
 

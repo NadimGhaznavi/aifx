@@ -11,17 +11,34 @@ Even at an early stage in the project, the complexity has risen to the point tha
 
 # Test Execution
 
-Most tests here are `pytest` tests. They can be executed directly by providing the path to a test file or with `poetry run pytest -v` to run all tests. Execute this command from the base project directory.
+Most tests here are `pytest` tests. Execute commands from the base project
+directory.
 
-For the local project virtual environment, use:
+To run the current unit suite directly:
 
 ```
-aifx_venv/bin/python -m pytest tests/unit
+aifx_venv/bin/python -m pytest -v tests/unit
 ```
 
 Current unit coverage is 144 tests across `tests/unit`.
 
-3rd party testing tools have also been integrated into this project:
+The pre-release quality gate is:
+
+```
+scripts/run_final_tests.sh
+```
+
+That script runs:
+
+```
+flake8 aifx
+mypy aifx
+black --check --extend-exclude '(^|/)ui_form\.py$' aifx
+isort --check-only aifx
+poetry run pytest -v
+```
+
+3rd party testing and quality tools have also been integrated into this project:
 
 ## flake8
 
@@ -30,7 +47,6 @@ Current unit coverage is 144 tests across `tests/unit`.
 Configuration: 
 
 ```
-- (aifx_venv) dan@sally:/opt/dev/aifx$ cat .flake8
 [flake8]
 max-line-length = 88
 extend-ignore = E203
@@ -57,10 +73,13 @@ ignore_missing_imports = true
 ## black
 
 - [Black](https://black.readthedocs.io/en/stable/)
+- Pre-release command: `black --check --extend-exclude '(^|/)ui_form\.py$' aifx`
 
 ## isort
 
 - [isort](https://isort.readthedocs.io/en/latest/)
+- Configuration: `extend_skip = ["aifx/client/ui_form.py"]`
+- Pre-release command: `isort --check-only aifx`
 
 ---
 

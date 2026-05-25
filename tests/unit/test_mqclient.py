@@ -93,10 +93,10 @@ def fake_client(monkeypatch, qt_app):
     ctx = FakeContext()
     monkeypatch.setattr("aifx.zmq.MQClient.zmq.Context", lambda: ctx)
     client = MQClient(
-        broker_hostname="broker.local",
-        broker_port=10101,
-        broker_hb_port=10102,
-        broker_pub_port=10103,
+        server_hostname="broker.local",
+        server_port=10101,
+        server_hb_port=10102,
+        server_pub_port=10103,
         identity=MODULE.CLIENT_MQ,
         topic_prefix="test",
     )

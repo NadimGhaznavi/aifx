@@ -7,10 +7,11 @@
 #    Website: https://aifx.osoyalce.com
 #    License: GPL 3.0
 
-from typing import Final
+from dataclasses import dataclass, field
+from typing import Any, Final
 
 from aifx.constants.DInstrument import DInstrumentF as INSF
-from aifx.constants.DField import DField as FIELD
+from aifx.constants.DMethod import DMethod as METHOD
 
 
 class DColInstrument:
@@ -55,9 +56,51 @@ class DColCandles:
 class DDbF:
     BROKER: Final[str] = "broker"
     CACHE: Final[str] = "cache"
+    FILE: Final[str] = "file"
     LIMIT: Final[str] = "limit"
     MEMORY: Final[str] = ":memory:"
     OANDA: Final[str] = "oanda"
+    SERVER_MQ: Final[str] = "db_server_mq"
+    SERVER_MQ_MSGS: Final[str] = "db_server_mq_messages"
+
+
+# ----- These are the payloads for the SQL over MQ requests ----
+
+
+class DDbMqOps:
+    NUM_ROWS = METHOD.NUM_ROWS
+    SELECT_ALL = METHOD.SELECT_ALL
+    SELECT_ONE = METHOD.SELECT_ONE
+    UPSERT = METHOD.UPSERT
+
+
+@dataclass(slots=True, frozen=True)
+class DbNumRowsRequest:
+    table: str
+
+
+@dataclass(slots=True, frozen=True)
+class DbSelectAllRequest:
+    table: str
+    where: str | None = None
+    params: list[Any] = field(default_factory=list)
+    order_by: str | None = None
+    limit: int | None = None
+
+
+@dataclass(slots=True, frozen=True)
+class DbSelectOneRequest:
+    table: str
+    where: str | None = None
+    params: list[Any] = field(default_factory=list)
+    order_by: str | None = None
+
+
+@dataclass(slots=True, frozen=True)
+class DbUpsertRequest:
+    table: str
+    records: list[dict[str, Any]]
+    key_fields: list[str]
 
 
 class DTable:

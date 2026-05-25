@@ -43,10 +43,6 @@ textual = {extras = ["syntax"], version = "^8.2.0"}
 textual-dev = "^1.7.0"
 textual-plot = "^0.10.1"
 
-[[tool.mypy.overrides]]
-module = ["plotly", "plotly.*"]
-ignore_missing_imports = true
-
 [tool.isort]
 extend_skip = ["aifx/client/ui_form.py"]
 

@@ -19,6 +19,9 @@ class DNetwork:
     BRAIN_PORT: Final[int] = 20104
     BRAIN_HB_PORT: Final[int] = 20105
     BRAIN_PUB_PORT: Final[int] = 20106
+    DB_SERVER_HOSTNAME: Final[str] = "localhost"
+    DB_PORT: Final[int] = 20107
+    DB_HB_PORT: Final[int] = 20108
 
 
 class DNetworkF:

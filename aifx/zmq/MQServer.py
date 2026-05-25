@@ -88,6 +88,7 @@ class MQServer:
         self._ctx = zmq.asyncio.Context()
         self._socket = self._ctx.socket(zmq.ROUTER)
         self._hb_socket = self._ctx.socket(zmq.ROUTER)
+        self._pub_socket = None
         if self._pub_address is not None:
             self._pub_socket = self._ctx.socket(zmq.PUB)
             self._pub_socket.linger = 0
@@ -303,7 +304,7 @@ class MQServer:
             "socket.close(linger=0)",
         )
 
-        if self._pub_address is not None:
+        if self._pub_address is not None and self._pub_socket is not None:
             MQUtils.ignore_zmq_teardown(
                 lambda: self._pub_socket.unbind(self._pub_address),
                 f"pub_socket.unbind({self._pub_address})",
@@ -351,9 +352,7 @@ class MQServer:
 
         self._socket.bind(self._address)
         self._hb_socket.bind(self._hb_address)
-        if self._pub_address is None:
-            self._pub_socket = None
-        else:
+        if self._pub_address is not None and self._pub_socket is not None:
             self._pub_socket.bind(self._pub_address)
 
         self._started = True

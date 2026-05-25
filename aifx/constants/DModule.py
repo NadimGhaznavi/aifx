@@ -22,5 +22,7 @@ class DModule:
     CLIENT_MQ: Final[str] = "MQClient"
     CLIENT_QT: Final[str] = "ClientQt"
     DB_MGR: Final[str] = "DbMgr"
+    DB_SERVER: Final[str] = "DbServer"
     OANDA_MGR: Final[str] = "OandaMgr"
+    MQ_DB_CLIENT: Final[str] = "MQDbClient"
     SERVER_MQ: Final[str] = "MQServer"

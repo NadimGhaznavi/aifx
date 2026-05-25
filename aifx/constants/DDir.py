@@ -11,4 +11,5 @@ from typing import Final
 
 
 class DDir:
+    AIFX_DIR: Final[str] = "aifx"
     HISTORICAL_DATA: Final[str] = "his_data"

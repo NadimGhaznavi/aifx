@@ -9,8 +9,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, ClassVar
 import traceback
+from typing import Any, Callable, ClassVar
 
 from aifx.constants.DBrain import DBrainF as BRAINF
 
@@ -19,7 +19,6 @@ class SimCfg:
     _DEFAULTS: ClassVar[dict[str, Any]] = {
         BRAINF.START_TS: -1,
         BRAINF.STOP_TS: -1,
-        
     }
 
     _COERCE: ClassVar[dict[str, Callable[[Any], Any]]] = {
