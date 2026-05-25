@@ -11,15 +11,15 @@ The **AI FX** project houses an experimental AI-driven FOREX trading bot. This w
 
 ---
 
-# FOREX Tutorial
-
-A link to my [notes](/tutorial/index.md) on the [tutorial](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=1).
-
----
-
 # AI FX Project Beginnings
 
 - [AI FX Project](/pages/aifx.html)
+
+---
+
+# FOREX Tutorial Notes
+
+A link to my [notes](/tutorial/index.md) on the [tutorial](https://www.youtube.com/watch?v=zKk2iuuNJO0&list=PLZ1QII7yudbecO6a-zAI6cuGP1LLnmW8e&index=1). This tutorial forms the basis for my technical domain knowlege in this space.
 
 ---
 

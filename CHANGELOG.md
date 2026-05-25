@@ -9,20 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [Release 0.16.3] - 2026-05-23 09:28
+### Added
+- **TheBrain**: A persistent process with an integrated MQ Server to house the nn.
+- Latency plots from the `QtClient` to the `Broker` and from the `Broker` to **OANDA**.
 
-
-## [Release 0.16.2] - 2026-05-23 09:14
-
-
-## [Release 0.16.1] - 2026-05-23 09:06
-
-
-## [Release 0.16.0] - 2026-05-23 09:00
-
+---
 
 ## [Release 0.15.26] - 2026-05-18 15:00
-
 
 ### Added
 

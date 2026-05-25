@@ -10,8 +10,13 @@ layout: default
 AI FX is a Python-based foreign exchange market analysis platform built around a
 loosely coupled broker/client architecture.
 
-The system retrieves live market data from OANDA, distributes it over ZeroMQ,
-and renders real-time candlestick charts in a standalone Qt desktop client.
+- The *Qt Client* retrieves live market data from the *Broker* process
+- The *Broker* returns market data 
+  - if available in it's in memory databae or
+  - it engages the *Oanda Manager* which retrieves the data over the Internet from *Oanda*
+- Latency is plotted for 
+  - the link between the *Qt Client* and the *Broker* and 
+  - for the Internet link between the *Broker* and *Oanda*
 
 ---
 
@@ -58,6 +63,9 @@ The Qt desktop client is responsible for:
 - Requesting live market feeds
 - Consuming ZeroMQ candle streams
 - Rendering live candlestick charts
+- Ploting the latency of:
+  - The LAN link between the Qt client and the Python Broker
+  - The Internet link between the Python Broker and Oanda
 
 ## Core Components
 
@@ -73,8 +81,8 @@ The Qt desktop client is responsible for:
 - PySide6 / Qt for Python
 - ZeroMQ
 - SQLite3
-- Plotly
-- OANDA REST API
+- Plotly with Javascript
+- Oanda REST API
 
 ---
 
