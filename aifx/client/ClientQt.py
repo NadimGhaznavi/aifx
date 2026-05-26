@@ -129,6 +129,9 @@ class ClientQt(QWidget):
         # In memory dictionary of instruments
         self._instruments: dict[str, dict] = {}
 
+        # Track when QWebEngineView pages are ready for JavaScript calls
+        self._web_view_initialized: dict[QWebEngineView, bool] = {}
+
         # In memory client data cache
         self.db_mgr = DbMgr(db_type=DBF.CACHE, log_level=log_level)
         self.client_db = ClientDb(db_mgr=self.db_mgr, log_level=log_level)
@@ -169,7 +172,7 @@ class ClientQt(QWidget):
 
     def clear_data(self) -> None:
         js = "updateCandles([]);"
-        self.candle_web_view.page().runJavaScript(js)
+        ClientQt.run_plot_js(self, self.candle_web_view, js)
 
     def feed_started(self, feed_data):
         name = feed_data[C_INST.NAME]
@@ -385,8 +388,26 @@ class ClientQt(QWidget):
         plot_layout.setContentsMargins(0, 0, 0, 0)
 
         web_view = QWebEngineView(container)
+        self.track_web_view(web_view)
         plot_layout.addWidget(web_view)
         return web_view
+
+    def track_web_view(self, web_view: QWebEngineView) -> None:
+        self._web_view_initialized[web_view] = False
+        web_view.loadFinished.connect(
+            lambda ok, view=web_view: self._web_view_initialized.__setitem__(view, ok)
+        )
+
+    def web_view_ready(self, web_view: QWebEngineView) -> bool:
+        initialized = getattr(self, "_web_view_initialized", None)
+        if initialized is None:
+            return True
+        return initialized.get(web_view, True)
+
+    def run_plot_js(self, web_view: QWebEngineView, js: str) -> None:
+        if not ClientQt.web_view_ready(self, web_view):
+            return
+        web_view.page().runJavaScript(js)
 
     def latency_plot_html(self, title: str) -> str:
         return f"""
@@ -545,7 +566,7 @@ class ClientQt(QWidget):
         ]
 
         js = f"updateCandles({json.dumps(payload)});"
-        self.candle_web_view.page().runJavaScript(js)
+        ClientQt.run_plot_js(self, self.candle_web_view, js)
 
     def update_latency_plot(self, elem: str, web_view: QWebEngineView) -> None:
         rows = self.db_mgr.select_all(
@@ -565,7 +586,7 @@ class ClientQt(QWidget):
         ]
 
         js = f"updateLatency({json.dumps(payload)});"
-        web_view.page().runJavaScript(js)
+        ClientQt.run_plot_js(self, web_view, js)
 
     def wire_signals(self):
         # Wire up an exit button

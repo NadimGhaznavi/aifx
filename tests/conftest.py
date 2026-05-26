@@ -192,7 +192,7 @@ if importlib.util.find_spec("PySide6") is None:
 
     class _Widget:
         def __init__(self, *_args, **_kwargs):
-            pass
+            self.loadFinished = _SignalInstance()
 
         def __getattr__(self, _name):
             def _method(*_args, **_kwargs):

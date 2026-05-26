@@ -11,8 +11,7 @@ import json
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
-from aifx.client.ClientQt import ClientQt
-from aifx.client.ClientQt import LATENCY_PLOT_POINTS
+from aifx.client.ClientQt import LATENCY_PLOT_POINTS, ClientQt
 from aifx.constants.DDb import DDbF as DBF
 from aifx.constants.DDb import DTable as TABLE
 from aifx.constants.DDef import DDef as DEF
@@ -288,3 +287,33 @@ def test_update_latency_plot_uses_latest_points_in_time_order() -> None:
     assert payload[0]["ts"] == 5
     assert payload[-1]["ts"] == LATENCY_PLOT_POINTS + 4
     assert all(point["ts"] != 4 for point in payload)
+
+
+def test_update_latency_plot_skips_until_web_view_is_ready() -> None:
+    page = SimpleNamespace(runJavaScript=MagicMock())
+    web_view = MagicMock()
+    web_view.page.return_value = page
+    db_mgr = SimpleNamespace(select_all=MagicMock(return_value=[]))
+    client = SimpleNamespace(
+        _web_view_initialized={web_view: False},
+        db_mgr=db_mgr,
+    )
+
+    ClientQt.update_latency_plot(client, elem=DBF.OANDA, web_view=web_view)
+
+    page.runJavaScript.assert_not_called()
+
+
+def test_update_latency_plot_runs_after_web_view_is_ready() -> None:
+    page = SimpleNamespace(runJavaScript=MagicMock())
+    web_view = MagicMock()
+    web_view.page.return_value = page
+    db_mgr = SimpleNamespace(select_all=MagicMock(return_value=[]))
+    client = SimpleNamespace(
+        _web_view_initialized={web_view: True},
+        db_mgr=db_mgr,
+    )
+
+    ClientQt.update_latency_plot(client, elem=DBF.OANDA, web_view=web_view)
+
+    page.runJavaScript.assert_called_once_with("updateLatency([]);")
