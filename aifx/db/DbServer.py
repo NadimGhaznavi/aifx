@@ -16,21 +16,25 @@ from aifx.constants.DDb import DDbF as DBF
 from aifx.constants.DDef import DDef as DEF
 from aifx.constants.DDir import DDir as DIR
 from aifx.constants.DFile import DFile as FILE
+from aifx.constants.DLogging import DAiFxLog as LOG
 from aifx.constants.DMethod import DMethod as METHOD
 from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DMQ import DMQ as MQ
 from aifx.constants.DNetwork import DNetwork as NET
+
 from aifx.db.DbMgr import DbMgr
 from aifx.utils.AiFxLog import AiFxLog
 from aifx.zmq.MQMsg import MQMsg
 from aifx.zmq.MQServer import MQServer
+
+DEFAULT_DB_LOG_LEVEL = LOG.INFO
 
 
 class DbServer:
 
     def __init__(
         self,
-        log_level=DEF.DEFAULT_LOG_LEVEL,
+        log_level=DEFAULT_DB_LOG_LEVEL,
         log_file=FILE.DB_SERVER_LOG,
         hostname=NET.DB_SERVER_HOSTNAME,
         port=NET.DB_PORT,
@@ -114,11 +118,14 @@ class DbServer:
         return {"record": None if row is None else dict(row)}
 
     def upsert(self, event: MQMsg) -> dict[str, int]:
-        self.log.debug("upsert()")
+        table = event.payload["table"]
+        records = event.payload["records"]
+        key_fields = event.payload["key_fields"]
+        self.log.debug(f"upsert({table} : {records}")
         rows = self.db.upsert(
-            table=event.payload["table"],
-            records=event.payload["records"],
-            key_fields=event.payload["key_fields"],
+            table=table,
+            records=records,
+            key_fields=key_fields,
         )
         return {"rows": rows}
 

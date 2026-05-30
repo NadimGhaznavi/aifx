@@ -55,6 +55,7 @@ class Broker:
         hostname=NET.BROKER_HOSTNAME,
         port=NET.BROKER_PORT,
         hb_port=NET.BROKER_HB_PORT,
+        pub_port=NET.BROKER_PUB_PORT,
         identity=MODULE.BROKER,
     ) -> None:
 
@@ -63,6 +64,7 @@ class Broker:
         self._hostname = hostname
         self._port = port
         self._hb_port = hb_port
+        self._pub_port = pub_port
         self._identity = identity
 
         # Log
@@ -406,6 +408,7 @@ class Broker:
             hostname=self._hostname,
             port=self._port,
             hb_port=self._hb_port,
+            pub_port=self._pub_port,
             identity=self._identity,
             srv_methods=self._srv_methods,
             topic_prefix=MQ.TOPIC_PREFIX,
