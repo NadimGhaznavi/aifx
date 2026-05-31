@@ -32,6 +32,8 @@ from aifx.forex.Candle import Candle
 from aifx.forex.RecentCandlesModel import RecentCandlesModel
 from aifx.utils.AiFxLog import AiFxLog
 from aifx.zmq.MQBrokerClient import MQBrokerClient
+from aifx.zmq.MQQtBrainClient import MQQtBrainClient
+from aifx.zmq.MQQtDbClient import MQQtDbClient
 
 # Number of candles to cache for Plotly
 RECENT_CANDLES_COLUMN_PADDING = 50
@@ -112,6 +114,11 @@ class ClientQt(QWidget):
         broker_port: int = NET.BROKER_PORT,
         broker_hb_port: int = NET.BROKER_HB_PORT,
         broker_pub_port: int = NET.BROKER_PUB_PORT,
+        db_hostname: str = NET.DB_SERVER_HOSTNAME,
+        db_port: int = NET.DB_PORT,
+        db_hb_port: int = NET.DB_HB_PORT,
+        brain_hostname: str = NET.BRAIN_HOSTNAME,
+        brain_hb_port: int = NET.BRAIN_HB_PORT,
         identity: str = MODULE.CLIENT_QT,
     ):
         super().__init__()
@@ -158,6 +165,23 @@ class ClientQt(QWidget):
         self.mq.instruments_received.connect(self.update_instruments)
         self.mq.feed_started.connect(self.feed_started)
         self.mq.recent_candles.connect(self.on_recent_candles)
+
+        self.db_mq = MQQtDbClient(
+            log_level=log_level,
+            server_hostname=db_hostname,
+            server_port=db_port,
+            server_hb_port=db_hb_port,
+            identity=identity,
+        )
+        self.db_mq.db_status_changed.connect(self.set_db_connection_status)
+
+        self.brain_mq = MQQtBrainClient(
+            log_level=log_level,
+            server_hostname=brain_hostname,
+            server_hb_port=brain_hb_port,
+            identity=identity,
+        )
+        self.brain_mq.brain_status_changed.connect(self.set_brain_connection_status)
 
         self.wire_signals()
         self.log.info(QTL.SIGNALS_WIRED)
@@ -302,6 +326,30 @@ class ClientQt(QWidget):
                 self.mq.get_instruments()
 
         self._was_connected = connected
+
+    def set_db_connection_status(
+        self,
+        connected: bool,
+        latency_ms: float | None = None,
+    ) -> None:
+        if connected and latency_ms is not None:
+            self.db_mgr.add_latency(elem=DBF.DB_SERVER, latency=latency_ms)
+            self.update_latency_plot(
+                elem=DBF.DB_SERVER,
+                web_view=self.db_server_latency_web_view,
+            )
+
+    def set_brain_connection_status(
+        self,
+        connected: bool,
+        latency_ms: float | None = None,
+    ) -> None:
+        if connected and latency_ms is not None:
+            self.db_mgr.add_latency(elem=DBF.BRAIN, latency=latency_ms)
+            self.update_latency_plot(
+                elem=DBF.BRAIN,
+                web_view=self.brain_latency_web_view,
+            )
 
     def setup_candle_plot(self):
         self.candle_web_view = self.setup_web_view(self.ui.wgt_candle_plot)
@@ -538,12 +586,16 @@ class ClientQt(QWidget):
         self._shutting_down = True
 
         self.mq.quit()
+        self.db_mq.quit()
+        self.brain_mq.quit()
         self.db_mgr.close()
         self.ui.close()
         self.log.info("Clean shutdown")
 
     def start_mq(self):
         self.mq.start()
+        self.db_mq.start()
+        self.brain_mq.start()
         topic = self.mq.topic(MQ.OANDA_LATENCY_TOPIC)
         self.mq.register_sub_handler(topic, self.on_oanda_latency_received)
         self.mq.subscribe(topic)

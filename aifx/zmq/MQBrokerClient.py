@@ -8,7 +8,6 @@
 #    License: GPL 3.0
 #
 
-import time
 from collections.abc import Callable
 from typing import Any
 
@@ -29,12 +28,13 @@ from aifx.constants.DMQ import DMQF as MQF
 from aifx.constants.DNetwork import DNetworkF as NETF
 from aifx.utils.AiFxLog import AiFxLog
 from aifx.zmq.MQMsg import MQMsg
+from aifx.zmq.MQQtHeartbeatClient import MQQtHeartbeatClient
 from aifx.zmq.MQUtils import MQUtils
 
 SubHandler = Callable[[str, dict], Any]
 
 
-class MQBrokerClient(QObject):
+class MQBrokerClient(QObject, MQQtHeartbeatClient):
 
     candle_received = Signal(str, object)
     broker_status_changed = Signal(bool, object)
@@ -73,28 +73,21 @@ class MQBrokerClient(QObject):
         self._ctx = zmq.Context()
 
         self._socket = self._ctx.socket(zmq.DEALER)
-        self._hb_socket = self._ctx.socket(zmq.DEALER)
-        self._sub_socket = self._ctx.socket(zmq.SUB)
 
         self._socket.setsockopt(zmq.IDENTITY, self._identity.encode())
-        self._hb_socket.setsockopt(zmq.IDENTITY, self._identity.encode())
 
         self._socket.connect(self._address)
         self._timer = QTimer(self)
         self._poll_timer = QTimer(self)
         self._poll_timer.timeout.connect(self._poll_control_reply)
 
-        self._hb_socket.connect(self._hb_address)
-        self._last_heartbeat = 0.0
-        self._pending_heartbeat_at: float | None = None
-        self._broker_latency_ms: float | None = None
-        self._last_connected: bool | None = None
-        self._hb_timer = QTimer(self)
-        self._hb_timer.timeout.connect(self._heartbeat_tick)
+        self._init_heartbeat(
+            server_hostname=server_hostname,
+            server_hb_port=server_hb_port,
+            target=server_hostname,
+        )
 
-        self._poll_hb_timer = QTimer(self)
-        self._poll_hb_timer.timeout.connect(self._poll_heartbeat_reply)
-
+        self._sub_socket = self._ctx.socket(zmq.SUB)
         self._sub_socket.connect(self._sub_address)
         self._sub_timer = QTimer(self)
         self._sub_timer.timeout.connect(self._bg_sub_listen)
@@ -128,11 +121,6 @@ class MQBrokerClient(QObject):
 
     def candle_topic(self, instrument: str) -> str:
         return self.topic(f"candles.{instrument}")
-
-    def connected(self) -> bool:
-        return (time.monotonic() - self._last_heartbeat) < (
-            2 * int(MQ.HEARTBEAT_INTERVAL)
-        )
 
     def get_instruments(self) -> bool:
         msg = MQMsg(
@@ -183,29 +171,6 @@ class MQBrokerClient(QObject):
 
         self.log.critical(f"Unhandled control reply: {reply.method}")
 
-    def _heartbeat_tick(self) -> None:
-        now = time.monotonic()
-        if self._pending_heartbeat_at is not None:
-            pending_age = now - self._pending_heartbeat_at
-            if pending_age < (2 * int(MQ.HEARTBEAT_INTERVAL)):
-                self._update_connection_state()
-                return
-            self._pending_heartbeat_at = None
-
-        msg = MQMsg(
-            sender=self._identity,
-            target=self._server_hostname,
-            method=METHOD.HEARTBEAT,
-        )
-        # self.log.debug(QTL.SENDING_HEARTBEAT)
-        try:
-            self._hb_socket.send(msg.to_json(), flags=zmq.NOBLOCK)
-            self._pending_heartbeat_at = now
-        except zmq.Again:
-            pass
-
-        self._update_connection_state()
-
     def _poll_control_reply(self) -> None:
         while True:
             try:
@@ -216,29 +181,6 @@ class MQBrokerClient(QObject):
             reply = MQMsg.from_json(MQUtils.ensure_bytes(message_data))
             self._handle_control_reply(reply)
 
-    def _poll_heartbeat_reply(self) -> None:
-        while True:
-            # self.log.debug(QTL.POLLING_HEARTBEAT_REPLY)
-            try:
-                # self.log.debug(QTL.POLLING_HEARTBEAT_REPLY)
-                message_data = self._hb_socket.recv(copy=True, flags=zmq.NOBLOCK)
-            except zmq.Again:
-                break
-
-            reply = MQMsg.from_json(MQUtils.ensure_bytes(message_data))
-
-            if reply.method == METHOD.HEARTBEAT_REPLY:
-                # self.log.debug(QTL.HEARTBEAT_REPLY_RECEIVED)
-                now = time.monotonic()
-                self._last_heartbeat = now
-                if self._pending_heartbeat_at is not None:
-                    self._broker_latency_ms = (
-                        now - self._pending_heartbeat_at
-                    ) * 1000.0
-                    self._pending_heartbeat_at = None
-
-        self._update_connection_state()
-
     def quit(self) -> None:
         if self._stopped:
             self.log.warning("ClientMQ.quit(): Already stopped")
@@ -247,11 +189,7 @@ class MQBrokerClient(QObject):
         self._stopped = True
         self._started = False
 
-        self._hb_timer.stop()
-        self.log.info("Heartbeat timer stopped")
-
-        self._poll_hb_timer.stop()
-        self.log.info("Heartbeat poll timer stopped")
+        self._close_heartbeat()
 
         self._poll_timer.stop()
         self.log.info("Control poll timer stopped")
@@ -262,11 +200,6 @@ class MQBrokerClient(QObject):
         MQUtils.ignore_zmq_teardown(
             lambda: self._socket.close(linger=0),
             "socket.close(linger=0)",
-        )
-
-        MQUtils.ignore_zmq_teardown(
-            lambda: self._hb_socket.close(linger=0),
-            "hb_socket.close(linger=0)",
         )
 
         MQUtils.ignore_zmq_teardown(
@@ -295,11 +228,9 @@ class MQBrokerClient(QObject):
             return
 
         self._started = True
-        self._hb_timer.start(int(MQ.HEARTBEAT_INTERVAL) * 1000)
-        self._poll_hb_timer.start(1000)
+        self._start_heartbeat()
         self._poll_timer.start(100)
         self._sub_timer.start(100)
-        self._heartbeat_tick()
 
     def start_feed(self, instrument: dict) -> bool:
         msg = MQMsg(
@@ -317,18 +248,12 @@ class MQBrokerClient(QObject):
     def topic(self, suffix: str) -> str:
         return f"{self._topic_prefix}.{suffix}"
 
-    def _update_connection_state(self) -> None:
-        now_connected = self.connected()
-
-        if now_connected != self._last_connected:
-            self._last_connected = now_connected
-
-        if now_connected:
-            latency_ms = self._broker_latency_ms
-        else:
-            self._broker_latency_ms = None
-            latency_ms = None
-        self.broker_status_changed.emit(now_connected, latency_ms)
+    def _emit_heartbeat_status(
+        self,
+        connected: bool,
+        latency_ms: float | None,
+    ) -> None:
+        self.broker_status_changed.emit(connected, latency_ms)
 
     def unsubscribe(self, topic: str) -> None:
         self.log.info(f"Unsubscribing: {topic}")

@@ -54,8 +54,10 @@ class DColCandles:
 
 
 class DDbF:
+    BRAIN: Final[str] = "brain"
     BROKER: Final[str] = "broker"
     CACHE: Final[str] = "cache"
+    DB_SERVER: Final[str] = "db_server"
     FILE: Final[str] = "file"
     LIMIT: Final[str] = "limit"
     MEMORY: Final[str] = ":memory:"

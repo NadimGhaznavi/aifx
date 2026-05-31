@@ -158,6 +158,8 @@ def test_start_mq_subscribes_to_oanda_latency_topic() -> None:
         topic=MagicMock(return_value="aifx.oanda_latency"),
     )
     client = SimpleNamespace(
+        brain_mq=SimpleNamespace(start=MagicMock()),
+        db_mq=SimpleNamespace(start=MagicMock()),
         log=SimpleNamespace(info=MagicMock()),
         mq=mq,
         on_oanda_latency_received=MagicMock(),
@@ -166,6 +168,8 @@ def test_start_mq_subscribes_to_oanda_latency_topic() -> None:
     ClientQt.start_mq(client)
 
     mq.start.assert_called_once_with()
+    client.db_mq.start.assert_called_once_with()
+    client.brain_mq.start.assert_called_once_with()
     mq.topic.assert_called_once_with(MQ.OANDA_LATENCY_TOPIC)
     mq.register_sub_handler.assert_called_once_with(
         "aifx.oanda_latency",
@@ -247,6 +251,58 @@ def test_set_connection_status_marks_disconnected_without_ui_labels() -> None:
     client.update_latency_plot.assert_not_called()
     mq.get_instruments.assert_not_called()
     assert client._was_connected is False
+
+
+def test_set_db_connection_status_records_db_server_latency() -> None:
+    client = SimpleNamespace(
+        db_mgr=SimpleNamespace(add_latency=MagicMock()),
+        db_server_latency_web_view=MagicMock(),
+        update_latency_plot=MagicMock(),
+    )
+
+    ClientQt.set_db_connection_status(client, connected=True, latency_ms=2.5)
+
+    client.db_mgr.add_latency.assert_called_once_with(
+        elem=DBF.DB_SERVER,
+        latency=2.5,
+    )
+    client.update_latency_plot.assert_called_once_with(
+        elem=DBF.DB_SERVER,
+        web_view=client.db_server_latency_web_view,
+    )
+
+
+def test_set_brain_connection_status_records_brain_latency() -> None:
+    client = SimpleNamespace(
+        brain_latency_web_view=MagicMock(),
+        db_mgr=SimpleNamespace(add_latency=MagicMock()),
+        update_latency_plot=MagicMock(),
+    )
+
+    ClientQt.set_brain_connection_status(client, connected=True, latency_ms=3.75)
+
+    client.db_mgr.add_latency.assert_called_once_with(
+        elem=DBF.BRAIN,
+        latency=3.75,
+    )
+    client.update_latency_plot.assert_called_once_with(
+        elem=DBF.BRAIN,
+        web_view=client.brain_latency_web_view,
+    )
+
+
+def test_service_connection_status_ignores_missing_latency() -> None:
+    client = SimpleNamespace(
+        brain_latency_web_view=MagicMock(),
+        db_mgr=SimpleNamespace(add_latency=MagicMock()),
+        update_latency_plot=MagicMock(),
+    )
+
+    ClientQt.set_brain_connection_status(client, connected=True, latency_ms=None)
+    ClientQt.set_brain_connection_status(client, connected=False, latency_ms=3.75)
+
+    client.db_mgr.add_latency.assert_not_called()
+    client.update_latency_plot.assert_not_called()
 
 
 def test_latency_plot_html_configures_title_legend_and_current_latency() -> None:

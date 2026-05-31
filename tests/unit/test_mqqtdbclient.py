@@ -77,6 +77,7 @@ def fake_qt_db_client(monkeypatch, qt_app):
     client = MQQtDbClient(
         server_hostname="db.local",
         server_port=10107,
+        server_hb_port=10108,
         identity=MODULE.CLIENT_QT,
     )
     client.log.info = lambda *_args, **_kwargs: None
@@ -92,9 +93,12 @@ def test_mqqtdbclient_initializes_and_connects_control_socket(
     client, ctx = fake_qt_db_client
 
     assert client._address == "tcp://db.local:10107"
-    assert len(ctx.sockets) == 1
+    assert client._hb_address == "tcp://db.local:10108"
+    assert len(ctx.sockets) == 2
     assert ctx.sockets[0].socket_options == [(zmq.IDENTITY, b"ClientQt")]
+    assert ctx.sockets[1].socket_options == [(zmq.IDENTITY, b"ClientQt")]
     assert ctx.sockets[0].connected == ["tcp://db.local:10107"]
+    assert ctx.sockets[1].connected == ["tcp://db.local:10108"]
 
 
 def test_mqqtdbclient_request_sends_message(fake_qt_db_client) -> None:
@@ -158,6 +162,30 @@ def test_mqqtdbclient_poll_reply_emits_generic_and_specific_signals(
     assert list(client._pending_requests) == []
 
 
+def test_mqqtdbclient_heartbeat_reply_emits_db_status_with_latency(
+    fake_qt_db_client,
+) -> None:
+    client, ctx = fake_qt_db_client
+    received = []
+    client.db_status_changed.connect(
+        lambda connected, latency_ms: received.append((connected, latency_ms))
+    )
+
+    client._heartbeat_tick()
+
+    reply = MQMsg(
+        sender=MODULE.DB_SERVER,
+        target=MODULE.CLIENT_QT,
+        method=METHOD.HEARTBEAT_REPLY,
+    )
+    ctx.sockets[1].recv_items.append(reply.to_json())
+    client._poll_heartbeat_reply()
+
+    assert received[-1][0] is True
+    assert received[-1][1] is not None
+    assert received[-1][1] >= 0.0
+
+
 def test_mqqtdbclient_quit_disconnects_and_closes(fake_qt_db_client) -> None:
     client, ctx = fake_qt_db_client
 
@@ -165,6 +193,8 @@ def test_mqqtdbclient_quit_disconnects_and_closes(fake_qt_db_client) -> None:
     client.quit()
 
     assert ctx.sockets[0].disconnected == ["tcp://db.local:10107"]
+    assert ctx.sockets[1].disconnected == ["tcp://db.local:10108"]
     assert ctx.sockets[0].closed == [0]
+    assert ctx.sockets[1].closed == [0]
     assert ctx.destroyed == [0]
     assert client._stopped is True

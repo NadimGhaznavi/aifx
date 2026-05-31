@@ -19,11 +19,13 @@ from aifx.constants.DNetwork import DNetwork as NET
 from aifx.constants.DNetwork import DNetworkF as NETF
 from aifx.utils.AiFxLog import AiFxLog
 from aifx.zmq.MQMsg import MQMsg
+from aifx.zmq.MQQtHeartbeatClient import MQQtHeartbeatClient
 from aifx.zmq.MQUtils import MQUtils
 
 
-class MQQtDbClient(QObject):
+class MQQtDbClient(QObject, MQQtHeartbeatClient):
 
+    db_status_changed = Signal(bool, object)
     reply_received = Signal(str, object)
     request_failed = Signal(str, object)
     num_rows_received = Signal(object)
@@ -36,6 +38,7 @@ class MQQtDbClient(QObject):
         log_level: str = DEF.DEFAULT_LOG_LEVEL,
         server_hostname: str = NET.DB_SERVER_HOSTNAME,
         server_port: int = NET.DB_PORT,
+        server_hb_port: int = NET.DB_HB_PORT,
         identity: str = MODULE.MQ_DB_CLIENT,
         poll_interval_ms: int = 100,
     ) -> None:
@@ -45,6 +48,7 @@ class MQQtDbClient(QObject):
 
         self._server_hostname = server_hostname
         self._server_port = server_port
+        self._server_hb_port = server_hb_port
         self._identity = identity
         self._address = f"{NETF.TCP}{server_hostname}:{server_port}"
         self._poll_interval_ms = poll_interval_ms
@@ -53,6 +57,11 @@ class MQQtDbClient(QObject):
         self._socket = self._ctx.socket(zmq.DEALER)
         self._socket.setsockopt(zmq.IDENTITY, self._identity.encode())
         self._socket.connect(self._address)
+        self._init_heartbeat(
+            server_hostname=server_hostname,
+            server_hb_port=server_hb_port,
+            target=MODULE.DB_SERVER,
+        )
 
         self._pending_requests: deque[str] = deque()
 
@@ -133,6 +142,7 @@ class MQQtDbClient(QObject):
         self._started = False
 
         self._poll_timer.stop()
+        self._close_heartbeat(disconnect=True)
 
         MQUtils.ignore_zmq_teardown(
             lambda: self._socket.disconnect(self._address),
@@ -153,4 +163,12 @@ class MQQtDbClient(QObject):
 
         self._started = True
         self._stopped = False
+        self._start_heartbeat()
         self._poll_timer.start(self._poll_interval_ms)
+
+    def _emit_heartbeat_status(
+        self,
+        connected: bool,
+        latency_ms: float | None,
+    ) -> None:
+        self.db_status_changed.emit(connected, latency_ms)
