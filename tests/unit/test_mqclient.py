@@ -23,7 +23,7 @@ from aifx.constants.DMethod import DMethod as METHOD
 from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DMQ import DMQ as MQ
 from aifx.constants.DMQ import DMQF as MQF
-from aifx.zmq.MQClient import MQClient
+from aifx.zmq.MQBrokerClient import MQClient
 from aifx.zmq.MQMsg import MQMsg
 
 

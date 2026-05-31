@@ -19,7 +19,7 @@ class DModule:
     BASE_MQ: Final[str] = "BaseMQ"
     CACHE_MGR: Final[str] = "CacheMgr"
     CLIENT_DB: Final[str] = "ClientDb"
-    CLIENT_MQ: Final[str] = "MQClient"
+    MQ_BROKER_CLIENT: Final[str] = "MQBrokerClient"
     CLIENT_QT: Final[str] = "ClientQt"
     DB_MGR: Final[str] = "DbMgr"
     DB_SERVER: Final[str] = "DbServer"

@@ -31,7 +31,7 @@ from aifx.db.DbMgr import DbMgr
 from aifx.forex.Candle import Candle
 from aifx.forex.RecentCandlesModel import RecentCandlesModel
 from aifx.utils.AiFxLog import AiFxLog
-from aifx.zmq.MQClient import MQClient
+from aifx.zmq.MQBrokerClient import MQBrokerClient
 
 # Number of candles to cache for Plotly
 RECENT_CANDLES_COLUMN_PADDING = 50
@@ -58,8 +58,7 @@ def apply_dark_theme(app: QApplication) -> None:
     palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.white)
     app.setPalette(palette)
 
-    app.setStyleSheet(
-        """
+    app.setStyleSheet("""
         QWidget {
             background-color: #202020;
             color: #eeeeee;
@@ -102,8 +101,7 @@ def apply_dark_theme(app: QApplication) -> None:
         QScrollBar:vertical, QScrollBar:horizontal {
             background-color: #202020;
         }
-    """
-    )
+    """)
 
 
 class ClientQt(QWidget):
@@ -139,13 +137,15 @@ class ClientQt(QWidget):
         # Load the UI
         self.load_ui()
         self.setup_recent_candles_table()
+
         # Prepare the plotting widget
         self.setup_candle_plot()
         self.setup_latency_plots()
+        # Log it
         self.log.info(QTL.UI_LOADED)
 
-        # Prepare the MQ client
-        self.mq = MQClient(
+        # Prepare the Broker MQ client
+        self.mq = MQBrokerClient(
             server_hostname=broker_hostname,
             server_port=broker_port,
             server_hb_port=broker_hb_port,
@@ -366,13 +366,17 @@ class ClientQt(QWidget):
         </script>
         </body>
         </html>
-        """.replace(
-            "__PLOT_TEXT_COLOR__", PLOT_TEXT_COLOR
-        )
+        """.replace("__PLOT_TEXT_COLOR__", PLOT_TEXT_COLOR)
 
         self.candle_web_view.setHtml(html)
 
     def setup_latency_plots(self):
+        self.brain_latency_web_view = self.setup_web_view(
+            self.ui.wgt_plot_brain_latency
+        )
+        self.db_server_latency_web_view = self.setup_web_view(
+            self.ui.wgt_plot_db_server_latency
+        )
         self.broker_latency_web_view = self.setup_web_view(
             self.ui.wgt_plot_broker_latency
         )
@@ -380,6 +384,8 @@ class ClientQt(QWidget):
             self.ui.wgt_plot_oanda_latency
         )
 
+        self.brain_latency_web_view.setHtml(self.latency_plot_html("Brain"))
+        self.db_server_latency_web_view.setHtml(self.latency_plot_html("DB"))
         self.broker_latency_web_view.setHtml(self.latency_plot_html("Broker"))
         self.oanda_latency_web_view.setHtml(self.latency_plot_html("OANDA"))
 

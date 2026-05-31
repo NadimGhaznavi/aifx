@@ -34,7 +34,7 @@ from aifx.zmq.MQUtils import MQUtils
 SubHandler = Callable[[str, dict], Any]
 
 
-class MQClient(QObject):
+class MQBrokerClient(QObject):
 
     candle_received = Signal(str, object)
     broker_status_changed = Signal(bool, object)
@@ -49,14 +49,14 @@ class MQClient(QObject):
         server_port: int | None = None,
         server_hb_port: int | None = None,
         server_pub_port: int | None = None,
-        identity: str = MODULE.CLIENT_MQ,
+        identity: str = MODULE.MQ_BROKER_CLIENT,
         topic_prefix: str = MQ.TOPIC_PREFIX,
         sub_methods: dict[str, SubHandler] | None = None,
     ) -> None:
         super().__init__()
 
         # Console log
-        self.log = AiFxLog(client_id=MODULE.CLIENT_MQ, log_level=log_level)
+        self.log = AiFxLog(client_id=MODULE.MQ_BROKER_CLIENT, log_level=log_level)
 
         self._server_hostname = server_hostname
         self._server_port = server_port

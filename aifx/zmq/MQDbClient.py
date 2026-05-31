@@ -7,6 +7,10 @@
 #    Website: https://aifx.osoyalce.com
 #    License: GPL 3.0
 
+import time
+from collections.abc import Callable
+from typing import Any
+
 import asyncio
 
 import zmq
@@ -21,6 +25,8 @@ from aifx.constants.DOanda import DOanda as OANDA
 from aifx.utils.AiFxLog import AiFxLog
 from aifx.zmq.MQMsg import MQMsg
 from aifx.zmq.MQUtils import MQUtils
+
+SubHandler = Callable[[str, dict], Any]
 
 
 class MQDbClient:

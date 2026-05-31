@@ -57,7 +57,10 @@ class TheBrain:
         )
 
         # Server methods that are exposed over ZeroMQ
-        self._srv_methods = {METHOD.START_SIM: self.start_sim}
+        self._srv_methods = {
+            METHOD.START_SIM: self.start_sim,
+            METHOD.STATUS: self.status,
+        }
         self.mq: MQServer | None = None
 
         # Background MQ control channel listener
@@ -160,6 +163,9 @@ class TheBrain:
         self.ensure_data(event)
         self.start_nn_run(event)
         self.log.info("End simulation run...")
+
+    def status(self, event: MQMsg):
+        self.log.debug("Ready")
 
 
 def main():
