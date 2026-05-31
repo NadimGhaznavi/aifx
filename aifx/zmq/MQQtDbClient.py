@@ -7,7 +7,6 @@
 #    Website: https://aifx.osoyalce.com
 #    License: GPL 3.0
 
-import time
 from collections import deque
 
 import zmq
@@ -18,7 +17,6 @@ from aifx.constants.DMethod import DMethod as METHOD
 from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DNetwork import DNetwork as NET
 from aifx.constants.DNetwork import DNetworkF as NETF
-from aifx.constants.DOanda import DOanda as OANDA
 from aifx.utils.AiFxLog import AiFxLog
 from aifx.zmq.MQMsg import MQMsg
 from aifx.zmq.MQUtils import MQUtils
@@ -40,7 +38,6 @@ class MQQtDbClient(QObject):
         server_port: int = NET.DB_PORT,
         identity: str = MODULE.MQ_DB_CLIENT,
         poll_interval_ms: int = 100,
-        timeout_seconds: float = OANDA.TIMEOUT,
     ) -> None:
         super().__init__()
 
@@ -51,20 +48,16 @@ class MQQtDbClient(QObject):
         self._identity = identity
         self._address = f"{NETF.TCP}{server_hostname}:{server_port}"
         self._poll_interval_ms = poll_interval_ms
-        self._timeout_seconds = timeout_seconds
 
         self._ctx = zmq.Context()
         self._socket = self._ctx.socket(zmq.DEALER)
         self._socket.setsockopt(zmq.IDENTITY, self._identity.encode())
         self._socket.connect(self._address)
 
-        self._pending_requests: deque[tuple[str, float]] = deque()
+        self._pending_requests: deque[str] = deque()
 
         self._poll_timer = QTimer(self)
         self._poll_timer.timeout.connect(self._poll_reply)
-
-        self._timeout_timer = QTimer(self)
-        self._timeout_timer.timeout.connect(self._check_timeouts)
 
         self._started = False
         self._stopped = False
@@ -91,24 +84,15 @@ class MQQtDbClient(QObject):
 
         try:
             self._socket.send(msg.to_json(), flags=zmq.NOBLOCK)
-            self._pending_requests.append((method, time.monotonic()))
+            self._pending_requests.append(method)
             return True
         except zmq.Again:
+            self.request_failed.emit(method, {"error": "send_would_block"})
             return False
         except Exception as e:
             self.log.critical(f"Exception: {e}")
+            self.request_failed.emit(method, {"error": str(e)})
             return False
-
-    def _check_timeouts(self) -> None:
-        now = time.monotonic()
-
-        while self._pending_requests:
-            method, sent_at = self._pending_requests[0]
-            if (now - sent_at) < self._timeout_seconds:
-                break
-
-            self._pending_requests.popleft()
-            self.request_failed.emit(method, {"error": "timeout"})
 
     def _emit_reply(self, reply: MQMsg) -> None:
         method = reply.method
@@ -149,7 +133,6 @@ class MQQtDbClient(QObject):
         self._started = False
 
         self._poll_timer.stop()
-        self._timeout_timer.stop()
 
         MQUtils.ignore_zmq_teardown(
             lambda: self._socket.disconnect(self._address),
@@ -171,4 +154,3 @@ class MQQtDbClient(QObject):
         self._started = True
         self._stopped = False
         self._poll_timer.start(self._poll_interval_ms)
-        self._timeout_timer.start(1000)
