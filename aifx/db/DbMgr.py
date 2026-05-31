@@ -98,8 +98,7 @@ class DbMgr:
         """
         # Avoid raising an exception because the index already exists
         try:
-            self._conn.executescript(
-                f"""
+            self._conn.executescript(f"""
                 ALTER TABLE {table_name}
                 ADD COLUMN ts INTEGER
                     GENERATED ALWAYS AS (
@@ -113,8 +112,7 @@ class DbMgr:
 
                 CREATE INDEX IF NOT EXISTS idx_{table_name}_ts
                     ON {table_name}(ts);
-                """
-            )
+                """)
         except sqlite3.OperationalError as exc:
             if "duplicate column name" not in str(exc).lower():
                 raise
@@ -134,8 +132,7 @@ class DbMgr:
         """
         # Avoid raising an exception because the index already exists
         try:
-            self._conn.executescript(
-                f"""
+            self._conn.executescript(f"""
                 ALTER TABLE {table_name}
                 ADD COLUMN updated_ts INTEGER
                     GENERATED ALWAYS AS (
@@ -149,8 +146,7 @@ class DbMgr:
 
                 CREATE INDEX IF NOT EXISTS idx_{table_name}_updated_ts
                     ON {table_name}(updated_ts);
-                """
-            )
+                """)
         except sqlite3.OperationalError as exc:
             if "duplicate column name" not in str(exc).lower():
                 raise
@@ -160,8 +156,7 @@ class DbMgr:
 
     def _init_db(self):
         """Create the in memory schema"""
-        self._cursor.executescript(
-            """
+        self._cursor.executescript("""
             CREATE TABLE IF NOT EXISTS latency (
                 elem TEXT NOT NULL,
                 latency_ms REAL NOT NULL,
@@ -217,8 +212,7 @@ class DbMgr:
             CREATE INDEX IF NOT EXISTS idx_candles_instrument_time ON candles(
                 instrument, granularity, y, mo, d, h, mi, s
             );
-            """
-        )
+            """)
         self._add_updated_ts_column(TABLE.INSTRUMENTS)
         self._add_ts_column(TABLE.LATENCY)
         self._conn.commit()

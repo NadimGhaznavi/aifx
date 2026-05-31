@@ -144,7 +144,7 @@ def test_mqserver_wraps_recent_candles_handler_result_in_reply(fake_server) -> N
         server._srv_methods = {METHOD.GET_RECENT_CANDLES: get_recent_candles}
         ctx.sockets[0].on_send_multipart = server._listen_stop_event.set
         request = MQMsg(
-            sender=MODULE.CLIENT_MQ,
+            sender=MODULE.MQ_BROKER_CLIENT,
             target=MODULE.BROKER,
             method=METHOD.GET_RECENT_CANDLES,
             payload={
@@ -168,7 +168,7 @@ def test_mqserver_wraps_recent_candles_handler_result_in_reply(fake_server) -> N
 
             assert route == [b"client-1"]
             assert reply.sender == MODULE.SERVER_MQ
-            assert reply.target == MODULE.CLIENT_MQ
+            assert reply.target == MODULE.MQ_BROKER_CLIENT
             assert reply.method == METHOD.GET_RECENT_CANDLES_REPLY
             assert reply.payload == {
                 INSF.TOPIC: "test.candles.USD_CAD",

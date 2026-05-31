@@ -23,7 +23,7 @@ from aifx.constants.DMethod import DMethod as METHOD
 from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DMQ import DMQ as MQ
 from aifx.constants.DMQ import DMQF as MQF
-from aifx.zmq.MQBrokerClient import MQClient
+from aifx.zmq.MQBrokerClient import MQBrokerClient
 from aifx.zmq.MQMsg import MQMsg
 
 
@@ -91,13 +91,13 @@ def qt_app():
 @pytest.fixture
 def fake_client(monkeypatch, qt_app):
     ctx = FakeContext()
-    monkeypatch.setattr("aifx.zmq.MQClient.zmq.Context", lambda: ctx)
-    client = MQClient(
+    monkeypatch.setattr("aifx.zmq.MQBrokerClient.zmq.Context", lambda: ctx)
+    client = MQBrokerClient(
         server_hostname="broker.local",
         server_port=10101,
         server_hb_port=10102,
         server_pub_port=10103,
-        identity=MODULE.CLIENT_MQ,
+        identity=MODULE.MQ_BROKER_CLIENT,
         topic_prefix="test",
     )
     client.log.info = lambda *_args, **_kwargs: None
@@ -117,8 +117,8 @@ def test_mqclient_initializes_sockets_and_addresses(fake_client) -> None:
     assert ctx.sockets[0].connected == [client._address]
     assert ctx.sockets[1].connected == [client._hb_address]
     assert ctx.sockets[2].connected == [client._sub_address]
-    assert ctx.sockets[0].socket_options == [(zmq.IDENTITY, b"MQClient")]
-    assert ctx.sockets[1].socket_options == [(zmq.IDENTITY, b"MQClient")]
+    assert ctx.sockets[0].socket_options == [(zmq.IDENTITY, b"MQBrokerClient")]
+    assert ctx.sockets[1].socket_options == [(zmq.IDENTITY, b"MQBrokerClient")]
 
 
 def test_mqclient_builds_topics(fake_client) -> None:
@@ -151,7 +151,7 @@ def test_mqclient_heartbeat_reply_emits_broker_status_with_latency(
 
     reply = MQMsg(
         sender=MODULE.BROKER,
-        target=MODULE.CLIENT_MQ,
+        target=MODULE.MQ_BROKER_CLIENT,
         method=METHOD.HEARTBEAT_REPLY,
     )
     ctx.sockets[1].recv_items.append(reply.to_json())
@@ -211,7 +211,7 @@ def test_mqclient_get_instruments_sends_request(fake_client) -> None:
 
     assert client.get_instruments() is True
     msg = MQMsg.from_json(ctx.sockets[0].sent[0])
-    assert msg.sender == MODULE.CLIENT_MQ
+    assert msg.sender == MODULE.MQ_BROKER_CLIENT
     assert msg.target == "broker.local"
     assert msg.method == METHOD.GET_INSTRUMENTS
     assert msg.payload == {}
@@ -222,7 +222,7 @@ def test_mqclient_get_recent_candles_sends_request(fake_client) -> None:
 
     assert client.get_recent_candles("topic", {C_INST.NAME: "USD_CAD"}, 5) is True
     msg = MQMsg.from_json(ctx.sockets[0].sent[0])
-    assert msg.sender == MODULE.CLIENT_MQ
+    assert msg.sender == MODULE.MQ_BROKER_CLIENT
     assert msg.target == "broker.local"
     assert msg.method == METHOD.GET_RECENT_CANDLES
     assert msg.payload == {
@@ -238,7 +238,7 @@ def test_mqclient_start_feed_sends_start_feed_message(fake_client) -> None:
 
     assert client.start_feed(instrument) is True
     msg = MQMsg.from_json(ctx.sockets[0].sent[0])
-    assert msg.sender == MODULE.CLIENT_MQ
+    assert msg.sender == MODULE.MQ_BROKER_CLIENT
     assert msg.target == MODULE.BROKER
     assert msg.method == METHOD.START_FEED
     assert msg.payload == instrument
@@ -250,7 +250,7 @@ def test_mqclient_poll_control_reply_emits_instruments(fake_client) -> None:
     client.instruments_received.connect(received.append)
     reply = MQMsg(
         sender=MODULE.BROKER,
-        target=MODULE.CLIENT_MQ,
+        target=MODULE.MQ_BROKER_CLIENT,
         method=METHOD.GET_INSTRUMENTS_REPLY,
         payload={MQF.INSTRUMENTS: [{"name": "USD_CAD"}]},
     )
@@ -270,7 +270,7 @@ def test_mqclient_poll_control_reply_emits_recent_candles(fake_client) -> None:
     candles = [{C_CAND.INSTRUMENT: "USD_CAD", C_CAND.MID_C: 1.10015}]
     reply = MQMsg(
         sender=MODULE.BROKER,
-        target=MODULE.CLIENT_MQ,
+        target=MODULE.MQ_BROKER_CLIENT,
         method=METHOD.GET_RECENT_CANDLES_REPLY,
         payload={
             INSF.TOPIC: "test.candles.USD_CAD",

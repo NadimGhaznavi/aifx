@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import Any
 
 from aifx.constants.DDb import DDbF as DBF
-from aifx.constants.DDef import DDef as DEF
 from aifx.constants.DDir import DDir as DIR
 from aifx.constants.DFile import DFile as FILE
 from aifx.constants.DLogging import DAiFxLog as LOG
@@ -21,7 +20,6 @@ from aifx.constants.DMethod import DMethod as METHOD
 from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DMQ import DMQ as MQ
 from aifx.constants.DNetwork import DNetwork as NET
-
 from aifx.db.DbMgr import DbMgr
 from aifx.utils.AiFxLog import AiFxLog
 from aifx.zmq.MQMsg import MQMsg
