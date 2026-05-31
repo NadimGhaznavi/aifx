@@ -8,12 +8,12 @@
 #    License: GPL 3.0
 
 import json
+from collections import deque
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
-from aifx.client.ClientQt import LATENCY_PLOT_POINTS, ClientQt
+from aifx.client.ClientQt import LATENCY_PLOT_WINDOW_MS, ClientQt
 from aifx.constants.DDb import DDbF as DBF
-from aifx.constants.DDb import DTable as TABLE
 from aifx.constants.DDef import DDef as DEF
 from aifx.constants.DMQ import DMQ as MQ
 from aifx.constants.DMQ import DMQF as MQF
@@ -180,9 +180,8 @@ def test_start_mq_subscribes_to_oanda_latency_topic() -> None:
 
 def test_on_oanda_latency_received_records_latency_and_updates_plot() -> None:
     client = SimpleNamespace(
-        db_mgr=SimpleNamespace(add_latency=MagicMock()),
         oanda_latency_web_view=MagicMock(),
-        update_latency_plot=MagicMock(),
+        record_latency=MagicMock(),
     )
 
     ClientQt.on_oanda_latency_received(
@@ -191,9 +190,9 @@ def test_on_oanda_latency_received_records_latency_and_updates_plot() -> None:
         data={MQF.OANDA_LATENCY: 12.3456},
     )
 
-    client.db_mgr.add_latency.assert_called_once_with(elem="oanda", latency=12.3456)
-    client.update_latency_plot.assert_called_once_with(
+    client.record_latency.assert_called_once_with(
         elem="oanda",
+        latency_ms=12.3456,
         web_view=client.oanda_latency_web_view,
     )
 
@@ -203,16 +202,15 @@ def test_set_connection_status_records_broker_latency() -> None:
     client = SimpleNamespace(
         _was_connected=True,
         broker_latency_web_view=MagicMock(),
-        db_mgr=SimpleNamespace(add_latency=MagicMock()),
         mq=mq,
-        update_latency_plot=MagicMock(),
+        record_latency=MagicMock(),
     )
 
     ClientQt.set_connection_status(client, connected=True, latency_ms=1.25)
 
-    client.db_mgr.add_latency.assert_called_once_with(elem=DBF.BROKER, latency=1.25)
-    client.update_latency_plot.assert_called_once_with(
+    client.record_latency.assert_called_once_with(
         elem=DBF.BROKER,
+        latency_ms=1.25,
         web_view=client.broker_latency_web_view,
     )
     mq.get_instruments.assert_not_called()
@@ -223,15 +221,13 @@ def test_set_connection_status_requests_instruments_on_first_connect() -> None:
     client = SimpleNamespace(
         _was_connected=False,
         broker_latency_web_view=MagicMock(),
-        db_mgr=SimpleNamespace(add_latency=MagicMock()),
         mq=mq,
-        update_latency_plot=MagicMock(),
+        record_latency=MagicMock(),
     )
 
     ClientQt.set_connection_status(client, connected=True, latency_ms=None)
 
-    client.db_mgr.add_latency.assert_not_called()
-    client.update_latency_plot.assert_not_called()
+    client.record_latency.assert_not_called()
     mq.get_instruments.assert_called_once_with()
     assert client._was_connected is True
 
@@ -240,34 +236,28 @@ def test_set_connection_status_marks_disconnected_without_ui_labels() -> None:
     mq = SimpleNamespace(get_instruments=MagicMock())
     client = SimpleNamespace(
         _was_connected=True,
-        db_mgr=SimpleNamespace(add_latency=MagicMock()),
         mq=mq,
-        update_latency_plot=MagicMock(),
+        record_latency=MagicMock(),
     )
 
     ClientQt.set_connection_status(client, connected=False)
 
-    client.db_mgr.add_latency.assert_not_called()
-    client.update_latency_plot.assert_not_called()
+    client.record_latency.assert_not_called()
     mq.get_instruments.assert_not_called()
     assert client._was_connected is False
 
 
 def test_set_db_connection_status_records_db_server_latency() -> None:
     client = SimpleNamespace(
-        db_mgr=SimpleNamespace(add_latency=MagicMock()),
         db_server_latency_web_view=MagicMock(),
-        update_latency_plot=MagicMock(),
+        record_latency=MagicMock(),
     )
 
     ClientQt.set_db_connection_status(client, connected=True, latency_ms=2.5)
 
-    client.db_mgr.add_latency.assert_called_once_with(
+    client.record_latency.assert_called_once_with(
         elem=DBF.DB_SERVER,
-        latency=2.5,
-    )
-    client.update_latency_plot.assert_called_once_with(
-        elem=DBF.DB_SERVER,
+        latency_ms=2.5,
         web_view=client.db_server_latency_web_view,
     )
 
@@ -275,18 +265,14 @@ def test_set_db_connection_status_records_db_server_latency() -> None:
 def test_set_brain_connection_status_records_brain_latency() -> None:
     client = SimpleNamespace(
         brain_latency_web_view=MagicMock(),
-        db_mgr=SimpleNamespace(add_latency=MagicMock()),
-        update_latency_plot=MagicMock(),
+        record_latency=MagicMock(),
     )
 
     ClientQt.set_brain_connection_status(client, connected=True, latency_ms=3.75)
 
-    client.db_mgr.add_latency.assert_called_once_with(
+    client.record_latency.assert_called_once_with(
         elem=DBF.BRAIN,
-        latency=3.75,
-    )
-    client.update_latency_plot.assert_called_once_with(
-        elem=DBF.BRAIN,
+        latency_ms=3.75,
         web_view=client.brain_latency_web_view,
     )
 
@@ -294,15 +280,13 @@ def test_set_brain_connection_status_records_brain_latency() -> None:
 def test_service_connection_status_ignores_missing_latency() -> None:
     client = SimpleNamespace(
         brain_latency_web_view=MagicMock(),
-        db_mgr=SimpleNamespace(add_latency=MagicMock()),
-        update_latency_plot=MagicMock(),
+        record_latency=MagicMock(),
     )
 
     ClientQt.set_brain_connection_status(client, connected=True, latency_ms=None)
     ClientQt.set_brain_connection_status(client, connected=False, latency_ms=3.75)
 
-    client.db_mgr.add_latency.assert_not_called()
-    client.update_latency_plot.assert_not_called()
+    client.record_latency.assert_not_called()
 
 
 def test_latency_plot_html_configures_title_legend_and_current_latency() -> None:
@@ -315,44 +299,75 @@ def test_latency_plot_html_configures_title_legend_and_current_latency() -> None
     assert 'y: 1' in html
     assert 'yanchor: "top"' in html
     assert "const currentLatency = y.length ? y[y.length - 1] : null;" in html
+    assert "function latencyYAxis(values)" in html
+    assert "const recentValues = finiteValues.slice(-60);" in html
+    assert "Math.ceil(sortedValues.length * 0.95) - 1" in html
+    assert "range: [" in html
+    assert "yaxis: latencyYAxis(y)" in html
     assert "name: formatLatency(currentLatency)" in html
 
 
-def test_update_latency_plot_uses_latest_points_in_time_order() -> None:
-    rows = [
-        {"ts": ts, "latency_ms": float(ts)}
-        for ts in range(LATENCY_PLOT_POINTS + 5)
+def test_record_latency_appends_to_sliding_deque_and_updates_plot(monkeypatch) -> None:
+    web_view = MagicMock()
+    client = SimpleNamespace(
+        _latency_data={DBF.OANDA: deque(maxlen=10)},
+        update_latency_plot=MagicMock(),
+    )
+    monkeypatch.setattr("aifx.client.ClientQt.time.time", lambda: 1000.0)
+
+    ClientQt.record_latency(
+        client,
+        elem=DBF.OANDA,
+        latency_ms=12.5,
+        web_view=web_view,
+    )
+
+    assert list(client._latency_data[DBF.OANDA]) == [
+        {"ts": 1000000.0, "latency_ms": 12.5}
     ]
-    selected_rows = list(reversed(rows[-LATENCY_PLOT_POINTS:]))
+    client.update_latency_plot.assert_called_once_with(
+        elem=DBF.OANDA,
+        web_view=web_view,
+    )
+
+
+def test_update_latency_plot_uses_sliding_deque_window(monkeypatch) -> None:
+    now_ms = 1_000_000
+    old_ts = now_ms - LATENCY_PLOT_WINDOW_MS - 1
+    recent_ts = now_ms - LATENCY_PLOT_WINDOW_MS
     page = SimpleNamespace(runJavaScript=MagicMock())
     web_view = SimpleNamespace(page=MagicMock(return_value=page))
-    db_mgr = SimpleNamespace(select_all=MagicMock(return_value=selected_rows))
-    client = SimpleNamespace(db_mgr=db_mgr)
+    client = SimpleNamespace(
+        _latency_data={
+            DBF.OANDA: deque(
+                [
+                    {"ts": float(old_ts), "latency_ms": 1.0},
+                    {"ts": float(recent_ts), "latency_ms": 2.0},
+                    {"ts": float(now_ms), "latency_ms": 3.0},
+                ],
+                maxlen=10,
+            )
+        }
+    )
+    monkeypatch.setattr("aifx.client.ClientQt.time.time", lambda: now_ms / 1000)
 
     ClientQt.update_latency_plot(client, elem=DBF.OANDA, web_view=web_view)
 
-    db_mgr.select_all.assert_called_once_with(
-        table=TABLE.LATENCY,
-        where="elem = ?",
-        params=(DBF.OANDA,),
-        order_by="ts DESC",
-        limit=LATENCY_PLOT_POINTS,
-    )
     js = page.runJavaScript.call_args.args[0]
     payload = json.loads(js.removeprefix("updateLatency(").removesuffix(");"))
-    assert payload[0]["ts"] == 5
-    assert payload[-1]["ts"] == LATENCY_PLOT_POINTS + 4
-    assert all(point["ts"] != 4 for point in payload)
+    assert payload == [
+        {"ts": float(recent_ts), "latency_ms": 2.0},
+        {"ts": float(now_ms), "latency_ms": 3.0},
+    ]
 
 
 def test_update_latency_plot_skips_until_web_view_is_ready() -> None:
     page = SimpleNamespace(runJavaScript=MagicMock())
     web_view = MagicMock()
     web_view.page.return_value = page
-    db_mgr = SimpleNamespace(select_all=MagicMock(return_value=[]))
     client = SimpleNamespace(
         _web_view_initialized={web_view: False},
-        db_mgr=db_mgr,
+        _latency_data={DBF.OANDA: deque()},
     )
 
     ClientQt.update_latency_plot(client, elem=DBF.OANDA, web_view=web_view)
@@ -364,10 +379,9 @@ def test_update_latency_plot_runs_after_web_view_is_ready() -> None:
     page = SimpleNamespace(runJavaScript=MagicMock())
     web_view = MagicMock()
     web_view.page.return_value = page
-    db_mgr = SimpleNamespace(select_all=MagicMock(return_value=[]))
     client = SimpleNamespace(
         _web_view_initialized={web_view: True},
-        db_mgr=db_mgr,
+        _latency_data={DBF.OANDA: deque()},
     )
 
     ClientQt.update_latency_plot(client, elem=DBF.OANDA, web_view=web_view)

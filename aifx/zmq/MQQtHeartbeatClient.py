@@ -20,6 +20,8 @@ from aifx.utils.AiFxLog import AiFxLog
 from aifx.zmq.MQMsg import MQMsg
 from aifx.zmq.MQUtils import MQUtils
 
+HEARTBEAT_POLL_INTERVAL_MS = 10
+
 
 class MQQtHeartbeatClient:
     _ctx: Any
@@ -71,7 +73,7 @@ class MQQtHeartbeatClient:
 
     def _start_heartbeat(self) -> None:
         self._hb_timer.start(int(MQ.HEARTBEAT_INTERVAL) * 1000)
-        self._poll_hb_timer.start(1000)
+        self._poll_hb_timer.start(HEARTBEAT_POLL_INTERVAL_MS)
         self._heartbeat_tick()
 
     def connected(self) -> bool:
@@ -102,6 +104,8 @@ class MQQtHeartbeatClient:
         self._update_connection_state()
 
     def _poll_heartbeat_reply(self) -> None:
+        latency_ms = None
+
         while True:
             try:
                 message_data = self._hb_socket.recv(copy=True, flags=zmq.NOBLOCK)
@@ -114,26 +118,25 @@ class MQQtHeartbeatClient:
                 now = time.monotonic()
                 self._last_heartbeat = now
                 if self._pending_heartbeat_at is not None:
-                    self._heartbeat_latency_ms = (
-                        now - self._pending_heartbeat_at
-                    ) * 1000.0
+                    latency_ms = (now - self._pending_heartbeat_at) * 1000.0
+                    self._heartbeat_latency_ms = latency_ms
                     self._pending_heartbeat_at = None
 
-        self._update_connection_state()
+        self._update_connection_state(latency_ms=latency_ms)
 
-    def _update_connection_state(self) -> None:
+    def _update_connection_state(self, latency_ms: float | None = None) -> None:
         now_connected = self.connected()
+        state_changed = now_connected != self._last_connected
 
-        if now_connected != self._last_connected:
+        if state_changed:
             self._last_connected = now_connected
 
-        if now_connected:
-            latency_ms = self._heartbeat_latency_ms
-        else:
+        if not now_connected:
             self._heartbeat_latency_ms = None
             latency_ms = None
 
-        self._emit_heartbeat_status(now_connected, latency_ms)
+        if state_changed or latency_ms is not None:
+            self._emit_heartbeat_status(now_connected, latency_ms)
 
     def _emit_heartbeat_status(
         self,

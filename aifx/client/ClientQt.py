@@ -9,7 +9,10 @@
 
 import json
 import sys
+import time
+from collections import deque
 from pathlib import Path
+from typing import Any
 
 from PySide6.QtCore import QFile, Qt, QTimer
 from PySide6.QtGui import QColor, QPalette
@@ -19,7 +22,6 @@ from PySide6.QtWidgets import QApplication, QVBoxLayout, QWidget
 
 from aifx.constants.DDb import DColInstrument as C_INST
 from aifx.constants.DDb import DDbF as DBF
-from aifx.constants.DDb import DTable as TABLE
 from aifx.constants.DDef import DDef as DEF
 from aifx.constants.DModule import DModule as MODULE
 from aifx.constants.DMQ import DMQ as MQ
@@ -38,7 +40,8 @@ from aifx.zmq.MQQtDbClient import MQQtDbClient
 # Number of candles to cache for Plotly
 RECENT_CANDLES_COLUMN_PADDING = 50
 RECENT_CANDLES_ROWS = 12
-LATENCY_PLOT_POINTS = 200
+LATENCY_PLOT_WINDOW_MS = 2 * 60 * 1000
+LATENCY_PLOT_MAX_SAMPLES = 2 * 60 * 10
 PLOT_TEXT_COLOR = "#55dd55"
 
 
@@ -136,6 +139,14 @@ class ClientQt(QWidget):
 
         # Track when QWebEngineView pages are ready for JavaScript calls
         self._web_view_initialized: dict[QWebEngineView, bool] = {}
+
+        # Sliding in-memory latency buffers for Plotly
+        self._latency_data: dict[str, deque[dict[str, float]]] = {
+            DBF.BRAIN: deque(maxlen=LATENCY_PLOT_MAX_SAMPLES),
+            DBF.BROKER: deque(maxlen=LATENCY_PLOT_MAX_SAMPLES),
+            DBF.DB_SERVER: deque(maxlen=LATENCY_PLOT_MAX_SAMPLES),
+            DBF.OANDA: deque(maxlen=LATENCY_PLOT_MAX_SAMPLES),
+        }
 
         # In memory client data cache
         self.db_mgr = DbMgr(db_type=DBF.CACHE, log_level=log_level)
@@ -273,8 +284,11 @@ class ClientQt(QWidget):
 
     def on_oanda_latency_received(self, topic: str, data: dict[str, float]) -> None:
         latency_ms = data[MQF.OANDA_LATENCY]
-        self.db_mgr.add_latency(elem=DBF.OANDA, latency=latency_ms)
-        self.update_latency_plot(elem=DBF.OANDA, web_view=self.oanda_latency_web_view)
+        self.record_latency(
+            elem=DBF.OANDA,
+            latency_ms=latency_ms,
+            web_view=self.oanda_latency_web_view,
+        )
 
     def on_recent_candles(self, topic: str, candles: list[dict]) -> None:
         if topic != self._active_topic:
@@ -316,9 +330,9 @@ class ClientQt(QWidget):
 
         if connected:
             if latency_ms is not None:
-                self.db_mgr.add_latency(elem=DBF.BROKER, latency=latency_ms)
-                self.update_latency_plot(
+                self.record_latency(
                     elem=DBF.BROKER,
+                    latency_ms=latency_ms,
                     web_view=self.broker_latency_web_view,
                 )
 
@@ -333,9 +347,9 @@ class ClientQt(QWidget):
         latency_ms: float | None = None,
     ) -> None:
         if connected and latency_ms is not None:
-            self.db_mgr.add_latency(elem=DBF.DB_SERVER, latency=latency_ms)
-            self.update_latency_plot(
+            self.record_latency(
                 elem=DBF.DB_SERVER,
+                latency_ms=latency_ms,
                 web_view=self.db_server_latency_web_view,
             )
 
@@ -345,9 +359,9 @@ class ClientQt(QWidget):
         latency_ms: float | None = None,
     ) -> None:
         if connected and latency_ms is not None:
-            self.db_mgr.add_latency(elem=DBF.BRAIN, latency=latency_ms)
-            self.update_latency_plot(
+            self.record_latency(
                 elem=DBF.BRAIN,
+                latency_ms=latency_ms,
                 web_view=self.brain_latency_web_view,
             )
 
@@ -532,10 +546,45 @@ class ClientQt(QWidget):
                 return `Latency: ${{Math.round(value)}} ms`;
             }}
 
+            function latencyYAxis(values) {{
+                const finiteValues = values.filter(v => Number.isFinite(v));
+                if (!finiteValues.length) {{
+                    return {{...layout.yaxis, autorange: true}};
+                }}
+
+                const recentValues = finiteValues.slice(-60);
+                const sortedValues = [...recentValues].sort((a, b) => a - b);
+                const highIndex = Math.max(
+                    0,
+                    Math.ceil(sortedValues.length * 0.95) - 1
+                );
+
+                const minValue = Math.min(...recentValues);
+                const maxValue = Math.max(
+                    sortedValues[highIndex],
+                    recentValues[recentValues.length - 1]
+                );
+                const spread = maxValue - minValue;
+                const padding = Math.max(spread * 0.15, maxValue * 0.15, 0.1);
+
+                return {{
+                    ...layout.yaxis,
+                    autorange: false,
+                    range: [
+                        Math.max(0, minValue - padding),
+                        maxValue + padding
+                    ]
+                }};
+            }}
+
             function updateLatency(points) {{
                 const x = points.map(p => new Date(p.ts));
                 const y = points.map(p => p.latency_ms);
                 const currentLatency = y.length ? y[y.length - 1] : null;
+                const updatedLayout = {{
+                    ...layout,
+                    yaxis: latencyYAxis(y)
+                }};
 
                 Plotly.react("chart", [{{
                     type: "scatter",
@@ -543,7 +592,7 @@ class ClientQt(QWidget):
                     x: x,
                     y: y,
                     name: formatLatency(currentLatency)
-                }}], layout, {{responsive: true}});
+                }}], updatedLayout, {{responsive: true}});
             }}
         </script>
         </body>
@@ -626,22 +675,46 @@ class ClientQt(QWidget):
         js = f"updateCandles({json.dumps(payload)});"
         ClientQt.run_plot_js(self, self.candle_web_view, js)
 
-    def update_latency_plot(self, elem: str, web_view: QWebEngineView) -> None:
-        rows = self.db_mgr.select_all(
-            table=TABLE.LATENCY,
-            where="elem = ?",
-            params=(elem,),
-            order_by="ts DESC",
-            limit=LATENCY_PLOT_POINTS,
-        )
+    def latency_points(self, elem: str) -> deque[dict[str, float]]:
+        latency_data = getattr(self, "_latency_data", None)
+        if latency_data is None:
+            latency_data = {}
+            self._latency_data = latency_data
 
-        payload = [
+        if elem not in latency_data:
+            latency_data[elem] = deque(maxlen=LATENCY_PLOT_MAX_SAMPLES)
+
+        return latency_data[elem]
+
+    def record_latency(
+        self,
+        elem: str,
+        latency_ms: float,
+        web_view: QWebEngineView,
+    ) -> None:
+        now_ms = int(time.time() * 1000)
+        points = ClientQt.latency_points(self, elem)
+        points.append(
             {
-                "ts": row["ts"],
-                "latency_ms": row["latency_ms"],
+                "ts": float(now_ms),
+                "latency_ms": latency_ms,
             }
-            for row in reversed(rows)
-        ]
+        )
+        ClientQt.trim_latency_points(self, elem=elem, now_ms=now_ms)
+        self.update_latency_plot(elem=elem, web_view=web_view)
+
+    def trim_latency_points(self, elem: str, now_ms: int | None = None) -> None:
+        if now_ms is None:
+            now_ms = int(time.time() * 1000)
+
+        cutoff_ms = now_ms - LATENCY_PLOT_WINDOW_MS
+        points = ClientQt.latency_points(self, elem)
+        while points and points[0]["ts"] < cutoff_ms:
+            points.popleft()
+
+    def update_latency_plot(self, elem: str, web_view: QWebEngineView) -> None:
+        ClientQt.trim_latency_points(self, elem=elem)
+        payload: list[dict[str, Any]] = list(ClientQt.latency_points(self, elem))
 
         js = f"updateLatency({json.dumps(payload)});"
         ClientQt.run_plot_js(self, web_view, js)

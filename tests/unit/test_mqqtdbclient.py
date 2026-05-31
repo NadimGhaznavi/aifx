@@ -186,6 +186,30 @@ def test_mqqtdbclient_heartbeat_reply_emits_db_status_with_latency(
     assert received[-1][1] >= 0.0
 
 
+def test_mqqtdbclient_empty_heartbeat_poll_does_not_reemit_stale_latency(
+    fake_qt_db_client,
+) -> None:
+    client, ctx = fake_qt_db_client
+    received = []
+    client.db_status_changed.connect(
+        lambda connected, latency_ms: received.append((connected, latency_ms))
+    )
+
+    client._heartbeat_tick()
+    reply = MQMsg(
+        sender=MODULE.DB_SERVER,
+        target=MODULE.CLIENT_QT,
+        method=METHOD.HEARTBEAT_REPLY,
+    )
+    ctx.sockets[1].recv_items.append(reply.to_json())
+    client._poll_heartbeat_reply()
+    first_count = len(received)
+
+    client._poll_heartbeat_reply()
+
+    assert len(received) == first_count
+
+
 def test_mqqtdbclient_quit_disconnects_and_closes(fake_qt_db_client) -> None:
     client, ctx = fake_qt_db_client
 

@@ -126,7 +126,7 @@ class MQServer:
                 try:
                     frames = await asyncio.wait_for(
                         self._hb_socket.recv_multipart(),
-                        timeout=OANDA.TIMEOUT,
+                        timeout=MQ.HEARTBEAT_INTERVAL,
                     )
 
                     routing_id, message_data, route = MQUtils.split_router_frames(
@@ -148,8 +148,6 @@ class MQServer:
 
                 except asyncio.TimeoutError:
                     pass
-
-                await asyncio.sleep(MQ.HEARTBEAT_INTERVAL)
 
         except asyncio.CancelledError:
             raise
